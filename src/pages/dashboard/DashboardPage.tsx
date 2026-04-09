@@ -59,20 +59,20 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div style={{ padding: 32, maxWidth: 1200, margin: '0 auto' }}>
+    <div className="px-4 py-5 sm:p-8" style={{ maxWidth: 1200, margin: '0 auto' }}>
 
       {/* OVERVIEW */}
       <p style={{ fontSize: 13, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>Overview</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4" style={{ marginBottom: 32 }}>
         {kpis.map(kpi => (
           <div key={kpi.label} style={{
-            background: 'white', borderRadius: 16, padding: 28,
+            background: 'white', borderRadius: 16, padding: window.innerWidth < 640 ? 16 : 28,
             border: '1px solid rgba(0,0,0,0.06)',
             borderBottom: kpi.accent ? '3px solid #C8A96E' : '1px solid rgba(0,0,0,0.06)',
           }}>
-            <p style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1.5, color: '#9CA3AF', marginBottom: 8 }}>{kpi.label}</p>
-            <p style={{ fontSize: 36, fontWeight: 700, color: '#0D1B3D', lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>{kpi.value}</p>
+            <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1.5, color: '#9CA3AF', marginBottom: 6 }}>{kpi.label}</p>
+            <p className="text-[24px] sm:text-[36px]" style={{ fontWeight: 700, color: '#0D1B3D', lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>{kpi.value}</p>
           </div>
         ))}
       </div>
@@ -90,7 +90,7 @@ export default function DashboardPage() {
       {/* RECENT ACTIVITY */}
       <p style={{ fontSize: 13, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>Recent Activity</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 32 }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6" style={{ marginBottom: 32 }}>
 
         {/* Recent Jobs */}
         <div>
