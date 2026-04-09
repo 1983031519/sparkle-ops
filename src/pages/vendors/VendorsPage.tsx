@@ -92,7 +92,7 @@ export default function VendorsPage() {
 
   async function handleSave() {
     const isIndividual = form.record_type === 'Individual'
-    if (isIndividual && !form.first_name.trim() && !form.last_name.trim()) { toast.error('First or last name is required.'); return }
+    if (isIndividual && !form.first_name.trim()) { toast.error('First name is required.'); return }
     if (!isIndividual && !form.name.trim()) { toast.error('Company name is required.'); return }
 
     setSaving(true)
