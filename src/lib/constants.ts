@@ -4,12 +4,12 @@ import { enUS } from 'date-fns/locale'
 export const COMPANY = {
   legal_name: 'Sparkle Solutions LLC',
   brand: 'Sparkle Stone & Pavers',
-  tagline: 'Brick Pavers \u00b7 Pool Decks \u00b7 Driveways \u00b7 Walkways',
+  tagline: 'Pavers \u00b7 Stone \u00b7 Outdoor Living',
   address: '14651 Westbrook Cir #210, Bradenton, FL 34211',
   phone: '(941) 387-5133',
-  email: 'sparklesolutionsgs@gmail.com',
+  email: 'info@sparklestonepavers.com',
   signatory: 'Oscar Rocha',
-  zelle: 'sparklesolutionsgs@gmail.com',
+  zelle: 'info@sparklestonepavers.com',
   check_payable: 'Sparkle Solutions LLC',
 } as const
 

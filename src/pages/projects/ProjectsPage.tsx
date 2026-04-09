@@ -418,36 +418,22 @@ function ProjectPreview({ project: p, phases, client }: { project: Project; phas
   async function handlePrint() {
     const el = document.querySelector('.print-area')
     if (!el) return
-
-    // Open a clean window with just the content
-    const win = window.open('', '_blank', 'width=800,height=1100')
-    if (!win) { window.print(); return }  // fallback if popup blocked
-
-    win.document.write(`<!DOCTYPE html><html><head>
-      <title>Project Proposal — ${p.number}</title>
-      <style>
-        body { font-family: system-ui, -apple-system, sans-serif; color: #101114; margin: 30px 40px; font-size: 13px; line-height: 1.6; }
-        img { max-width: 100%; border-radius: 8px; }
-        .phase-section { page-break-inside: avoid; }
-        @media print { body { margin: 15px 20px; } }
-      </style>
-    </head><body>${el.innerHTML}</body></html>`)
-    win.document.close()
-
-    // Wait for images to load in the new window
-    const imgs = win.document.querySelectorAll('img') as NodeListOf<HTMLImageElement>
-    await Promise.all([...imgs].map(img =>
-      img.complete ? Promise.resolve() : new Promise(r => { img.onload = r; img.onerror = r })
-    ))
-
-    setTimeout(() => { win.print(); win.close() }, 300)
+    const html2pdf = (await import('html2pdf.js')).default
+    html2pdf().set({
+      margin: [0.4, 0.5, 0.4, 0.5],
+      filename: `Project Proposal — ${p.number}.pdf`,
+      image: { type: 'jpeg', quality: 0.92 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'], avoid: '.phase-section' },
+    }).from(el).save()
   }
 
   return (
     <>
       <div className="mb-4 no-print flex items-center gap-3">
         <Button onClick={handlePrint} disabled={!imagesReady && (sitePhotosRaw.length > 0 || phases.some(ph => ((ph.photos as string[]) ?? []).length > 0))}>
-          <Printer size={14} strokeWidth={1.5} /> {imagesReady ? 'Print' : 'Preparing images...'}
+          <Printer size={14} strokeWidth={1.5} /> {imagesReady ? 'Download PDF' : 'Preparing images...'}
         </Button>
       </div>
       <div className="print-area space-y-6 text-sm leading-relaxed">
