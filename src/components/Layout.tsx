@@ -2,6 +2,8 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { LayoutDashboard, Users, Briefcase, FileText, Receipt, Truck, Package, BarChart3, LogOut } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
+const NAVY = '#0D1B3D'
+
 const nav = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/clients', icon: Users, label: 'Clients' },
@@ -17,12 +19,25 @@ export function Layout() {
   const { user, signOut } = useAuth()
 
   return (
-    <div className="flex h-screen">
-      {/* Sidebar */}
-      <aside className="no-print flex w-[240px] flex-col" style={{ background: '#0D1B3D' }}>
+    <div style={{ display: 'flex', height: '100vh' }}>
+      {/* Sidebar — 100% inline styles to guarantee navy background */}
+      <aside
+        className="no-print"
+        style={{
+          width: 240,
+          display: 'flex',
+          flexDirection: 'column',
+          backgroundColor: NAVY,
+          minHeight: '100vh',
+        }}
+      >
         {/* Logo */}
-        <div style={{ background: '#0D1B3D', padding: '24px 24px 16px' }}>
-          <img src="/sparkle-logo-light.png" alt="Sparkle Stone & Pavers" width={160} style={{ height: 'auto', display: 'block' }} />
+        <div style={{ backgroundColor: NAVY, padding: '24px 20px' }}>
+          <img
+            src="/sparkle-logo-light.png"
+            alt="Sparkle Stone & Pavers"
+            style={{ width: 160, height: 'auto', display: 'block' }}
+          />
         </div>
 
         {/* Nav */}
