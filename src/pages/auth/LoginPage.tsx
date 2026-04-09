@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
 
 export default function LoginPage() {
   const { signIn } = useAuth()
@@ -13,48 +12,111 @@ export default function LoginPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
+
+    const trimmedEmail = email.trim()
+    if (!trimmedEmail) { setError('Please enter your email.'); return }
+    if (!password) { setError('Please enter your password.'); return }
+
     setLoading(true)
     try {
-      await signIn(email, password)
+      await signIn(trimmedEmail, password)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Sign in failed')
+      console.error('[Login] Auth error:', err)
+      const msg = err instanceof Error ? err.message : 'Sign in failed'
+      // Make Supabase errors friendlier
+      if (msg.includes('Invalid login')) {
+        setError('Incorrect email or password. Please try again.')
+      } else if (msg.includes('Email not confirmed')) {
+        setError('Please confirm your email address before signing in.')
+      } else if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed')) {
+        setError('Network error. Please check your internet connection.')
+      } else {
+        setError(msg)
+      }
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-surface px-4">
-      <div className="w-full max-w-[380px]">
-        <div className="mb-8 text-center">
-          <img src="/logo-dark.png" alt="Sparkle Stone & Pavers" className="mx-auto mb-4" style={{ width: 180, height: 'auto', display: 'block' }} />
-          <h1 className="text-[22px] font-bold text-navy-900">Welcome back</h1>
-          <p className="mt-1 text-[13px] text-stone-500">Sign in to your operations portal</p>
+    <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: '#FAFAF7', padding: '16px' }}>
+      <div style={{ width: '100%', maxWidth: 380 }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <img
+            src="/logo-dark.png"
+            alt="Sparkle Stone & Pavers"
+            style={{ width: 160, height: 'auto', display: 'block', margin: '0 auto 16px' }}
+          />
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#0D1B3D', letterSpacing: -0.5 }}>Welcome back</h1>
+          <p style={{ marginTop: 4, fontSize: 13, color: '#6B7280' }}>Sign in to your operations portal</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5 rounded-[20px] border border-black/[0.06] bg-white p-7 shadow-[0_2px_16px_rgba(0,0,0,0.05)]">
-          <Input
-            label="Email"
-            id="email"
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            required
-          />
-          <Input
-            label="Password"
-            id="password"
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="Your password"
-            required
-          />
+        <form
+          onSubmit={handleSubmit}
+          action="#"
+          method="POST"
+          style={{
+            background: 'white', borderRadius: 20, padding: 28,
+            border: '1px solid rgba(0,0,0,0.06)',
+            boxShadow: '0 2px 16px rgba(0,0,0,0.05)',
+          }}
+        >
+          <div style={{ marginBottom: 20 }}>
+            <label htmlFor="email" style={{ display: 'block', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280', marginBottom: 6 }}>Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              enterKeyHint="next"
+              required
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              style={{
+                display: 'block', width: '100%', height: 44, borderRadius: 10,
+                border: '1px solid #E5E3DF', background: 'white', padding: '0 12px',
+                fontSize: 16, /* 16px prevents iOS zoom */
+                outline: 'none', WebkitAppearance: 'none',
+              }}
+              onFocus={e => { e.currentTarget.style.borderColor = '#0D1B3D'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(13,27,61,0.08)' }}
+              onBlur={e => { e.currentTarget.style.borderColor = '#E5E3DF'; e.currentTarget.style.boxShadow = 'none' }}
+            />
+          </div>
 
-          {error && <p className="text-[13px] text-danger-600">{error}</p>}
+          <div style={{ marginBottom: 20 }}>
+            <label htmlFor="password" style={{ display: 'block', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280', marginBottom: 6 }}>Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              enterKeyHint="go"
+              required
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="Your password"
+              style={{
+                display: 'block', width: '100%', height: 44, borderRadius: 10,
+                border: '1px solid #E5E3DF', background: 'white', padding: '0 12px',
+                fontSize: 16,
+                outline: 'none', WebkitAppearance: 'none',
+              }}
+              onFocus={e => { e.currentTarget.style.borderColor = '#0D1B3D'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(13,27,61,0.08)' }}
+              onBlur={e => { e.currentTarget.style.borderColor = '#E5E3DF'; e.currentTarget.style.boxShadow = 'none' }}
+            />
+          </div>
 
-          <Button type="submit" className="w-full h-[44px]" disabled={loading}>
+          {error && (
+            <div style={{ background: '#FFF1F2', border: '1px solid #FECDD3', borderRadius: 10, padding: '10px 14px', marginBottom: 20 }}>
+              <p style={{ fontSize: 13, color: '#E11D48', fontWeight: 500 }}>{error}</p>
+            </div>
+          )}
+
+          <Button type="submit" className="w-full" style={{ height: 44 }} disabled={loading}>
             {loading ? 'Signing in...' : 'Sign In'}
           </Button>
         </form>
