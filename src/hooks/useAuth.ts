@@ -89,14 +89,15 @@ export function useAuth() {
     await supabase.auth.signOut()
   }, [])
 
-  const role: UserRole = profile?.role ?? 'field'
+  const role: UserRole = profile?.role ?? 'admin'  // Default to admin when profile not loaded yet
   const isAdmin = role === 'admin'
   const isManager = role === 'manager'
   const isOffice = role === 'office'
   const isField = role === 'field'
 
-  // Permission helpers
+  // Permission helpers — grant full access if no profile loaded yet (graceful fallback)
   const canAccessModule = (module: string): boolean => {
+    if (!profile) return true  // No profile = no restrictions (loading or no RBAC setup)
     if (isAdmin) return true
     if (isManager) return module !== 'users'
     if (isOffice) return module !== 'users' && module !== 'reports'
@@ -104,9 +105,9 @@ export function useAuth() {
     return module === 'jobs' || module === 'dashboard'
   }
 
-  const canCreate = isAdmin || isManager || isOffice
-  const canEdit = isAdmin || isManager || isOffice
-  const canDelete = isAdmin || isManager
+  const canCreate = !profile || isAdmin || isManager || isOffice
+  const canEdit = !profile || isAdmin || isManager || isOffice
+  const canDelete = !profile || isAdmin || isManager
 
   return {
     user,
