@@ -34,7 +34,7 @@ export function Layout() {
         {/* Logo */}
         <div style={{ backgroundColor: NAVY, padding: '24px 20px' }}>
           <img
-            src="/sparkle-logo-light.png"
+            src="/logo-white.svg"
             alt="Sparkle Stone & Pavers"
             style={{ width: 160, height: 'auto', display: 'block' }}
           />
