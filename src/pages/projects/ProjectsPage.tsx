@@ -363,16 +363,59 @@ export default function ProjectsPage() {
   )
 }
 
+/* ─── Resize helper ─── */
+function resizeImageUrl(url: string, maxWidth = 800): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      const scale = Math.min(1, maxWidth / img.width)
+      const canvas = document.createElement('canvas')
+      canvas.width = img.width * scale
+      canvas.height = img.height * scale
+      const ctx = canvas.getContext('2d')
+      if (ctx) ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      resolve(canvas.toDataURL('image/jpeg', 0.7))
+    }
+    img.onerror = () => resolve(url) // fallback to original
+    img.src = url
+  })
+}
+
 /* ─── Printable Project Preview ─── */
 function ProjectPreview({ project: p, phases, client }: { project: Project; phases: ProjectPhase[]; client?: Client }) {
   const dep = p.total_value * (p.deposit_percent / 100)
   const mid = p.total_value * (p.mid_percent / 100)
   const fin = p.total_value * (p.final_percent / 100)
 
-  const sitePhotos = (p.photos as string[]) ?? []
+  const sitePhotosRaw = (p.photos as string[]) ?? []
+  const [sitePhotos, setSitePhotos] = useState<string[]>([])
+  const [phasePhotos, setPhasePhotos] = useState<Record<string, string[]>>({})
+  const [imagesReady, setImagesReady] = useState(false)
+
+  // Resize all photos on mount
+  useEffect(() => {
+    let cancelled = false
+    async function resize() {
+      const resizedSite = await Promise.all(sitePhotosRaw.map(u => resizeImageUrl(u)))
+      const resizedPhases: Record<string, string[]> = {}
+      for (const ph of phases) {
+        const urls = (ph.photos as string[]) ?? []
+        if (urls.length > 0) {
+          resizedPhases[ph.id] = await Promise.all(urls.map(u => resizeImageUrl(u)))
+        }
+      }
+      if (!cancelled) {
+        setSitePhotos(resizedSite)
+        setPhasePhotos(resizedPhases)
+        setImagesReady(true)
+      }
+    }
+    resize()
+    return () => { cancelled = true }
+  }, [sitePhotosRaw, phases])
 
   async function handlePrint() {
-    // Wait for all images to load before printing
     const images = document.querySelectorAll('.print-area img') as NodeListOf<HTMLImageElement>
     await Promise.all([...images].map(img =>
       img.complete ? Promise.resolve() : new Promise(r => { img.onload = r; img.onerror = r })
@@ -382,7 +425,11 @@ function ProjectPreview({ project: p, phases, client }: { project: Project; phas
 
   return (
     <>
-      <div className="mb-4 no-print"><Button onClick={handlePrint}><Printer size={14} strokeWidth={1.5} /> Print</Button></div>
+      <div className="mb-4 no-print flex items-center gap-3">
+        <Button onClick={handlePrint} disabled={!imagesReady && (sitePhotosRaw.length > 0 || phases.some(ph => ((ph.photos as string[]) ?? []).length > 0))}>
+          <Printer size={14} strokeWidth={1.5} /> {imagesReady ? 'Print' : 'Preparing images...'}
+        </Button>
+      </div>
       <div className="print-area space-y-6 text-sm leading-relaxed">
         {/* Header */}
         <div className="flex justify-between items-start">
@@ -422,7 +469,7 @@ function ProjectPreview({ project: p, phases, client }: { project: Project; phas
             <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 8 }}>Site Photos</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {sitePhotos.map((url, i) => (
-                <img key={i} src={url} alt={`Site photo ${i + 1}`} style={{ width: '100%', borderRadius: 8, objectFit: 'cover', aspectRatio: '4/3' }} />
+                <img key={i} src={url} alt={`Site photo ${i + 1}`} style={{ width: '100%', maxHeight: 300, borderRadius: 8, objectFit: 'cover' }} />
               ))}
             </div>
           </div>
@@ -436,12 +483,12 @@ function ProjectPreview({ project: p, phases, client }: { project: Project; phas
             </h5>
             {ph.description && <p className="text-stone-700 whitespace-pre-wrap mb-2">{ph.description}</p>}
             {/* Phase photos */}
-            {(ph.photos as string[])?.length > 0 && (
+            {(phasePhotos[ph.id] ?? (ph.photos as string[]))?.length > 0 && (
               <div style={{ marginBottom: 8 }}>
                 <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#9CA3AF', marginBottom: 4 }}>Phase Photos</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {(ph.photos as string[]).map((url, pi) => (
-                    <img key={pi} src={url} alt={`Phase ${ph.order_num} photo ${pi + 1}`} style={{ width: '100%', borderRadius: 8, objectFit: 'cover', aspectRatio: '4/3' }} />
+                  {(phasePhotos[ph.id] ?? (ph.photos as string[])).map((url, pi) => (
+                    <img key={pi} src={url} alt={`Phase ${ph.order_num} photo ${pi + 1}`} style={{ width: '100%', maxHeight: 300, borderRadius: 8, objectFit: 'cover' }} />
                   ))}
                 </div>
               </div>
