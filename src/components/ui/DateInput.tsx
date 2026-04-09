@@ -122,7 +122,7 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
 
   return (
     <div className="space-y-1" ref={ref}>
-      {label && <label htmlFor={id} className="block text-sm font-medium text-stone-700">{label}</label>}
+      {label && <label htmlFor={id} className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">{label}</label>}
       <div className="relative">
         <input
           id={id}
@@ -134,7 +134,7 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
           onBlur={handleInputBlur}
           onFocus={() => setOpen(true)}
           required={required}
-          className="block w-full rounded-lg border border-stone-300 px-3 py-2 pr-10 text-sm shadow-sm placeholder:text-stone-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          className="block w-full h-[40px] rounded-[10px] border border-stone-200 bg-white px-3 pr-10 text-[14px] shadow-none placeholder:text-stone-400 transition-all duration-150 focus:border-navy-900 focus:outline-none focus:ring-[3px] focus:ring-navy-900/[0.08]"
           autoComplete="off"
         />
         <button
@@ -147,7 +147,7 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
         </button>
 
         {open && (
-          <div className="absolute left-0 top-full z-50 mt-1 w-[280px] rounded-xl border border-stone-200 bg-white p-3 shadow-lg">
+          <div className="absolute left-0 top-full z-50 mt-1 w-[280px] rounded-[16px] border border-black/[0.06] bg-white p-3 shadow-[0_8px_30px_rgba(0,0,0,0.1)]">
             {/* Header */}
             <div className="mb-2 flex items-center justify-between">
               <button type="button" onClick={prevMonth} className="rounded p-1 hover:bg-stone-100">
@@ -178,8 +178,8 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
                     onClick={() => selectDay(day)}
                     className={clsx(
                       'mx-auto flex h-8 w-8 items-center justify-center rounded-full text-xs transition-colors',
-                      isSelected && 'bg-brand-600 text-white font-bold',
-                      !isSelected && isToday && 'ring-1 ring-brand-400 text-brand-700 font-medium',
+                      isSelected && 'bg-navy-900 text-white font-bold',
+                      !isSelected && isToday && 'ring-1 ring-gold-500 text-navy-900 font-medium',
                       !isSelected && !isToday && 'hover:bg-stone-100 text-stone-700',
                     )}
                   >
@@ -199,7 +199,7 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
                   onChange(iso)
                   setOpen(false)
                 }}
-                className="text-xs font-medium text-brand-600 hover:underline"
+                className="text-xs font-medium text-navy-900 hover:underline"
               >
                 Today
               </button>

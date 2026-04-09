@@ -1,7 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { LayoutDashboard, Users, Briefcase, FileText, Receipt, Truck, Package, BarChart3, LogOut } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
-import { COMPANY } from '@/lib/constants'
 
 const nav = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -15,48 +14,65 @@ const nav = [
 ]
 
 export function Layout() {
-  const { signOut } = useAuth()
+  const { user, signOut } = useAuth()
 
   return (
     <div className="flex h-screen">
-      <aside className="no-print flex w-64 flex-col border-r border-stone-200 bg-white">
-        <div className="border-b border-stone-200 px-6 py-5">
-          <h1 className="text-lg font-bold text-brand-700">{COMPANY.brand}</h1>
-          <p className="text-xs text-stone-500">Operations Portal</p>
+      {/* Sidebar */}
+      <aside className="no-print flex w-[240px] flex-col bg-navy-900">
+        {/* Logo */}
+        <div className="px-6 py-6">
+          <img
+            src="/sparkle-logo.png"
+            alt="Sparkle Stone & Pavers"
+            className="h-10 w-auto brightness-0 invert"
+            onError={(e) => {
+              const el = e.currentTarget
+              el.onerror = null
+              el.src = '/sparkle-logo.svg'
+              el.className = 'h-10 w-auto brightness-0 invert'
+            }}
+          />
         </div>
 
-        <nav className="flex-1 space-y-1 px-3 py-4">
+        {/* Nav */}
+        <nav className="flex-1 space-y-0.5 px-3 py-2">
           {nav.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}
               end={to === '/'}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                `flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-150 ${
                   isActive
-                    ? 'bg-brand-50 text-brand-700'
-                    : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+                    ? 'border-l-[3px] border-gold-500 bg-white/[0.08] text-gold-500 pl-[9px]'
+                    : 'border-l-[3px] border-transparent text-white/60 hover:text-white/90 hover:bg-white/[0.05]'
                 }`
               }
             >
-              <Icon className="h-5 w-5" />
+              <Icon className="h-[18px] w-[18px]" />
               {label}
             </NavLink>
           ))}
         </nav>
 
-        <div className="border-t border-stone-200 px-3 py-3">
+        {/* User + Sign Out */}
+        <div className="border-t border-white/10 px-4 py-4">
+          {user?.email && (
+            <p className="mb-2 truncate text-[11px] text-white/40">{user.email}</p>
+          )}
           <button
             onClick={signOut}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-100"
+            className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-[13px] font-medium text-white/50 transition-colors hover:text-white/80 hover:bg-white/[0.05]"
           >
-            <LogOut className="h-5 w-5" />
+            <LogOut className="h-4 w-4" />
             Sign Out
           </button>
         </div>
       </aside>
 
-      <main className="flex-1 overflow-auto bg-stone-50">
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto bg-surface">
         <Outlet />
       </main>
     </div>

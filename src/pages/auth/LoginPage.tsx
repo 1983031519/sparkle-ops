@@ -2,7 +2,6 @@ import { useState, type FormEvent } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { COMPANY } from '@/lib/constants'
 
 export default function LoginPage() {
   const { signIn } = useAuth()
@@ -25,14 +24,24 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-stone-100 px-4">
-      <div className="w-full max-w-sm">
+    <div className="flex min-h-screen items-center justify-center bg-surface px-4">
+      <div className="w-full max-w-[380px]">
         <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold text-brand-700">{COMPANY.brand}</h1>
-          <p className="mt-1 text-sm text-stone-500">Operations Portal</p>
+          <img
+            src="/sparkle-logo.png"
+            alt="Sparkle Stone & Pavers"
+            className="mx-auto mb-4 h-12 w-auto"
+            onError={(e) => {
+              const el = e.currentTarget
+              el.onerror = null
+              el.src = '/sparkle-logo.svg'
+            }}
+          />
+          <h1 className="text-[22px] font-bold text-navy-900">Welcome back</h1>
+          <p className="mt-1 text-[13px] text-stone-500">Sign in to your operations portal</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
+        <form onSubmit={handleSubmit} className="space-y-5 rounded-[20px] border border-black/[0.06] bg-white p-7 shadow-[0_2px_16px_rgba(0,0,0,0.05)]">
           <Input
             label="Email"
             id="email"
@@ -52,9 +61,9 @@ export default function LoginPage() {
             required
           />
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-[13px] text-danger-600">{error}</p>}
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full h-[44px]" disabled={loading}>
             {loading ? 'Signing in...' : 'Sign In'}
           </Button>
         </form>

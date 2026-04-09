@@ -55,21 +55,21 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
 
   return (
     <div
-      className={`flex items-center gap-3 rounded-lg border px-4 py-3 shadow-lg transition-all duration-300 ${
+      className={`flex items-center gap-3 rounded-[12px] border px-4 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur-sm transition-all duration-250 ${
         visible ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0'
       } ${
         toast.type === 'success'
-          ? 'border-green-200 bg-green-50 text-green-800'
-          : 'border-red-200 bg-red-50 text-red-800'
+          ? 'border-success-600/20 bg-success-50 text-success-600'
+          : 'border-danger-600/20 bg-danger-50 text-danger-600'
       }`}
     >
       {toast.type === 'success'
-        ? <CheckCircle className="h-5 w-5 text-green-600 shrink-0" />
-        : <XCircle className="h-5 w-5 text-red-600 shrink-0" />
+        ? <CheckCircle className="h-[18px] w-[18px] shrink-0" />
+        : <XCircle className="h-[18px] w-[18px] shrink-0" />
       }
-      <p className="text-sm font-medium">{toast.message}</p>
-      <button onClick={onClose} className="ml-2 shrink-0 rounded p-0.5 hover:bg-black/5">
-        <X className="h-4 w-4" />
+      <p className="text-[13px] font-semibold">{toast.message}</p>
+      <button onClick={onClose} className="ml-2 shrink-0 rounded-full p-0.5 hover:bg-black/5">
+        <X className="h-3.5 w-3.5" />
       </button>
     </div>
   )

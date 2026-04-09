@@ -53,21 +53,21 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-2xl font-bold text-stone-900">Dashboard</h1>
+      <h1 className="text-[18px] font-bold text-navy-900">Dashboard</h1>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {kpis.map(kpi => (
-          <Card key={kpi.label}>
-            <CardBody className="flex items-center gap-4">
-              <div className={`rounded-lg p-3 ${kpi.color}`}>
-                <kpi.icon className="h-6 w-6" />
+          <div key={kpi.label} className="rounded-[20px] border border-gold-500/20 bg-white p-5 shadow-[0_2px_16px_rgba(0,0,0,0.05)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
+            <div className="flex items-center gap-4">
+              <div className={`rounded-[12px] p-3 ${kpi.color}`}>
+                <kpi.icon className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm text-stone-500">{kpi.label}</p>
-                <p className="text-2xl font-bold">{kpi.value}</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[1px] text-stone-400">{kpi.label}</p>
+                <p className="text-[28px] font-bold leading-tight text-navy-900">{kpi.value}</p>
               </div>
-            </CardBody>
-          </Card>
+            </div>
+          </div>
         ))}
       </div>
 

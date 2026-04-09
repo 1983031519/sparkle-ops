@@ -11,10 +11,10 @@ export function FlowIndicator({ steps }: { steps: Step[] }) {
       {visible.map((step, i) => (
         <span key={step.label} className="flex items-center gap-0.5">
           {i > 0 && <span className="mx-0.5 text-stone-300">&rarr;</span>}
-          <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-medium ${
-            step.status === 'done' ? 'bg-green-50 text-green-700' :
-            step.status === 'active' ? 'bg-blue-50 text-blue-700' :
-            'bg-stone-100 text-stone-500'
+          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-[3px] font-semibold tracking-[0.2px] ${
+            step.status === 'done' ? 'bg-success-50 text-success-600' :
+            step.status === 'active' ? 'bg-navy-900/[0.08] text-navy-900' :
+            'bg-stone-100 text-stone-400'
           }`}>
             {step.status === 'done' ? <CheckCircle className="h-3 w-3" /> :
              step.status === 'active' ? <Circle className="h-3 w-3" /> :

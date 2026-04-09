@@ -1,6 +1,8 @@
 import { clsx } from 'clsx'
 import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
 
+const inputClass = 'block w-full h-[40px] rounded-[10px] border border-stone-200 bg-white px-3 text-[14px] shadow-none placeholder:text-stone-400 transition-all duration-150 focus:border-navy-900 focus:outline-none focus:ring-[3px] focus:ring-navy-900/[0.08]'
+
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string
   error?: string
@@ -8,18 +10,10 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 export function Input({ label, error, className, id, ...props }: InputProps) {
   return (
-    <div className="space-y-1">
-      {label && <label htmlFor={id} className="block text-sm font-medium text-stone-700">{label}</label>}
-      <input
-        id={id}
-        className={clsx(
-          'block w-full rounded-lg border border-stone-300 px-3 py-2 text-sm shadow-sm placeholder:text-stone-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500',
-          error && 'border-red-500',
-          className,
-        )}
-        {...props}
-      />
-      {error && <p className="text-sm text-red-600">{error}</p>}
+    <div className="space-y-1.5">
+      {label && <label htmlFor={id} className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">{label}</label>}
+      <input id={id} className={clsx(inputClass, error && 'border-danger-600', className)} {...props} />
+      {error && <p className="text-[12px] text-danger-600">{error}</p>}
     </div>
   )
 }
@@ -31,16 +25,9 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 
 export function Select({ label, options, className, id, ...props }: SelectProps) {
   return (
-    <div className="space-y-1">
-      {label && <label htmlFor={id} className="block text-sm font-medium text-stone-700">{label}</label>}
-      <select
-        id={id}
-        className={clsx(
-          'block w-full rounded-lg border border-stone-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500',
-          className,
-        )}
-        {...props}
-      >
+    <div className="space-y-1.5">
+      {label && <label htmlFor={id} className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">{label}</label>}
+      <select id={id} className={clsx(inputClass, 'pr-8', className)} {...props}>
         <option value="">Select...</option>
         {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
@@ -54,12 +41,12 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
 
 export function Textarea({ label, className, id, ...props }: TextareaProps) {
   return (
-    <div className="space-y-1">
-      {label && <label htmlFor={id} className="block text-sm font-medium text-stone-700">{label}</label>}
+    <div className="space-y-1.5">
+      {label && <label htmlFor={id} className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">{label}</label>}
       <textarea
         id={id}
         className={clsx(
-          'block w-full rounded-lg border border-stone-300 px-3 py-2 text-sm shadow-sm placeholder:text-stone-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500',
+          'block w-full rounded-[10px] border border-stone-200 bg-white px-3 py-2.5 text-[14px] shadow-none placeholder:text-stone-400 transition-all duration-150 focus:border-navy-900 focus:outline-none focus:ring-[3px] focus:ring-navy-900/[0.08]',
           className,
         )}
         rows={3}
