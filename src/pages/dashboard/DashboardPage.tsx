@@ -1,45 +1,45 @@
 import { useEffect, useState } from 'react'
-import { DollarSign, Users, Briefcase, Package, AlertTriangle, CalendarDays } from 'lucide-react'
+import { DollarSign, Users, Briefcase, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { Card, CardBody } from '@/components/ui/Card'
 import { Badge, statusColor } from '@/components/ui/Badge'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO } from 'date-fns'
 import { enUS } from 'date-fns/locale'
-import { fmtCurrency } from '@/lib/constants'
-import type { Job } from '@/lib/database.types'
-
-interface KPI { label: string; value: string; icon: React.ElementType; color: string }
+import { fmtCurrency, fmtDateShort } from '@/lib/constants'
+import type { Job, Invoice } from '@/lib/database.types'
 
 export default function DashboardPage() {
-  const [kpis, setKpis] = useState<KPI[]>([])
+  const [revenue, setRevenue] = useState(0)
+  const [outstanding, setOutstanding] = useState(0)
+  const [clientCount, setClientCount] = useState(0)
+  const [activeJobs, setActiveJobs] = useState(0)
   const [jobs, setJobs] = useState<Job[]>([])
+  const [invoices, setInvoices] = useState<Invoice[]>([])
   const [lowStock, setLowStock] = useState<{ name: string; quantity: number; low_stock_threshold: number }[]>([])
   const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [clientMap, setClientMap] = useState<Record<string, string>>({})
 
   useEffect(() => { loadDashboard() }, [])
 
   async function loadDashboard() {
-    const [clientRes, jobRes, invRes, stockRes] = await Promise.all([
+    const [clientRes, jobRes, invRes, stockRes, clientsRes] = await Promise.all([
       supabase.from('clients').select('id', { count: 'exact', head: true }),
-      supabase.from('jobs').select('*'),
-      supabase.from('invoices').select('total, status'),
+      supabase.from('jobs').select('*').order('created_at', { ascending: false }),
+      supabase.from('invoices').select('*').order('created_at', { ascending: false }),
       supabase.from('inventory').select('name, quantity, low_stock_threshold'),
+      supabase.from('clients').select('id, name'),
     ])
 
     const allJobs = (jobRes.data ?? []) as Job[]
+    const allInvoices = (invRes.data ?? []) as Invoice[]
     setJobs(allJobs)
+    setInvoices(allInvoices)
+    setClientMap(Object.fromEntries((clientsRes.data ?? []).map((c: { id: string; name: string }) => [c.id, c.name])))
 
-    const invoices = (invRes.data ?? []) as { total: number; status: string }[]
-    const revenue = invoices.filter(i => i.status === 'Paid').reduce((s, i) => s + (i.total || 0), 0)
-    const outstanding = invoices.filter(i => i.status === 'Unpaid' || i.status === 'Overdue').reduce((s, i) => s + (i.total || 0), 0)
-    const activeJobs = allJobs.filter(j => j.status === 'In Progress' || j.status === 'Scheduled').length
-
-    setKpis([
-      { label: 'Revenue (Paid)', value: fmtCurrency(revenue), icon: DollarSign, color: 'text-green-600 bg-green-50' },
-      { label: 'Outstanding', value: fmtCurrency(outstanding), icon: DollarSign, color: 'text-yellow-600 bg-yellow-50' },
-      { label: 'Total Clients', value: String(clientRes.count ?? 0), icon: Users, color: 'text-blue-600 bg-blue-50' },
-      { label: 'Active Jobs', value: String(activeJobs), icon: Briefcase, color: 'text-purple-600 bg-purple-50' },
-    ])
+    const invData = allInvoices as { total: number; status: string }[]
+    setRevenue(invData.filter(i => i.status === 'Paid').reduce((s, i) => s + (i.total || 0), 0))
+    setOutstanding(invData.filter(i => i.status === 'Unpaid' || i.status === 'Overdue').reduce((s, i) => s + (i.total || 0), 0))
+    setClientCount(clientRes.count ?? 0)
+    setActiveJobs(allJobs.filter(j => j.status === 'In Progress' || j.status === 'Scheduled').length)
 
     const items = (stockRes.data ?? []) as { name: string; quantity: number; low_stock_threshold: number }[]
     setLowStock(items.filter(i => i.quantity <= i.low_stock_threshold))
@@ -51,104 +51,140 @@ export default function DashboardPage() {
   const startDow = monthStart.getDay()
   const scheduledJobs = jobs.filter(j => j.start_date)
 
-  return (
-    <div className="space-y-6 p-6">
-      <h1 className="text-[18px] font-bold text-navy-900">Dashboard</h1>
+  const kpis = [
+    { label: 'Revenue', value: fmtCurrency(revenue), icon: DollarSign, accent: true },
+    { label: 'Outstanding', value: fmtCurrency(outstanding), icon: DollarSign, accent: false },
+    { label: 'Total Clients', value: String(clientCount), icon: Users, accent: false },
+    { label: 'Active Jobs', value: String(activeJobs), icon: Briefcase, accent: false },
+  ]
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  return (
+    <div style={{ padding: 32, maxWidth: 1200, margin: '0 auto' }}>
+
+      {/* OVERVIEW */}
+      <p style={{ fontSize: 13, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>Overview</p>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
         {kpis.map(kpi => (
-          <div key={kpi.label} className="rounded-[20px] border border-gold-500/20 bg-white p-5 shadow-[0_2px_16px_rgba(0,0,0,0.05)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
-            <div className="flex items-center gap-4">
-              <div className={`rounded-[12px] p-3 ${kpi.color}`}>
-                <kpi.icon className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[1px] text-stone-400">{kpi.label}</p>
-                <p className="text-[28px] font-bold leading-tight text-navy-900">{kpi.value}</p>
-              </div>
-            </div>
+          <div key={kpi.label} style={{
+            background: 'white', borderRadius: 16, padding: 28,
+            border: '1px solid rgba(0,0,0,0.06)',
+            borderBottom: kpi.accent ? '3px solid #C8A96E' : '1px solid rgba(0,0,0,0.06)',
+          }}>
+            <p style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1.5, color: '#9CA3AF', marginBottom: 8 }}>{kpi.label}</p>
+            <p style={{ fontSize: 36, fontWeight: 700, color: '#0D1B3D', lineHeight: 1.1 }}>{kpi.value}</p>
           </div>
         ))}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Calendar */}
-        <Card className="lg:col-span-2">
-          <div className="flex items-center justify-between border-b border-stone-100 px-6 py-4">
-            <h2 className="flex items-center gap-2 font-semibold">
-              <CalendarDays className="h-5 w-5 text-stone-500" />
-              Schedule
-            </h2>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() - 1))} className="rounded-lg px-2 py-1 text-sm hover:bg-stone-100">&lt;</button>
-              <span className="text-sm font-medium">{format(currentMonth, 'MMMM yyyy', { locale: enUS })}</span>
-              <button onClick={() => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() + 1))} className="rounded-lg px-2 py-1 text-sm hover:bg-stone-100">&gt;</button>
-            </div>
-          </div>
-          <CardBody>
-            <div className="grid grid-cols-7 gap-px text-center text-xs font-medium text-stone-500">
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d} className="py-2">{d}</div>)}
-            </div>
-            <div className="grid grid-cols-7 gap-px">
-              {Array.from({ length: startDow }).map((_, i) => <div key={`e${i}`} />)}
-              {days.map(day => {
-                const dayJobs = scheduledJobs.filter(j => j.start_date && isSameDay(parseISO(j.start_date), day))
-                const isToday = isSameDay(day, new Date())
-                return (
-                  <div key={day.toISOString()} className={`min-h-[60px] rounded-lg p-1 text-xs ${isToday ? 'bg-brand-50 ring-1 ring-brand-300' : 'hover:bg-stone-50'}`}>
-                    <span className={`inline-block rounded-full px-1.5 py-0.5 ${isToday ? 'bg-brand-600 text-white' : 'text-stone-600'}`}>
-                      {format(day, 'd', { locale: enUS })}
-                    </span>
-                    {dayJobs.slice(0, 2).map(j => (
-                      <div key={j.id} className="mt-0.5 truncate rounded bg-brand-100 px-1 text-[10px] text-brand-800">
-                        {j.title}
-                      </div>
-                    ))}
-                    {dayJobs.length > 2 && <div className="mt-0.5 text-[10px] text-stone-400">+{dayJobs.length - 2} more</div>}
-                  </div>
-                )
-              })}
-            </div>
-          </CardBody>
-        </Card>
+      {/* LOW STOCK ALERTS */}
+      {lowStock.length > 0 && (
+        <div style={{ background: '#FEF9C3', borderRadius: 12, padding: '16px 20px', marginBottom: 32, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <AlertTriangle style={{ width: 18, height: 18, color: '#B45309', flexShrink: 0 }} />
+          <p style={{ fontSize: 13, color: '#92400E' }}>
+            <strong>Low stock:</strong> {lowStock.map(i => `${i.name} (${i.quantity} left)`).join(' · ')}
+          </p>
+        </div>
+      )}
 
-        {/* Low Stock + Recent Jobs */}
-        <div className="space-y-6">
-          {lowStock.length > 0 && (
-            <Card>
-              <div className="flex items-center gap-2 border-b border-stone-100 px-6 py-4">
-                <AlertTriangle className="h-5 w-5 text-orange-500" />
-                <h2 className="font-semibold">Low Stock Alerts</h2>
-              </div>
-              <CardBody className="space-y-2">
-                {lowStock.map(item => (
-                  <div key={item.name} className="flex items-center justify-between text-sm">
-                    <span>{item.name}</span>
-                    <Badge color="red">{item.quantity} left (min: {item.low_stock_threshold})</Badge>
-                  </div>
-                ))}
-              </CardBody>
-            </Card>
-          )}
+      {/* RECENT ACTIVITY */}
+      <p style={{ fontSize: 13, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>Recent Activity</p>
 
-          <Card>
-            <div className="flex items-center gap-2 border-b border-stone-100 px-6 py-4">
-              <Package className="h-5 w-5 text-stone-500" />
-              <h2 className="font-semibold">Recent Jobs</h2>
-            </div>
-            <CardBody className="space-y-3">
-              {jobs.slice(0, 5).map(job => (
-                <div key={job.id} className="flex items-center justify-between text-sm">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 32 }}>
+
+        {/* Recent Jobs */}
+        <div>
+          <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 12 }}>Jobs</p>
+          {jobs.length === 0 ? (
+            <p style={{ fontSize: 13, color: '#9CA3AF', padding: '20px 0' }}>No jobs yet.</p>
+          ) : (
+            <div>
+              {jobs.slice(0, 6).map(job => (
+                <div key={job.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: '1px solid #F3F4F6' }}>
                   <div>
-                    <p className="font-medium">{job.title}</p>
-                    <p className="text-xs text-stone-500">{job.division}</p>
+                    <p style={{ fontSize: 14, fontWeight: 600, color: '#0D1B3D' }}>{clientMap[job.client_id] ?? 'Unknown'}</p>
+                    <p style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2 }}>{job.title}</p>
                   </div>
-                  <Badge color={statusColor(job.status)}>{job.status}</Badge>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Badge color={statusColor(job.status)}>{job.status}</Badge>
+                  </div>
                 </div>
               ))}
-              {jobs.length === 0 && <p className="text-sm text-stone-500">No jobs yet.</p>}
-            </CardBody>
-          </Card>
+            </div>
+          )}
+        </div>
+
+        {/* Recent Invoices */}
+        <div>
+          <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 12 }}>Invoices</p>
+          {invoices.length === 0 ? (
+            <p style={{ fontSize: 13, color: '#9CA3AF', padding: '20px 0' }}>No invoices yet.</p>
+          ) : (
+            <div>
+              {invoices.slice(0, 6).map(inv => (
+                <div key={inv.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: '1px solid #F3F4F6' }}>
+                  <div>
+                    <p style={{ fontSize: 14, fontWeight: 600, color: '#0D1B3D' }}>{clientMap[inv.client_id] ?? 'Unknown'}</p>
+                    <p style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2 }}>{inv.number} · {fmtDateShort(inv.due_date)}</p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <Badge color={statusColor(inv.status)}>{inv.status}</Badge>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#0D1B3D', minWidth: 80, textAlign: 'right' }}>{fmtCurrency(inv.total)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* SCHEDULE */}
+      <p style={{ fontSize: 13, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>Schedule</p>
+
+      <div style={{ background: 'white', borderRadius: 16, border: '1px solid rgba(0,0,0,0.06)', padding: 24 }}>
+        {/* Month nav */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <button onClick={() => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() - 1))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 6, color: '#6B7280' }}>
+            <ChevronLeft style={{ width: 20, height: 20 }} />
+          </button>
+          <span style={{ fontSize: 15, fontWeight: 600, color: '#0D1B3D' }}>{format(currentMonth, 'MMMM yyyy', { locale: enUS })}</span>
+          <button onClick={() => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() + 1))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 6, color: '#6B7280' }}>
+            <ChevronRight style={{ width: 20, height: 20 }} />
+          </button>
+        </div>
+
+        {/* Day headers */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', marginBottom: 4 }}>
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+            <div key={d} style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 0.5, padding: '8px 0' }}>{d}</div>
+          ))}
+        </div>
+
+        {/* Day cells */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+          {Array.from({ length: startDow }).map((_, i) => <div key={`e${i}`} />)}
+          {days.map(day => {
+            const dayJobs = scheduledJobs.filter(j => j.start_date && isSameDay(parseISO(j.start_date), day))
+            const isToday = isSameDay(day, new Date())
+            return (
+              <div key={day.toISOString()} style={{ minHeight: 64, padding: '6px 4px', borderRadius: 8, position: 'relative' }}>
+                <div style={{ textAlign: 'center', marginBottom: 4 }}>
+                  <span style={{ fontSize: 13, fontWeight: isToday ? 700 : 400, color: isToday ? '#0D1B3D' : '#6B7280' }}>
+                    {format(day, 'd', { locale: enUS })}
+                  </span>
+                  {isToday && (
+                    <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#0D1B3D', margin: '2px auto 0' }} />
+                  )}
+                </div>
+                {dayJobs.slice(0, 2).map(j => (
+                  <div key={j.id} style={{ fontSize: 10, background: 'rgba(200,169,110,0.15)', color: '#92700A', borderRadius: 4, padding: '1px 4px', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {j.title}
+                  </div>
+                ))}
+                {dayJobs.length > 2 && <div style={{ fontSize: 10, color: '#9CA3AF' }}>+{dayJobs.length - 2}</div>}
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>
