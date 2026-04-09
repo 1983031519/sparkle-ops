@@ -3,23 +3,10 @@ import type { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import type { UserRole, Profile } from '@/lib/database.types'
 
-// Check if there's a cached session in localStorage (instant, no network)
-function hasCachedSession(): boolean {
-  try {
-    const key = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
-    if (!key) return false
-    const raw = localStorage.getItem(key)
-    if (!raw) return false
-    const parsed = JSON.parse(raw)
-    return !!parsed?.access_token
-  } catch { return false }
-}
-
 export function useAuth() {
-  // If cached session exists, skip the loading gate entirely
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(!hasCachedSession()) // false if cached session exists
+  const [loading, setLoading] = useState(true)
 
   const fetchProfile = useCallback(async (userId: string): Promise<Profile | null> => {
     try {
@@ -28,82 +15,53 @@ export function useAuth() {
         .select('*')
         .eq('id', userId)
         .single()
-      if (error) {
-        console.error('[Auth] Profile fetch error:', error.message)
-        return null
-      }
+      if (error) return null
       return data as Profile
-    } catch (err) {
-      console.error('[Auth] Profile fetch exception:', err)
+    } catch {
       return null
     }
   }, [])
 
   useEffect(() => {
-    console.log('[Auth] Initializing, cached session:', hasCachedSession())
+    let mounted = true
 
-    // Short safety timeout — only matters when no cached session
-    const timeout = setTimeout(() => {
-      if (loading) {
-        console.warn('[Auth] Safety timeout — forcing loading=false')
-        setLoading(false)
+    // Force loading=false after 1.5s no matter what
+    const safety = setTimeout(() => { if (mounted) setLoading(false) }, 1500)
+
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mounted) return
+      setUser(session?.user ?? null)
+      setLoading(false) // Unblock UI immediately
+      // Profile in background
+      if (session?.user) {
+        const p = await fetchProfile(session.user.id)
+        if (mounted) setProfile(p)
       }
-    }, 800)
+    }).catch(() => {
+      if (mounted) setLoading(false)
+    })
 
-    // Get session + fetch profile in background
-    supabase.auth.getSession()
-      .then(async ({ data: { session }, error }) => {
-        if (error) {
-          console.error('[Auth] getSession error:', error.message)
-          setLoading(false)
-          return
-        }
-        console.log('[Auth] Session:', session ? session.user.email : 'none')
-        setUser(session?.user ?? null)
-        setLoading(false) // Always unblock UI here
-
-        // Profile loads in background — role updates silently when ready
-        if (session?.user) {
-          const p = await fetchProfile(session.user.id)
-          setProfile(p)
-        }
-      })
-      .catch((err) => {
-        console.error('[Auth] getSession failed:', err)
-        setLoading(false)
-      })
-
-    // Listen for future auth changes (sign in, sign out, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'INITIAL_SESSION') return
-      console.log('[Auth] State change:', event, session?.user?.email ?? 'no user')
+      if (!mounted) return
       setUser(session?.user ?? null)
       setLoading(false)
       if (session?.user) {
-        const p = await fetchProfile(session.user.id)
-        setProfile(p)
+        fetchProfile(session.user.id).then(p => { if (mounted) setProfile(p) })
       } else {
         setProfile(null)
       }
     })
 
-    return () => {
-      clearTimeout(timeout)
-      subscription.unsubscribe()
-    }
+    return () => { mounted = false; clearTimeout(safety); subscription.unsubscribe() }
   }, [fetchProfile])
 
   const signIn = useCallback(async (email: string, password: string) => {
-    console.log('[Auth] Attempting sign in for:', email)
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      console.error('[Auth] Sign in error:', error.message, error.status)
-      throw error
-    }
-    console.log('[Auth] Sign in success:', data.user?.email)
+    if (error) throw error
     if (data.user) {
       setUser(data.user)
-      // Fetch profile in background — don't block sign-in
+      // Don't await — let redirect happen immediately
       fetchProfile(data.user.id).then(p => {
         setProfile(p)
         if (p && !p.active) {
@@ -117,7 +75,6 @@ export function useAuth() {
   }, [fetchProfile])
 
   const signOut = useCallback(async () => {
-    console.log('[Auth] Signing out')
     setUser(null)
     setProfile(null)
     await supabase.auth.signOut()
