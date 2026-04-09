@@ -1,22 +1,25 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import type { UserRole, Profile } from '@/lib/database.types'
 
+// Check if there's a cached session in localStorage (instant, no network)
+function hasCachedSession(): boolean {
+  try {
+    const key = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
+    if (!key) return false
+    const raw = localStorage.getItem(key)
+    if (!raw) return false
+    const parsed = JSON.parse(raw)
+    return !!parsed?.access_token
+  } catch { return false }
+}
+
 export function useAuth() {
+  // If cached session exists, skip the loading gate entirely
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const loadingDone = useRef(false)
-
-  // Safe way to set loading false — only once
-  const finishLoading = useCallback(() => {
-    if (!loadingDone.current) {
-      loadingDone.current = true
-      setLoading(false)
-      console.log('[Auth] Loading complete')
-    }
-  }, [])
+  const [loading, setLoading] = useState(!hasCachedSession()) // false if cached session exists
 
   const fetchProfile = useCallback(async (userId: string): Promise<Profile | null> => {
     try {
@@ -37,56 +40,58 @@ export function useAuth() {
   }, [])
 
   useEffect(() => {
-    console.log('[Auth] Initializing...')
+    console.log('[Auth] Initializing, cached session:', hasCachedSession())
 
-    // Safety timeout — if loading hasn't resolved in 3 seconds, force it
+    // Short safety timeout — only matters when no cached session
     const timeout = setTimeout(() => {
-      console.warn('[Auth] Safety timeout — forcing loading=false')
-      finishLoading()
-    }, 3000)
+      if (loading) {
+        console.warn('[Auth] Safety timeout — forcing loading=false')
+        setLoading(false)
+      }
+    }, 800)
 
-    // Get session + profile
+    // Get session + fetch profile in background
     supabase.auth.getSession()
       .then(async ({ data: { session }, error }) => {
         if (error) {
           console.error('[Auth] getSession error:', error.message)
-        } else {
-          console.log('[Auth] Session:', session ? session.user.email : 'none')
-          setUser(session?.user ?? null)
-          if (session?.user) {
-            const p = await fetchProfile(session.user.id)
-            setProfile(p)
-          }
+          setLoading(false)
+          return
+        }
+        console.log('[Auth] Session:', session ? session.user.email : 'none')
+        setUser(session?.user ?? null)
+        setLoading(false) // Always unblock UI here
+
+        // Profile loads in background — role updates silently when ready
+        if (session?.user) {
+          const p = await fetchProfile(session.user.id)
+          setProfile(p)
         }
       })
       .catch((err) => {
         console.error('[Auth] getSession failed:', err)
-      })
-      .finally(() => {
-        finishLoading()
+        setLoading(false)
       })
 
     // Listen for future auth changes (sign in, sign out, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Skip INITIAL_SESSION — we handle that above via getSession
       if (event === 'INITIAL_SESSION') return
-
       console.log('[Auth] State change:', event, session?.user?.email ?? 'no user')
       setUser(session?.user ?? null)
+      setLoading(false)
       if (session?.user) {
         const p = await fetchProfile(session.user.id)
         setProfile(p)
       } else {
         setProfile(null)
       }
-      finishLoading()
     })
 
     return () => {
       clearTimeout(timeout)
       subscription.unsubscribe()
     }
-  }, [fetchProfile, finishLoading])
+  }, [fetchProfile, loading])
 
   const signIn = useCallback(async (email: string, password: string) => {
     console.log('[Auth] Attempting sign in for:', email)
