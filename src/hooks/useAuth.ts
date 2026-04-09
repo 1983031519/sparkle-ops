@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import type { UserRole, Profile } from '@/lib/database.types'
@@ -7,29 +7,51 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const loadingDone = useRef(false)
 
-  const fetchProfile = useCallback(async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
-    if (error) {
-      console.error('[Auth] Profile fetch error:', error.message)
+  // Safe way to set loading false — only once
+  const finishLoading = useCallback(() => {
+    if (!loadingDone.current) {
+      loadingDone.current = true
+      setLoading(false)
+      console.log('[Auth] Loading complete')
+    }
+  }, [])
+
+  const fetchProfile = useCallback(async (userId: string): Promise<Profile | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+      if (error) {
+        console.error('[Auth] Profile fetch error:', error.message)
+        return null
+      }
+      return data as Profile
+    } catch (err) {
+      console.error('[Auth] Profile fetch exception:', err)
       return null
     }
-    return data as Profile
   }, [])
 
   useEffect(() => {
     console.log('[Auth] Initializing...')
 
+    // Safety timeout — if loading hasn't resolved in 3 seconds, force it
+    const timeout = setTimeout(() => {
+      console.warn('[Auth] Safety timeout — forcing loading=false')
+      finishLoading()
+    }, 3000)
+
+    // Get session + profile
     supabase.auth.getSession()
       .then(async ({ data: { session }, error }) => {
         if (error) {
           console.error('[Auth] getSession error:', error.message)
         } else {
-          console.log('[Auth] Initial session:', session ? session.user.email : 'none')
+          console.log('[Auth] Session:', session ? session.user.email : 'none')
           setUser(session?.user ?? null)
           if (session?.user) {
             const p = await fetchProfile(session.user.id)
@@ -41,10 +63,14 @@ export function useAuth() {
         console.error('[Auth] getSession failed:', err)
       })
       .finally(() => {
-        setLoading(false)
+        finishLoading()
       })
 
+    // Listen for future auth changes (sign in, sign out, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Skip INITIAL_SESSION — we handle that above via getSession
+      if (event === 'INITIAL_SESSION') return
+
       console.log('[Auth] State change:', event, session?.user?.email ?? 'no user')
       setUser(session?.user ?? null)
       if (session?.user) {
@@ -53,11 +79,14 @@ export function useAuth() {
       } else {
         setProfile(null)
       }
-      setLoading(false)
+      finishLoading()
     })
 
-    return () => subscription.unsubscribe()
-  }, [fetchProfile])
+    return () => {
+      clearTimeout(timeout)
+      subscription.unsubscribe()
+    }
+  }, [fetchProfile, finishLoading])
 
   const signIn = useCallback(async (email: string, password: string) => {
     console.log('[Auth] Attempting sign in for:', email)
@@ -71,7 +100,6 @@ export function useAuth() {
       setUser(data.user)
       const p = await fetchProfile(data.user.id)
       setProfile(p)
-      // If account is deactivated, sign them out
       if (p && !p.active) {
         await supabase.auth.signOut()
         setUser(null)
@@ -89,19 +117,17 @@ export function useAuth() {
     await supabase.auth.signOut()
   }, [])
 
-  const role: UserRole = profile?.role ?? 'admin'  // Default to admin when profile not loaded yet
+  const role: UserRole = profile?.role ?? 'admin'
   const isAdmin = role === 'admin'
   const isManager = role === 'manager'
   const isOffice = role === 'office'
   const isField = role === 'field'
 
-  // Permission helpers — grant full access if no profile loaded yet (graceful fallback)
   const canAccessModule = (module: string): boolean => {
-    if (!profile) return true  // No profile = no restrictions (loading or no RBAC setup)
+    if (!profile) return true
     if (isAdmin) return true
     if (isManager) return module !== 'users'
     if (isOffice) return module !== 'users' && module !== 'reports'
-    // Field: only jobs and dashboard
     return module === 'jobs' || module === 'dashboard'
   }
 
@@ -110,19 +136,9 @@ export function useAuth() {
   const canDelete = !profile || isAdmin || isManager
 
   return {
-    user,
-    profile,
-    loading,
-    role,
-    isAdmin,
-    isManager,
-    isOffice,
-    isField,
-    canAccessModule,
-    canCreate,
-    canEdit,
-    canDelete,
-    signIn,
-    signOut,
+    user, profile, loading, role,
+    isAdmin, isManager, isOffice, isField,
+    canAccessModule, canCreate, canEdit, canDelete,
+    signIn, signOut,
   }
 }
