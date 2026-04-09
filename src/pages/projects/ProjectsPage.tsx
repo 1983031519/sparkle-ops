@@ -9,6 +9,7 @@ import { Table } from '@/components/ui/Table'
 import { Badge, statusColor } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { InlineClientCreate } from '@/components/InlineClientCreate'
+import { ProjectPhotoUpload } from '@/components/ProjectPhotoUpload'
 import { useToast } from '@/components/ui/Toast'
 import {
   COMPANY, DEFAULT_WARRANTY, TERMS_AND_CONDITIONS, JOB_DIVISIONS,
@@ -21,15 +22,16 @@ const PAY_SCHEDULES = ['50% Deposit + 50% Completion', '30% / 40% / 30%', 'Custo
 
 interface PhaseForm {
   id?: string; order_num: number; title: string; description: string; timeline: string
-  value: string; show_value: boolean; status: string; notes: string
+  value: string; show_value: boolean; status: string; notes: string; photos: string[]
 }
-const emptyPhase = (n: number): PhaseForm => ({ order_num: n, title: '', description: '', timeline: '', value: '', show_value: false, status: 'Pending', notes: '' })
+const emptyPhase = (n: number): PhaseForm => ({ order_num: n, title: '', description: '', timeline: '', value: '', show_value: false, status: 'Pending', notes: '', photos: [] })
 
 interface PForm {
   client_id: string; title: string; site_address: string; division: string; status: string
   description: string; total_value: string; payment_schedule: string; payment_terms: string
   deposit_percent: string; mid_percent: string; final_percent: string
   accepted_payment_methods: string[]; warranty: string; notes: string; valid_until: string
+  project_photos: string[]
 }
 const emptyForm: PForm = {
   client_id: '', title: '', site_address: '', division: 'Pavers', status: 'Draft',
@@ -37,6 +39,7 @@ const emptyForm: PForm = {
   deposit_percent: '30', mid_percent: '40', final_percent: '30',
   accepted_payment_methods: ['Check', 'ACH', 'Zelle'], warranty: DEFAULT_WARRANTY,
   notes: '', valid_until: futureISO(30),
+  project_photos: [],
 }
 
 export default function ProjectsPage() {
@@ -89,13 +92,14 @@ export default function ProjectsPage() {
       mid_percent: String(proj.mid_percent), final_percent: String(proj.final_percent),
       accepted_payment_methods: proj.accepted_payment_methods ?? ['Check', 'ACH', 'Zelle'],
       warranty: proj.warranty ?? DEFAULT_WARRANTY, notes: proj.notes ?? '', valid_until: proj.valid_until ?? '',
+      project_photos: [],  // TODO: load from storage if needed
     })
     const { data } = await supabase.from('project_phases').select('*').eq('project_id', proj.id).order('order_num')
     const ph = (data ?? []) as ProjectPhase[]
     setPhases(ph.length > 0 ? ph.map(p => ({
       id: p.id, order_num: p.order_num, title: p.title, description: p.description ?? '',
       timeline: p.timeline ?? '', value: p.value != null ? String(p.value) : '', show_value: p.show_value,
-      status: p.status, notes: p.notes ?? '',
+      status: p.status, notes: p.notes ?? '', photos: (p.photos as string[]) ?? [],
     })) : [emptyPhase(1)])
     setModalOpen(true)
   }
@@ -148,7 +152,7 @@ export default function ProjectsPage() {
             project_id: projectId, order_num: p.order_num, title: p.title,
             description: p.description || null, timeline: p.timeline || null,
             value: p.value ? Number(p.value) : null, show_value: p.show_value,
-            status: p.status, notes: p.notes || null, photos: [],
+            status: p.status, notes: p.notes || null, photos: p.photos ?? [],
           })) as never
         )
         if (error) toast.error(`Phases: ${error.message}`)
@@ -246,6 +250,20 @@ export default function ProjectsPage() {
           <DateInput label="Valid Until" id="p-valid" value={form.valid_until} onChange={v => setForm(f => ({ ...f, valid_until: v }))} />
           <Textarea label="Project Description" id="p-desc" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
 
+          {/* PROJECT PHOTOS */}
+          {editing && (
+            <div className="border rounded-[12px] border-stone-200 p-4">
+              <ProjectPhotoUpload
+                folder={editing.id}
+                photos={form.project_photos}
+                onPhotosChange={urls => setForm(f => ({ ...f, project_photos: urls }))}
+                maxPhotos={6}
+                label="Site Overview / Existing Conditions"
+              />
+            </div>
+          )}
+          {!editing && <p style={{ fontSize: 12, color: '#9CA3AF', fontStyle: 'italic' }}>Save the project first to upload site photos.</p>}
+
           {/* PHASES */}
           <div>
             <p style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280', marginBottom: 12 }}>Project Phases</p>
@@ -273,6 +291,16 @@ export default function ProjectsPage() {
                     </div>
                     <Select label="Phase Status" id={`ph-st-${i}`} value={ph.status} onChange={e => updatePhase(i, 'status', e.target.value)} options={['Pending', 'In Progress', 'Completed'].map(s => ({ value: s, label: s }))} />
                   </div>
+                  {/* Phase Photos */}
+                  {editing && (
+                    <ProjectPhotoUpload
+                      folder={`${editing.id}/phase-${ph.order_num}`}
+                      photos={ph.photos}
+                      onPhotosChange={urls => updatePhase(i, 'photos', urls)}
+                      maxPhotos={4}
+                      label={`Phase ${ph.order_num} Photos`}
+                    />
+                  )}
                 </div>
               ))}
             </div>
@@ -377,11 +405,19 @@ function ProjectPreview({ project: p, phases, client }: { project: Project; phas
 
         {/* Phases */}
         {phases.map(ph => (
-          <div key={ph.id} className="border-t-2 border-stone-200 pt-4">
+          <div key={ph.id} className="border-t-2 border-stone-200 pt-4 phase-section">
             <h5 style={{ fontSize: 14, fontWeight: 700, color: '#0D1B3D', marginBottom: 8 }}>
               PHASE {ph.order_num} — {ph.title}
             </h5>
             {ph.description && <p className="text-stone-700 whitespace-pre-wrap mb-2">{ph.description}</p>}
+            {/* Phase photos */}
+            {(ph.photos as string[])?.length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, margin: '8px 0' }}>
+                {(ph.photos as string[]).map((url, pi) => (
+                  <img key={pi} src={url} alt="" style={{ width: '100%', borderRadius: 8, objectFit: 'cover', aspectRatio: '4/3' }} />
+                ))}
+              </div>
+            )}
             <div className="flex gap-6 text-xs text-stone-500">
               {ph.timeline && <p>Timeline: <strong className="text-stone-700">{ph.timeline}</strong></p>}
               {ph.show_value && ph.value != null && <p>Value: <strong className="text-stone-700">{fmtCurrency(ph.value)}</strong></p>}
@@ -390,7 +426,8 @@ function ProjectPreview({ project: p, phases, client }: { project: Project; phas
         ))}
 
         {/* Financial */}
-        <div className="border-t-2 border-stone-300 pt-4">
+        <hr style={{ border: 'none', borderTop: '2px solid #D1D5DB', margin: '8px 0' }} />
+        <div className="pt-4 print-break-before">
           <h5 style={{ fontSize: 14, fontWeight: 700, color: '#0D1B3D', marginBottom: 8 }}>Financial Summary</h5>
           <div className="ml-auto w-80 space-y-1 text-right">
             <div className="flex justify-between text-base font-bold"><span>Total Project Value</span><span>{fmtCurrency(p.total_value)}</span></div>

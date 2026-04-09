@@ -45,7 +45,7 @@ export function Modal({ open, onClose, title, children, wide }: Props) {
           position: 'fixed', top: '50%', left: '50%',
           transform: 'translate(-50%, -50%)',
           width: '100%', maxWidth: wide ? 896 : 512,
-          maxHeight: '90vh',
+          maxHeight: '95vh',
           background: 'white', borderRadius: 20,
           boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
           zIndex: 9999,

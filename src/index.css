@@ -60,4 +60,6 @@
 @media print {
   .no-print { display: none !important; }
   body { background: white; }
+  .phase-section { page-break-inside: avoid; }
+  .print-break-before { page-break-before: always; }
 }
