@@ -245,10 +245,10 @@ export default function JobsPage() {
                 ]} />
               }},
               { key: 'actions', header: '', render: j => (
-                <div className="flex gap-1" onClick={ev => ev.stopPropagation()}>
+                <div className="flex gap-2" onClick={ev => ev.stopPropagation()}>
                   {!invByJob[j.id] && (j.status === 'In Progress' || j.status === 'Completed') && (
-                    <Button variant="ghost" size="sm" onClick={() => generateInvoice(j)} title="Generate Invoice">
-                      <ArrowRight className="h-4 w-4 text-brand-600" />
+                    <Button variant="primary" size="sm" onClick={() => generateInvoice(j)}>
+                      <ArrowRight className="h-3 w-3" /> Generate Invoice
                     </Button>
                   )}
                 </div>

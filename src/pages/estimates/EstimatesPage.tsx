@@ -14,7 +14,7 @@ import {
   ESTIMATE_STATUSES, JOB_DIVISIONS, COMPANY, DEFAULT_WARRANTY, TERMS_AND_CONDITIONS,
   generateEstimateNumber, paymentMethodsForClient,
 } from '@/lib/constants'
-import type { Estimate, EstimateStatus, EstimateLineItem, Client, Job, MaterialsSpecified } from '@/lib/database.types'
+import type { Estimate, EstimateStatus, EstimateLineItem, Client, Job, Invoice, MaterialsSpecified } from '@/lib/database.types'
 import { fmtDate, fmtCurrency, futureISO, isoDatePart } from '@/lib/constants'
 import { useToast } from '@/components/ui/Toast'
 
@@ -25,6 +25,7 @@ interface EstForm {
   client_id: string; status: EstimateStatus; division: string; attn: string; site_address: string; re_line: string
   scope_of_work: string; materials: MaterialsSpecified; start_date: string; end_date: string
   line_items: EstimateLineItem[]; warranty: string; notes: string; valid_until: string
+  payment_terms: string; accepted_payment_methods: string[]
 }
 
 const plus30 = futureISO(30)
@@ -33,12 +34,14 @@ const emptyForm: EstForm = {
   client_id: '', status: 'Draft', division: 'Pavers', attn: '', site_address: '', re_line: '',
   scope_of_work: '', materials: { ...emptyMaterials }, start_date: '', end_date: '',
   line_items: [{ ...emptyLine }], warranty: DEFAULT_WARRANTY, notes: '', valid_until: plus30,
+  payment_terms: '50% deposit + 50% on completion', accepted_payment_methods: ['Check', 'ACH', 'Zelle'],
 }
 
 export default function EstimatesPage() {
   const [estimates, setEstimates] = useState<Estimate[]>([])
   const [clients, setClients] = useState<Client[]>([])
   const [jobs, setJobs] = useState<Job[]>([])
+  const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
@@ -51,14 +54,16 @@ export default function EstimatesPage() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
-    const [eRes, cRes, jRes] = await Promise.all([
+    const [eRes, cRes, jRes, iRes] = await Promise.all([
       supabase.from('estimates').select('*').order('created_at', { ascending: false }),
       supabase.from('clients').select('*').order('name'),
       supabase.from('jobs').select('*'),
+      supabase.from('invoices').select('*'),
     ])
     setEstimates((eRes.data ?? []) as Estimate[])
     setClients((cRes.data ?? []) as Client[])
     setJobs((jRes.data ?? []) as Job[])
+    setInvoices((iRes.data ?? []) as Invoice[])
     setLoading(false)
   }, [])
 
@@ -66,6 +71,7 @@ export default function EstimatesPage() {
 
   const clientMap = Object.fromEntries(clients.map(c => [c.id, c]))
   const jobByEstimate = Object.fromEntries(jobs.filter(j => j.estimate_id).map(j => [j.estimate_id!, j]))
+  const invByJob = Object.fromEntries(invoices.filter(i => i.job_id).map(i => [i.job_id!, i]))
 
   const filtered = estimates.filter(e => {
     const cl = clientMap[e.client_id]
@@ -95,6 +101,8 @@ export default function EstimatesPage() {
       line_items: (est.line_items as EstimateLineItem[]).length > 0 ? est.line_items as EstimateLineItem[] : [{ ...emptyLine }],
       warranty: est.warranty ?? DEFAULT_WARRANTY,
       notes: est.notes ?? '', valid_until: est.valid_until ?? '',
+      payment_terms: (est as Record<string, unknown>).payment_terms as string ?? '50% deposit + 50% on completion',
+      accepted_payment_methods: ((est as Record<string, unknown>).accepted_payment_methods as string[]) ?? ['Check', 'ACH', 'Zelle'],
     })
     setModalOpen(true)
   }
@@ -144,6 +152,8 @@ export default function EstimatesPage() {
         warranty: form.warranty || null,
         notes: form.notes || null,
         valid_until: form.valid_until || null,
+        payment_terms: form.payment_terms || null,
+        accepted_payment_methods: form.accepted_payment_methods,
       }
 
       let error: { message: string } | null = null
@@ -238,17 +248,18 @@ export default function EstimatesPage() {
               { key: 'total', header: 'Total', render: e => fmtCurrency(e.total) },
               { key: 'flow', header: 'Flow', render: e => {
                 const job = jobByEstimate[e.id]
+                const hasInvoice = job ? !!invByJob[job.id] : false
                 return <FlowIndicator steps={[
                   { label: 'Estimate', status: 'done' },
                   { label: 'Job', status: job ? 'done' : e.status === 'Approved' ? 'active' : 'pending' },
-                  { label: 'Invoice', status: 'pending' },
+                  { label: 'Invoice', status: hasInvoice ? 'done' : 'pending' },
                 ]} />
               }},
               { key: 'actions', header: '', render: e => (
-                <div className="flex gap-1" onClick={ev => ev.stopPropagation()}>
+                <div className="flex gap-2" onClick={ev => ev.stopPropagation()}>
                   {e.status === 'Approved' && !jobByEstimate[e.id] && (
-                    <Button variant="ghost" size="sm" onClick={() => convertToJob(e)} title="Convert to Job">
-                      <ArrowRight className="h-4 w-4 text-brand-600" />
+                    <Button variant="gold" size="sm" onClick={() => convertToJob(e)}>
+                      <ArrowRight className="h-3 w-3" /> Convert to Job
                     </Button>
                   )}
                   <Button variant="ghost" size="sm" onClick={() => openPreview(e)}><Printer className="h-4 w-4" /></Button>
@@ -332,12 +343,41 @@ export default function EstimatesPage() {
             <div className="flex justify-end gap-8 text-xs text-stone-500"><span>Balance (50%):</span><span>${(total - deposit).toFixed(2)}</span></div>
           </div>
 
+          {/* Payment Terms */}
+          <div className="border rounded-lg border-stone-200 p-4 space-y-3">
+            <h3 className="text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">Payment Terms</h3>
+            <Select label="Payment Schedule" id="est-pterms" value={form.payment_terms} onChange={e => setForm(f => ({ ...f, payment_terms: e.target.value }))} options={[
+              { value: '50% deposit + 50% on completion', label: '50% Deposit + 50% on Completion' },
+              { value: '100% on completion', label: '100% on Completion' },
+              { value: '100% upfront', label: '100% Upfront' },
+              { value: 'Custom', label: 'Custom' },
+            ]} />
+            <div className="space-y-1.5">
+              <label className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">Accepted Payment Methods</label>
+              <div className="flex flex-wrap gap-4">
+                {['Check', 'ACH', 'Zelle', 'Cash'].map(m => (
+                  <label key={m} className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={form.accepted_payment_methods.includes(m)} onChange={e => {
+                      setForm(f => ({ ...f, accepted_payment_methods: e.target.checked ? [...f.accepted_payment_methods, m] : f.accepted_payment_methods.filter(x => x !== m) }))
+                    }} className="accent-navy-900 rounded" />
+                    <span className="text-[13px]">{m}{m === 'Check' ? ` (payable to ${COMPANY.check_payable})` : m === 'Zelle' ? ` (${COMPANY.zelle})` : ''}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <Textarea label="Warranty" id="est-warranty" value={form.warranty} onChange={e => setForm(f => ({ ...f, warranty: e.target.value }))} />
           <Textarea label="Notes" id="est-notes" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
 
           <div className="flex justify-between border-t border-stone-200 pt-4">
             {editing && <Button variant="danger" onClick={handleDelete} type="button">Delete</Button>}
             <div className="ml-auto flex gap-2">
+              {editing && editing.status === 'Approved' && !jobByEstimate[editing.id] && (
+                <Button variant="gold" onClick={() => { convertToJob(editing); setModalOpen(false) }} type="button">
+                  <ArrowRight className="h-4 w-4" /> Convert to Job
+                </Button>
+              )}
               <Button variant="secondary" onClick={() => setModalOpen(false)} type="button">Cancel</Button>
               <Button onClick={handleSave} type="button" disabled={saving}>{saving ? 'Saving...' : editing ? 'Update' : 'Create'}</Button>
             </div>
@@ -447,13 +487,14 @@ function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
           <div className="flex justify-between border-t border-stone-300 pt-1 text-base font-bold"><span>Total</span><span>${est.total.toFixed(2)}</span></div>
         </div>
 
-        {/* Payment Schedule */}
+        {/* Payment Terms */}
         <div className="rounded-lg bg-stone-50 p-4">
-          <h4 className="font-semibold mb-2">Payment Schedule</h4>
-          <p>Deposit (50%): <strong>${deposit.toFixed(2)}</strong> — due upon acceptance</p>
-          <p>Balance (50%): <strong>${balance.toFixed(2)}</strong> — due upon completion</p>
-          <p className="mt-2 text-xs text-stone-500">Payment Methods: {paymentMethodsForClient(clientType)}</p>
+          <h4 className="font-semibold mb-2">Payment Terms</h4>
+          <p className="font-medium">{(est as Record<string, unknown>).payment_terms as string || '50% deposit + 50% on completion'}</p>
+          <p className="mt-1">Deposit: <strong>${deposit.toFixed(2)}</strong> — Balance: <strong>${balance.toFixed(2)}</strong></p>
+          <p className="mt-2 text-xs text-stone-600">Accepted Payment Methods: {((est as Record<string, unknown>).accepted_payment_methods as string[] || ['Check', 'ACH', 'Zelle']).join(' \u00b7 ')}</p>
           <p className="text-xs text-stone-500">Check payable to: {COMPANY.check_payable}</p>
+          <p className="text-xs text-stone-500">Zelle: {COMPANY.zelle}</p>
         </div>
 
         {/* Warranty */}

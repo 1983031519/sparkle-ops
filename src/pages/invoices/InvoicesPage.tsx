@@ -13,7 +13,9 @@ import { useToast } from '@/components/ui/Toast'
 import type { Invoice, InvoiceStatus, InvoiceLineItem, Client, Job } from '@/lib/database.types'
 
 const emptyLine: InvoiceLineItem = { description: '', qty: 1, unit: 'ea', unit_price: 0 }
-const emptyForm = { client_id: '', job_id: '', status: 'Unpaid' as InvoiceStatus, line_items: [{ ...emptyLine }], notes: '', due_date: '' }
+const PAYMENT_TERMS_INV = ['50% Deposit + 50% on Completion', '100% Due on Receipt', 'Net 15', 'Net 30', 'Custom']
+const PAYMENT_METHODS_INV = ['Check', 'ACH', 'Zelle', 'Cash']
+const emptyForm = { client_id: '', job_id: '', status: 'Unpaid' as InvoiceStatus, line_items: [{ ...emptyLine }], notes: '', due_date: '', payment_terms: '', payment_method_used: '', deposit_received: 0, has_deposit: false }
 
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
@@ -60,10 +62,14 @@ export default function InvoicesPage() {
   function openNew() { setEditing(null); setForm(emptyForm); setModalOpen(true) }
   function openEdit(inv: Invoice) {
     setEditing(inv)
+    const r = inv as Record<string, unknown>
+    const depRcv = r.deposit_received as number ?? 0
     setForm({
       client_id: inv.client_id, job_id: inv.job_id ?? '', status: inv.status,
       line_items: (inv.line_items as InvoiceLineItem[]).length > 0 ? inv.line_items as InvoiceLineItem[] : [{ ...emptyLine }],
       notes: inv.notes ?? '', due_date: inv.due_date ?? '',
+      payment_terms: r.payment_terms as string ?? '', payment_method_used: r.payment_method_used as string ?? '',
+      deposit_received: depRcv, has_deposit: depRcv > 0,
     })
     setModalOpen(true)
   }
@@ -80,11 +86,14 @@ export default function InvoicesPage() {
     setSaving(true)
     try {
       const { subtotal, total } = calcTotals(form.line_items)
+      const depositRcv = form.has_deposit ? form.deposit_received : 0
       const payload = {
         number: editing?.number ?? generateInvoiceNumber(invoices.length + 1),
         client_id: form.client_id, job_id: form.job_id || null, estimate_id: editing?.estimate_id ?? null,
         status: form.status, line_items: form.line_items, subtotal, total,
         notes: form.notes || null, due_date: form.due_date || null,
+        payment_terms: form.payment_terms || null, payment_method_used: form.payment_method_used || null,
+        deposit_received: depositRcv, balance_due: total - depositRcv,
       }
       let error: { message: string } | null = null
       if (editing) { const res = await supabase.from('invoices').update(payload as never).eq('id', editing.id); error = res.error }
@@ -182,6 +191,30 @@ export default function InvoicesPage() {
             <div className="flex justify-end gap-8 text-base border-t border-stone-200 pt-1"><span>Total Due:</span><strong>${total.toFixed(2)}</strong></div>
           </div>
 
+          {/* Payment Details */}
+          <div className="border rounded-lg border-stone-200 p-4 space-y-3">
+            <h3 className="text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">Payment Details</h3>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Select label="Payment Terms" id="inv-pterms" value={form.payment_terms} onChange={e => setForm(f => ({ ...f, payment_terms: e.target.value }))} options={PAYMENT_TERMS_INV.map(t => ({ value: t, label: t }))} />
+              <Select label="Payment Method" id="inv-pmethod" value={form.payment_method_used} onChange={e => setForm(f => ({ ...f, payment_method_used: e.target.value }))} options={PAYMENT_METHODS_INV.map(m => ({ value: m, label: m }))} />
+            </div>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={form.has_deposit} onChange={e => setForm(f => ({ ...f, has_deposit: e.target.checked, deposit_received: e.target.checked ? f.deposit_received : 0 }))} className="accent-navy-900 rounded" />
+                <span className="text-[13px] font-medium">Deposit received</span>
+              </label>
+              {form.has_deposit && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Input label="Deposit Amount ($)" id="inv-deposit" type="number" step="0.01" value={form.deposit_received} onChange={e => setForm(f => ({ ...f, deposit_received: Number(e.target.value) }))} />
+                  <div className="space-y-1.5">
+                    <label className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">Balance Due</label>
+                    <p className="h-[40px] flex items-center text-[16px] font-bold text-navy-900">${(total - form.deposit_received).toFixed(2)}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           <Textarea label="Notes" id="inv-notes" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
 
           <div className="flex justify-between border-t border-stone-200 pt-4">
@@ -261,11 +294,19 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
           <div className="flex justify-between border-t border-stone-300 pt-1 text-base font-bold"><span>Total Due</span><span>${inv.total.toFixed(2)}</span></div>
         </div>
 
-        {/* Payment Methods */}
-        <div className="rounded-lg bg-stone-50 p-4">
-          <h4 className="font-semibold mb-1">Payment Methods</h4>
-          <p>{methods}</p>
-          <p className="text-xs text-stone-500 mt-1">Check payable to: {COMPANY.check_payable}</p>
+        {/* Payment Details */}
+        <div className="rounded-lg bg-stone-50 p-4 space-y-1">
+          <h4 className="font-semibold mb-2">Payment Information</h4>
+          {(inv as Record<string, unknown>).payment_terms && <p>Payment Terms: <strong>{(inv as Record<string, unknown>).payment_terms as string}</strong></p>}
+          <p>Accepted Payment Methods: <strong>{methods}</strong></p>
+          {((inv as Record<string, unknown>).deposit_received as number ?? 0) > 0 && (
+            <p>Deposit Received: <strong>${((inv as Record<string, unknown>).deposit_received as number).toFixed(2)}</strong></p>
+          )}
+          {((inv as Record<string, unknown>).balance_due as number ?? 0) > 0 && (
+            <p className="text-base font-bold">Balance Due: ${((inv as Record<string, unknown>).balance_due as number).toFixed(2)}</p>
+          )}
+          <p className="text-xs text-stone-500 mt-2">Check payable to: {COMPANY.check_payable}</p>
+          <p className="text-xs text-stone-500">Zelle: {COMPANY.zelle}</p>
         </div>
 
         {inv.notes && <div><h4 className="font-semibold mb-1">Notes</h4><p className="text-stone-600">{inv.notes}</p></div>}
