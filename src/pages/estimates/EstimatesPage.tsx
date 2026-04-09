@@ -3,6 +3,7 @@ import { Plus, Search, Printer, ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input, Select, Textarea } from '@/components/ui/Input'
+import { DateInput } from '@/components/ui/DateInput'
 import { Card } from '@/components/ui/Card'
 import { Table } from '@/components/ui/Table'
 import { Badge, statusColor } from '@/components/ui/Badge'
@@ -265,7 +266,7 @@ export default function EstimatesPage() {
           <div className="grid gap-4 sm:grid-cols-3">
             <Select label="Status" id="est-status" value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as EstimateStatus }))} options={ESTIMATE_STATUSES.map(s => ({ value: s, label: s }))} />
             <Select label="Division" id="est-div" value={form.division} onChange={e => setForm(f => ({ ...f, division: e.target.value }))} options={JOB_DIVISIONS.map(d => ({ value: d, label: d }))} />
-            <Input label="Valid Until" id="est-valid" type="date" value={form.valid_until} onChange={e => setForm(f => ({ ...f, valid_until: e.target.value }))} />
+            <DateInput label="Valid Until" id="est-valid" value={form.valid_until} onChange={v => setForm(f => ({ ...f, valid_until: v }))} />
           </div>
           {/* Client */}
           <div className="flex items-end gap-2">
@@ -300,8 +301,8 @@ export default function EstimatesPage() {
 
           {/* Timeline */}
           <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="Estimated Start Date" id="est-start" type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} />
-            <Input label="Estimated Completion Date" id="est-end" type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} />
+            <DateInput label="Estimated Start Date" id="est-start" value={form.start_date} onChange={v => setForm(f => ({ ...f, start_date: v }))} />
+            <DateInput label="Estimated Completion Date" id="est-end" value={form.end_date} onChange={v => setForm(f => ({ ...f, end_date: v }))} />
           </div>
 
           {/* Line Items */}

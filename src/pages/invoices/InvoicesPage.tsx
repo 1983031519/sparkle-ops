@@ -3,6 +3,7 @@ import { Plus, Search, Printer, CheckCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input, Select, Textarea } from '@/components/ui/Input'
+import { DateInput } from '@/components/ui/DateInput'
 import { Card } from '@/components/ui/Card'
 import { Table } from '@/components/ui/Table'
 import { Badge, statusColor } from '@/components/ui/Badge'
@@ -143,7 +144,7 @@ export default function InvoicesPage() {
             <Select label="Job (optional)" id="inv-job" value={form.job_id} onChange={e => setForm(f => ({ ...f, job_id: e.target.value }))} options={jobs.map(j => ({ value: j.id, label: j.title }))} />
             <Select label="Status" id="inv-status" value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as InvoiceStatus }))} options={INVOICE_STATUSES.map(s => ({ value: s, label: s }))} />
           </div>
-          <Input label="Due Date" id="inv-due" type="date" value={form.due_date} onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))} />
+          <DateInput label="Due Date" id="inv-due" value={form.due_date} onChange={v => setForm(f => ({ ...f, due_date: v }))} />
 
           <div>
             <label className="mb-2 block text-sm font-semibold text-stone-700">Line Items</label>

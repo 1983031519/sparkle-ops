@@ -3,6 +3,7 @@ import { Plus, Search, ArrowRight, CheckSquare, Square, Trash2, PlusCircle } fro
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input, Select, Textarea } from '@/components/ui/Input'
+import { DateInput } from '@/components/ui/DateInput'
 import { Card } from '@/components/ui/Card'
 import { Table } from '@/components/ui/Table'
 import { Badge, statusColor } from '@/components/ui/Badge'
@@ -240,7 +241,7 @@ export default function JobsPage() {
           <div className="grid gap-4 sm:grid-cols-3">
             <Select label="Division" id="division" value={form.division} onChange={e => setForm(f => ({ ...f, division: e.target.value as JobDivision }))} options={JOB_DIVISIONS.map(d => ({ value: d, label: d }))} />
             <Select label="Status" id="status" value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as JobStatus }))} options={JOB_STATUSES.map(s => ({ value: s, label: s }))} />
-            <Input label="Scheduled Date" id="scheduled_date" type="date" value={form.scheduled_date} onChange={e => setForm(f => ({ ...f, scheduled_date: e.target.value }))} />
+            <DateInput label="Scheduled Date" id="scheduled_date" value={form.scheduled_date} onChange={v => setForm(f => ({ ...f, scheduled_date: v }))} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Input label="Job Address" id="address" value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
