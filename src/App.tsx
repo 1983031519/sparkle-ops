@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { Layout } from '@/components/Layout'
 import { ToastProvider } from '@/components/ui/Toast'
 import LoginPage from '@/pages/auth/LoginPage'
+import UnauthorizedPage from '@/pages/unauthorized/UnauthorizedPage'
 import DashboardPage from '@/pages/dashboard/DashboardPage'
 import ClientsPage from '@/pages/clients/ClientsPage'
 import JobsPage from '@/pages/jobs/JobsPage'
@@ -12,12 +13,21 @@ import InvoicesPage from '@/pages/invoices/InvoicesPage'
 import VendorsPage from '@/pages/vendors/VendorsPage'
 import InventoryPage from '@/pages/inventory/InventoryPage'
 import ReportsPage from '@/pages/reports/ReportsPage'
+import UsersPage from '@/pages/users/UsersPage'
 
 function ProtectedRoutes() {
   const { user, loading } = useAuth()
   if (loading) return <div className="flex h-screen items-center justify-center text-stone-500">Loading...</div>
   if (!user) return <Navigate to="/login" replace />
   return <Layout />
+}
+
+/** Wraps a page and redirects to /unauthorized if the user's role doesn't have access */
+function ModuleGuard({ module, children }: { module: string; children: React.ReactNode }) {
+  const { canAccessModule, loading } = useAuth()
+  if (loading) return null
+  if (!canAccessModule(module)) return <Navigate to="/unauthorized" replace />
+  return <>{children}</>
 }
 
 export default function App() {
@@ -28,14 +38,16 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route element={<ProtectedRoutes />}>
             <Route path="/" element={<DashboardPage />} />
-            <Route path="/clients" element={<ClientsPage />} />
-            <Route path="/jobs" element={<JobsPage />} />
-            <Route path="/estimates" element={<EstimatesPage />} />
-            <Route path="/projects" element={<ProjectsPage />} />
-            <Route path="/invoices" element={<InvoicesPage />} />
-            <Route path="/vendors" element={<VendorsPage />} />
-            <Route path="/inventory" element={<InventoryPage />} />
-            <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/unauthorized" element={<UnauthorizedPage />} />
+            <Route path="/clients" element={<ModuleGuard module="clients"><ClientsPage /></ModuleGuard>} />
+            <Route path="/jobs" element={<ModuleGuard module="jobs"><JobsPage /></ModuleGuard>} />
+            <Route path="/estimates" element={<ModuleGuard module="estimates"><EstimatesPage /></ModuleGuard>} />
+            <Route path="/projects" element={<ModuleGuard module="projects"><ProjectsPage /></ModuleGuard>} />
+            <Route path="/invoices" element={<ModuleGuard module="invoices"><InvoicesPage /></ModuleGuard>} />
+            <Route path="/vendors" element={<ModuleGuard module="vendors"><VendorsPage /></ModuleGuard>} />
+            <Route path="/inventory" element={<ModuleGuard module="inventory"><InventoryPage /></ModuleGuard>} />
+            <Route path="/reports" element={<ModuleGuard module="reports"><ReportsPage /></ModuleGuard>} />
+            <Route path="/users" element={<ModuleGuard module="users"><UsersPage /></ModuleGuard>} />
           </Route>
         </Routes>
       </BrowserRouter>

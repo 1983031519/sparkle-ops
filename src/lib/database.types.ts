@@ -1,3 +1,15 @@
+export type UserRole = 'admin' | 'manager' | 'office' | 'field'
+
+export interface Profile {
+  id: string
+  role: UserRole
+  full_name: string
+  email: string
+  active: boolean
+  created_at: string
+  updated_at: string
+}
+
 export type ClientType = 'Homeowner' | 'HOA' | 'Builder' | 'Company' | 'Commercial' | 'Property Manager'
 export type JobDivision = 'Pavers' | 'Stone'
 export type JobStatus = 'Lead' | 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled'
@@ -244,6 +256,7 @@ export interface Database {
       change_orders: { Row: ChangeOrder; Insert: Omit<ChangeOrder, 'id' | 'created_at'>; Update: Partial<Omit<ChangeOrder, 'id' | 'created_at'>> }
       projects: { Row: Project; Insert: Omit<Project, 'id' | 'created_at'>; Update: Partial<Omit<Project, 'id' | 'created_at'>> }
       project_phases: { Row: ProjectPhase; Insert: Omit<ProjectPhase, 'id' | 'created_at'>; Update: Partial<Omit<ProjectPhase, 'id' | 'created_at'>> }
+      profiles: { Row: Profile; Insert: Omit<Profile, 'created_at' | 'updated_at'>; Update: Partial<Omit<Profile, 'id' | 'created_at'>> }
     }
   }
 }

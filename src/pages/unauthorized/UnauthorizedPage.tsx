@@ -1,0 +1,18 @@
+import { useNavigate } from 'react-router-dom'
+import { ShieldX } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+
+export default function UnauthorizedPage() {
+  const navigate = useNavigate()
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', padding: 32, textAlign: 'center' }}>
+      <ShieldX size={48} strokeWidth={1.5} color="#9CA3AF" style={{ marginBottom: 16 }} />
+      <h1 style={{ fontSize: 20, fontWeight: 700, color: '#0D1B3D', marginBottom: 8 }}>Access Restricted</h1>
+      <p style={{ fontSize: 14, color: '#6B7280', maxWidth: 400, marginBottom: 24 }}>
+        You don't have permission to access this page. Contact your admin if you believe this is an error.
+      </p>
+      <Button onClick={() => navigate('/')}>Back to Dashboard</Button>
+    </div>
+  )
+}

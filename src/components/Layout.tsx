@@ -1,24 +1,25 @@
 import { useState, useEffect } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Users, Briefcase, FileText, FolderOpen, Receipt, UsersRound, Package, BarChart3, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Users, Briefcase, FileText, FolderOpen, Receipt, UsersRound, Package, BarChart3, Shield, LogOut, Menu, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 const NAVY = '#0D1B3D'
 
 const allNav = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/clients', icon: Users, label: 'Clients' },
-  { to: '/jobs', icon: Briefcase, label: 'Jobs' },
-  { to: '/estimates', icon: FileText, label: 'Estimates' },
-  { to: '/projects', icon: FolderOpen, label: 'Projects' },
-  { to: '/invoices', icon: Receipt, label: 'Invoices' },
-  { to: '/vendors', icon: UsersRound, label: 'Vendors & Team' },
-  { to: '/inventory', icon: Package, label: 'Inventory' },
-  { to: '/reports', icon: BarChart3, label: 'Reports' },
+  { to: '/', icon: LayoutDashboard, label: 'Dashboard', module: 'dashboard' },
+  { to: '/clients', icon: Users, label: 'Clients', module: 'clients' },
+  { to: '/jobs', icon: Briefcase, label: 'Jobs', module: 'jobs' },
+  { to: '/estimates', icon: FileText, label: 'Estimates', module: 'estimates' },
+  { to: '/projects', icon: FolderOpen, label: 'Projects', module: 'projects' },
+  { to: '/invoices', icon: Receipt, label: 'Invoices', module: 'invoices' },
+  { to: '/vendors', icon: UsersRound, label: 'Vendors & Team', module: 'vendors' },
+  { to: '/inventory', icon: Package, label: 'Inventory', module: 'inventory' },
+  { to: '/reports', icon: BarChart3, label: 'Reports', module: 'reports' },
+  { to: '/users', icon: Shield, label: 'Users', module: 'users' },
 ]
 
-// Bottom nav: 5 most important
-const bottomNav = allNav.slice(0, 5)
+// Bottom nav: derived inside component from visibleNav
+// bottomNav derived inside Layout from visibleNav
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(false)
@@ -32,9 +33,11 @@ function useIsMobile() {
 }
 
 export function Layout() {
-  const { user, signOut } = useAuth()
+  const { user, signOut, canAccessModule } = useAuth()
   const isMobile = useIsMobile()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const visibleNav = allNav.filter(n => canAccessModule(n.module))
+  const bottomNav = visibleNav.slice(0, 5)
   const location = useLocation()
 
   // Close drawer on navigation
@@ -108,7 +111,7 @@ export function Layout() {
               </div>
               {/* Drawer nav */}
               <nav style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {allNav.map(({ to, icon: Icon, label }) => (
+                {visibleNav.map(({ to, icon: Icon, label }) => (
                   <NavLink
                     key={to} to={to} end={to === '/'}
                     style={({ isActive }) => ({
@@ -148,7 +151,7 @@ export function Layout() {
           <img src="/logo-white.png" alt="Sparkle Stone & Pavers" style={{ width: 195, height: 'auto', maxHeight: 60, display: 'block', objectFit: 'contain' }} />
         </div>
         <nav style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {allNav.map(({ to, icon: Icon, label }) => (
+          {visibleNav.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to} to={to} end={to === '/'}
               className={({ isActive }) => isActive ? 'nav-item nav-active' : 'nav-item nav-inactive'}
