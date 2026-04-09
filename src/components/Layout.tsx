@@ -25,7 +25,7 @@ export function Layout() {
         style={{ width: 240, display: 'flex', flexDirection: 'column', backgroundColor: NAVY, minHeight: '100vh' }}
       >
         <div style={{ backgroundColor: NAVY, padding: '20px 20px 16px' }}>
-          <img src="/logo-white.png" alt="Sparkle Stone & Pavers" style={{ width: 160, height: 'auto', display: 'block' }} />
+          <img src="/logo-white.png" alt="Sparkle Stone & Pavers" style={{ width: 150, height: 'auto', maxHeight: 48, display: 'block', objectFit: 'contain' }} />
         </div>
 
         {/* Nav */}
