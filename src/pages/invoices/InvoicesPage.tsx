@@ -8,14 +8,36 @@ import { Card } from '@/components/ui/Card'
 import { Table } from '@/components/ui/Table'
 import { Badge, statusColor } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
-import { INVOICE_STATUSES, COMPANY, paymentMethodsForClient, generateInvoiceNumber, fmtDateShort, fmtDate, fmtCurrency, isoDatePart } from '@/lib/constants'
+import { INVOICE_STATUSES, COMPANY, generateInvoiceNumber, fmtDateShort, fmtDate, fmtCurrency, isoDatePart } from '@/lib/constants'
 import { useToast } from '@/components/ui/Toast'
 import type { Invoice, InvoiceStatus, InvoiceLineItem, Client, Job } from '@/lib/database.types'
 
 const emptyLine: InvoiceLineItem = { description: '', qty: 1, unit: 'ea', unit_price: 0 }
-const PAYMENT_TERMS_INV = ['50% Deposit + 50% on Completion', '100% Due on Receipt', 'Net 15', 'Net 30', 'Custom']
-const PAYMENT_METHODS_INV = ['Check', 'ACH', 'Zelle', 'Cash']
-const emptyForm = { client_id: '', job_id: '', status: 'Unpaid' as InvoiceStatus, line_items: [{ ...emptyLine }], notes: '', due_date: '', payment_terms: '', payment_method_used: '', deposit_received: 0, has_deposit: false }
+
+const PAYMENT_TERMS_OPTIONS = [
+  '50% Deposit + 50% on Completion',
+  '100% Due on Receipt',
+  'Net 15',
+  'Net 30',
+  'Custom',
+]
+
+const PAYMENT_METHOD_OPTIONS = [
+  'Check',
+  'ACH / Bank Transfer',
+  'Zelle',
+  'Cash',
+  'Multiple',
+]
+
+const emptyForm = {
+  client_id: '', job_id: '', status: 'Unpaid' as InvoiceStatus,
+  line_items: [{ ...emptyLine }], notes: '', due_date: '',
+  payment_terms: '50% Deposit + 50% on Completion',
+  payment_method_used: 'Check',
+  payment_method_custom: '',
+  has_deposit: false, deposit_received: 0,
+}
 
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
@@ -56,22 +78,28 @@ export default function InvoicesPage() {
 
   function calcTotals(items: InvoiceLineItem[]) {
     const subtotal = items.reduce((s, i) => s + i.qty * i.unit_price, 0)
-    return { subtotal, total: subtotal } // Tax always 0% for Sparkle
+    return { subtotal, total: subtotal }
   }
 
   function openNew() { setEditing(null); setForm(emptyForm); setModalOpen(true) }
+
   function openEdit(inv: Invoice) {
     setEditing(inv)
     const depRcv = inv.deposit_received ?? 0
+    const method = inv.payment_method_used ?? ''
+    const isCustomMethod = method !== '' && !['Check', 'ACH / Bank Transfer', 'Zelle', 'Cash'].includes(method)
     setForm({
       client_id: inv.client_id, job_id: inv.job_id ?? '', status: inv.status,
       line_items: (inv.line_items as InvoiceLineItem[]).length > 0 ? inv.line_items as InvoiceLineItem[] : [{ ...emptyLine }],
       notes: inv.notes ?? '', due_date: inv.due_date ?? '',
-      payment_terms: inv.payment_terms ?? '', payment_method_used: inv.payment_method_used ?? '',
-      deposit_received: depRcv, has_deposit: depRcv > 0,
+      payment_terms: inv.payment_terms ?? '50% Deposit + 50% on Completion',
+      payment_method_used: isCustomMethod ? 'Multiple' : method,
+      payment_method_custom: isCustomMethod ? method : '',
+      has_deposit: depRcv > 0, deposit_received: depRcv,
     })
     setModalOpen(true)
   }
+
   function openPreview(inv: Invoice) { setPreviewInv(inv); setPreviewOpen(true) }
 
   function addLine() { setForm(f => ({ ...f, line_items: [...f.line_items, { ...emptyLine }] })) }
@@ -86,13 +114,16 @@ export default function InvoicesPage() {
     try {
       const { subtotal, total } = calcTotals(form.line_items)
       const depositRcv = form.has_deposit ? form.deposit_received : 0
+      const methodValue = form.payment_method_used === 'Multiple' ? form.payment_method_custom : form.payment_method_used
       const payload = {
         number: editing?.number ?? generateInvoiceNumber(invoices.length + 1),
         client_id: form.client_id, job_id: form.job_id || null, estimate_id: editing?.estimate_id ?? null,
         status: form.status, line_items: form.line_items, subtotal, total,
         notes: form.notes || null, due_date: form.due_date || null,
-        payment_terms: form.payment_terms || null, payment_method_used: form.payment_method_used || null,
-        deposit_received: depositRcv, balance_due: total - depositRcv,
+        payment_terms: form.payment_terms || null,
+        payment_method_used: methodValue || null,
+        deposit_received: depositRcv,
+        balance_due: total - depositRcv,
       }
       let error: { message: string } | null = null
       if (editing) { const res = await supabase.from('invoices').update(payload as never).eq('id', editing.id); error = res.error }
@@ -125,7 +156,7 @@ export default function InvoicesPage() {
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Invoices</h1>
+        <h1 className="text-[18px] font-bold text-navy-900">Invoices</h1>
         <Button onClick={openNew}><Plus className="h-4 w-4" /> New Invoice</Button>
       </div>
 
@@ -133,7 +164,7 @@ export default function InvoicesPage() {
         <div className="border-b border-stone-100 px-4 py-3">
           <div className="relative max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-            <input className="w-full rounded-lg border border-stone-300 py-2 pl-10 pr-3 text-sm placeholder:text-stone-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" placeholder="Search invoices..." value={search} onChange={e => setSearch(e.target.value)} />
+            <input className="w-full rounded-[10px] border border-stone-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-stone-400 focus:border-navy-900 focus:outline-none focus:ring-[3px] focus:ring-navy-900/[0.08]" placeholder="Search invoices..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
         {loading ? <p className="p-6 text-sm text-stone-500">Loading...</p> : (
@@ -145,6 +176,10 @@ export default function InvoicesPage() {
               { key: 'client', header: 'Client', render: i => clientMap[i.client_id]?.name ?? '-' },
               { key: 'status', header: 'Status', render: i => <Badge color={statusColor(i.status)}>{i.status}</Badge> },
               { key: 'total', header: 'Total', render: i => fmtCurrency(i.total) },
+              { key: 'balance', header: 'Balance Due', render: i => {
+                const bal = i.balance_due ?? i.total
+                return bal > 0 && i.status !== 'Paid' ? <span className="font-semibold text-danger-600">{fmtCurrency(bal)}</span> : <span className="text-stone-400">-</span>
+              }},
               { key: 'due', header: 'Due Date', render: i => fmtDateShort(i.due_date) },
               { key: 'actions', header: '', render: i => (
                 <div className="flex gap-1" onClick={e => e.stopPropagation()}>
@@ -159,7 +194,7 @@ export default function InvoicesPage() {
 
       {/* FORM MODAL */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Edit Invoice' : 'New Invoice'} wide>
-        <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+        <div className="space-y-5 max-h-[80vh] overflow-y-auto pr-1">
           <div className="grid gap-4 sm:grid-cols-3">
             <Select label="Client" id="inv-client" value={form.client_id} onChange={e => setForm(f => ({ ...f, client_id: e.target.value }))} options={clients.map(c => ({ value: c.id, label: c.name }))} />
             <Select label="Job (optional)" id="inv-job" value={form.job_id} onChange={e => setForm(f => ({ ...f, job_id: e.target.value }))} options={jobs.map(j => ({ value: j.id, label: j.title }))} />
@@ -167,39 +202,70 @@ export default function InvoicesPage() {
           </div>
           <DateInput label="Due Date" id="inv-due" value={form.due_date} onChange={v => setForm(f => ({ ...f, due_date: v }))} />
 
+          {/* Line Items */}
           <div>
-            <label className="mb-2 block text-sm font-semibold text-stone-700">Line Items</label>
+            <label className="mb-2 block text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">Line Items</label>
             <div className="space-y-2">
               {form.line_items.map((line, i) => (
                 <div key={i} className="grid grid-cols-12 gap-2 items-end">
-                  <div className="col-span-5"><input className="w-full rounded-lg border border-stone-300 px-2 py-1.5 text-sm" placeholder="Description" value={line.description} onChange={e => updateLine(i, 'description', e.target.value)} /></div>
-                  <div className="col-span-2"><input className="w-full rounded-lg border border-stone-300 px-2 py-1.5 text-sm" type="number" placeholder="Qty" value={line.qty} onChange={e => updateLine(i, 'qty', Number(e.target.value))} /></div>
-                  <div className="col-span-1"><input className="w-full rounded-lg border border-stone-300 px-2 py-1.5 text-sm" placeholder="Unit" value={line.unit} onChange={e => updateLine(i, 'unit', e.target.value)} /></div>
-                  <div className="col-span-2"><input className="w-full rounded-lg border border-stone-300 px-2 py-1.5 text-sm" type="number" step="0.01" placeholder="Price" value={line.unit_price} onChange={e => updateLine(i, 'unit_price', Number(e.target.value))} /></div>
-                  <div className="col-span-1 text-right text-sm font-medium">${(line.qty * line.unit_price).toFixed(2)}</div>
-                  <div className="col-span-1">{form.line_items.length > 1 && <button type="button" onClick={() => removeLine(i)} className="text-red-500 text-sm hover:underline">X</button>}</div>
+                  <div className="col-span-5"><input className="w-full h-[36px] rounded-[10px] border border-stone-200 px-2 text-[13px]" placeholder="Description" value={line.description} onChange={e => updateLine(i, 'description', e.target.value)} /></div>
+                  <div className="col-span-2"><input className="w-full h-[36px] rounded-[10px] border border-stone-200 px-2 text-[13px]" type="number" placeholder="Qty" value={line.qty} onChange={e => updateLine(i, 'qty', Number(e.target.value))} /></div>
+                  <div className="col-span-1"><input className="w-full h-[36px] rounded-[10px] border border-stone-200 px-2 text-[13px]" placeholder="Unit" value={line.unit} onChange={e => updateLine(i, 'unit', e.target.value)} /></div>
+                  <div className="col-span-2"><input className="w-full h-[36px] rounded-[10px] border border-stone-200 px-2 text-[13px]" type="number" step="0.01" placeholder="Price" value={line.unit_price} onChange={e => updateLine(i, 'unit_price', Number(e.target.value))} /></div>
+                  <div className="col-span-1 text-right text-[13px] font-medium">${(line.qty * line.unit_price).toFixed(2)}</div>
+                  <div className="col-span-1">{form.line_items.length > 1 && <button type="button" onClick={() => removeLine(i)} className="text-red-500 text-xs hover:underline">X</button>}</div>
                 </div>
               ))}
             </div>
             <Button variant="ghost" size="sm" type="button" onClick={addLine} className="mt-2">+ Add Line</Button>
           </div>
 
+          {/* Totals */}
           <div className="rounded-lg bg-stone-50 p-4 space-y-1 text-right text-sm">
             <div className="flex justify-end gap-8"><span>Subtotal:</span><strong>${subtotal.toFixed(2)}</strong></div>
             <div className="flex justify-end gap-8"><span>Tax (0%):</span><strong>$0.00</strong></div>
-            <div className="flex justify-end gap-8 text-base border-t border-stone-200 pt-1"><span>Total Due:</span><strong>${total.toFixed(2)}</strong></div>
+            <div className="flex justify-end gap-8 text-base border-t border-stone-200 pt-1"><span>Total:</span><strong>${total.toFixed(2)}</strong></div>
           </div>
 
-          {/* Payment Details */}
-          <div className="border rounded-lg border-stone-200 p-4 space-y-3">
-            <h3 className="text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">Payment Details</h3>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Select label="Payment Terms" id="inv-pterms" value={form.payment_terms} onChange={e => setForm(f => ({ ...f, payment_terms: e.target.value }))} options={PAYMENT_TERMS_INV.map(t => ({ value: t, label: t }))} />
-              <Select label="Payment Method" id="inv-pmethod" value={form.payment_method_used} onChange={e => setForm(f => ({ ...f, payment_method_used: e.target.value }))} options={PAYMENT_METHODS_INV.map(m => ({ value: m, label: m }))} />
+          {/* Payment Agreement */}
+          <div className="border rounded-lg border-stone-200 p-4 space-y-4">
+            <h3 className="text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">Payment Agreement</h3>
+
+            {/* Payment Method */}
+            <div className="space-y-1.5">
+              <label className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">Payment Method</label>
+              <div className="space-y-1.5">
+                {PAYMENT_METHOD_OPTIONS.map(m => (
+                  <label key={m} className="flex items-center gap-2.5 cursor-pointer">
+                    <input type="radio" name="payment_method" value={m} checked={form.payment_method_used === m} onChange={() => setForm(f => ({ ...f, payment_method_used: m, payment_method_custom: m === 'Multiple' ? f.payment_method_custom : '' }))} className="accent-navy-900" />
+                    <span className="text-[13px]">
+                      {m === 'Check' && `Check (payable to ${COMPANY.check_payable})`}
+                      {m === 'ACH / Bank Transfer' && 'ACH / Bank Transfer'}
+                      {m === 'Zelle' && `Zelle (${COMPANY.zelle})`}
+                      {m === 'Cash' && 'Cash'}
+                      {m === 'Multiple' && 'Multiple (specify below)'}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              {form.payment_method_used === 'Multiple' && (
+                <Input label="Specify Methods" id="inv-pcustom" value={form.payment_method_custom} onChange={e => setForm(f => ({ ...f, payment_method_custom: e.target.value }))} placeholder="e.g. Check + Zelle" />
+              )}
             </div>
+
+            {/* Payment Schedule */}
+            <Select label="Payment Schedule" id="inv-pterms" value={form.payment_terms} onChange={e => setForm(f => ({ ...f, payment_terms: e.target.value }))} options={PAYMENT_TERMS_OPTIONS.map(t => ({ value: t, label: t }))} />
+
+            {/* Deposit */}
             <div className="space-y-2">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={form.has_deposit} onChange={e => setForm(f => ({ ...f, has_deposit: e.target.checked, deposit_received: e.target.checked ? f.deposit_received : 0 }))} className="accent-navy-900 rounded" />
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input type="checkbox" checked={form.has_deposit} onChange={e => {
+                  const checked = e.target.checked
+                  setForm(f => ({
+                    ...f, has_deposit: checked,
+                    deposit_received: checked && f.deposit_received === 0 ? Math.round(total * 50) / 100 : checked ? f.deposit_received : 0,
+                  }))
+                }} className="accent-navy-900 rounded" />
                 <span className="text-[13px] font-medium">Deposit received</span>
               </label>
               {form.has_deposit && (
@@ -207,7 +273,7 @@ export default function InvoicesPage() {
                   <Input label="Deposit Amount ($)" id="inv-deposit" type="number" step="0.01" value={form.deposit_received} onChange={e => setForm(f => ({ ...f, deposit_received: Number(e.target.value) }))} />
                   <div className="space-y-1.5">
                     <label className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">Balance Due</label>
-                    <p className="h-[40px] flex items-center text-[16px] font-bold text-navy-900">${(total - form.deposit_received).toFixed(2)}</p>
+                    <p className="h-[40px] flex items-center text-[18px] font-bold text-navy-900">{fmtCurrency(total - form.deposit_received)}</p>
                   </div>
                 </div>
               )}
@@ -237,7 +303,9 @@ export default function InvoicesPage() {
 /* ─── Professional Invoice Preview ─── */
 function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; job?: Job }) {
   const items = inv.line_items as InvoiceLineItem[]
-  const methods = paymentMethodsForClient(client?.type ?? 'Homeowner')
+  const method = inv.payment_method_used
+  const depositAmt = inv.deposit_received ?? 0
+  const balanceDue = inv.balance_due ?? inv.total
 
   return (
     <>
@@ -268,7 +336,6 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
           {client?.email && <p className="text-stone-600">{client.email}</p>}
         </div>
 
-        {/* RE line */}
         {job?.re_line && <p><span className="font-semibold">RE:</span> {job.re_line}</p>}
 
         {/* Line Items */}
@@ -287,25 +354,34 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
           </tbody>
         </table>
 
-        <div className="ml-auto w-64 space-y-1 text-right">
+        {/* Totals */}
+        <div className="ml-auto w-72 space-y-1 text-right">
           <div className="flex justify-between"><span>Subtotal</span><span>${inv.subtotal.toFixed(2)}</span></div>
           <div className="flex justify-between"><span>Tax (0%)</span><span>$0.00</span></div>
-          <div className="flex justify-between border-t border-stone-300 pt-1 text-base font-bold"><span>Total Due</span><span>${inv.total.toFixed(2)}</span></div>
+          <div className="flex justify-between border-t border-stone-300 pt-1 text-base font-bold"><span>Total</span><span>${inv.total.toFixed(2)}</span></div>
+          {depositAmt > 0 && (
+            <div className="flex justify-between text-success-600"><span>Deposit Received</span><span>-${depositAmt.toFixed(2)}</span></div>
+          )}
+          {depositAmt > 0 && (
+            <div className="flex justify-between border-t border-stone-300 pt-1 text-lg font-bold text-navy-900"><span>Balance Due</span><span>${balanceDue.toFixed(2)}</span></div>
+          )}
         </div>
 
-        {/* Payment Details */}
-        <div className="rounded-lg bg-stone-50 p-4 space-y-1">
+        {/* Payment Information — only what was agreed */}
+        <div className="rounded-lg bg-stone-50 p-4 space-y-1.5">
           <h4 className="font-semibold mb-2">Payment Information</h4>
+          {method && <p>Payment Method: <strong>{method}</strong></p>}
           {inv.payment_terms && <p>Payment Terms: <strong>{inv.payment_terms}</strong></p>}
-          <p>Accepted Payment Methods: <strong>{methods}</strong></p>
-          {(inv.deposit_received ?? 0) > 0 && (
-            <p>Deposit Received: <strong>${inv.deposit_received.toFixed(2)}</strong></p>
+          {/* Show specific info only for the selected method */}
+          {method && (method.includes('Check') || method === 'Check') && (
+            <p className="text-xs text-stone-600">Check payable to: {COMPANY.check_payable}</p>
           )}
-          {(inv.balance_due ?? 0) > 0 && (
-            <p className="text-base font-bold">Balance Due: ${(inv.balance_due ?? inv.total).toFixed(2)}</p>
+          {method && (method.includes('Zelle') || method === 'Zelle') && (
+            <p className="text-xs text-stone-600">Zelle: {COMPANY.zelle}</p>
           )}
-          <p className="text-xs text-stone-500 mt-2">Check payable to: {COMPANY.check_payable}</p>
-          <p className="text-xs text-stone-500">Zelle: {COMPANY.zelle}</p>
+          {method && (method.includes('ACH') || method === 'ACH / Bank Transfer') && (
+            <p className="text-xs text-stone-600">ACH / Bank Transfer — contact office for details</p>
+          )}
         </div>
 
         {inv.notes && <div><h4 className="font-semibold mb-1">Notes</h4><p className="text-stone-600">{inv.notes}</p></div>}
