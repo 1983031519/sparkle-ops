@@ -252,7 +252,7 @@ export default function JobsPage() {
 
       {/* JOB FORM MODAL */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Edit Job' : 'New Job'} wide>
-        <div className="space-y-5 max-h-[75vh] overflow-y-auto pr-1">
+        <div className="space-y-5 max-h-[80vh] overflow-y-auto pr-1">
           {/* Flow indicator at top */}
           {editing && (
             <div className="rounded-lg bg-stone-50 p-3 flex items-center justify-between">
@@ -338,9 +338,16 @@ export default function JobsPage() {
             </div>
           )}
 
-          {/* Photos (only when editing — need a job ID for storage path) */}
-          {editing && (
+          {/* Photos */}
+          {editing ? (
             <PhotoUpload jobId={editing.id} photos={photos} onPhotosChange={setPhotos} />
+          ) : (
+            <div className="border rounded-lg border-stone-200 p-4">
+              <h3 className="text-sm font-semibold text-stone-700 flex items-center gap-2 mb-2">
+                <ImageIcon className="h-4 w-4" /> Photos
+              </h3>
+              <p className="text-xs text-stone-400 italic">Save the job first, then you can upload photos.</p>
+            </div>
           )}
 
           <div className="flex justify-between border-t border-stone-200 pt-4">
