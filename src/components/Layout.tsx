@@ -25,13 +25,7 @@ export function Layout() {
           <img
             src="/sparkle-logo.png"
             alt="Sparkle Stone & Pavers"
-            className="h-10 w-auto brightness-0 invert"
-            onError={(e) => {
-              const el = e.currentTarget
-              el.onerror = null
-              el.src = '/sparkle-logo.svg'
-              el.className = 'h-10 w-auto brightness-0 invert'
-            }}
+            style={{ width: 160, height: 'auto', filter: 'brightness(0) invert(1)' }}
           />
         </div>
 

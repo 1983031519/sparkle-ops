@@ -30,12 +30,8 @@ export default function LoginPage() {
           <img
             src="/sparkle-logo.png"
             alt="Sparkle Stone & Pavers"
-            className="mx-auto mb-4 h-12 w-auto"
-            onError={(e) => {
-              const el = e.currentTarget
-              el.onerror = null
-              el.src = '/sparkle-logo.svg'
-            }}
+            style={{ width: 180, height: 'auto' }}
+            className="mx-auto mb-4"
           />
           <h1 className="text-[22px] font-bold text-navy-900">Welcome back</h1>
           <p className="mt-1 text-[13px] text-stone-500">Sign in to your operations portal</p>
