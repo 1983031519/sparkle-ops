@@ -18,12 +18,16 @@ export default function LoginPage() {
     if (!password) { setError('Please enter your password.'); return }
 
     setLoading(true)
+    console.log('[Login] Submitting for:', trimmedEmail)
     try {
       await signIn(trimmedEmail, password)
+      console.log('[Login] Success — redirecting to /')
+      // Force navigation — don't rely on React state across hook instances
+      window.location.href = '/'
     } catch (err: unknown) {
       console.error('[Login] Auth error:', err)
+      setLoading(false)
       const msg = err instanceof Error ? err.message : 'Sign in failed'
-      // Make Supabase errors friendlier
       if (msg.includes('Invalid login')) {
         setError('Incorrect email or password. Please try again.')
       } else if (msg.includes('Email not confirmed')) {
@@ -33,8 +37,6 @@ export default function LoginPage() {
       } else {
         setError(msg)
       }
-    } finally {
-      setLoading(false)
     }
   }
 
