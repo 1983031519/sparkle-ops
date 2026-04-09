@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 
 interface Props {
@@ -10,31 +10,72 @@ interface Props {
 }
 
 export function Modal({ open, onClose, title, children, wide }: Props) {
-  const ref = useRef<HTMLDialogElement>(null)
-
+  // Lock body scroll when open
   useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    if (open && !el.open) el.showModal()
-    else if (!open && el.open) el.close()
+    if (open) {
+      document.body.style.overflow = 'hidden'
+      return () => { document.body.style.overflow = '' }
+    }
   }, [open])
+
+  // Close on Escape key
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [open, onClose])
 
   if (!open) return null
 
   return (
-    <dialog
-      ref={ref}
-      onClose={onClose}
-      className={`rounded-[20px] border-0 p-0 shadow-[0_20px_60px_rgba(0,0,0,0.15)] backdrop:bg-black/40 backdrop:backdrop-blur-[4px] ${wide ? 'max-w-4xl' : 'max-w-lg'} w-full animate-[modalIn_200ms_ease-out]`}
-      style={{ animationFillMode: 'backwards' }}
-    >
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-stone-200/60 bg-white px-6 py-4 rounded-t-[20px]">
-        <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0D1B3D', letterSpacing: -0.3 }}>{title}</h2>
-        <button onClick={onClose} className="rounded-full p-1.5 transition-all duration-150 hover:bg-stone-100">
-          <X size={16} strokeWidth={1.5} className="text-stone-400" />
-        </button>
+    <>
+      {/* Overlay — fixed fullscreen */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
+          zIndex: 9998,
+        }}
+      />
+      {/* Modal — fixed centered */}
+      <div
+        style={{
+          position: 'fixed', top: '50%', left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '100%', maxWidth: wide ? 896 : 512,
+          maxHeight: '90vh',
+          background: 'white', borderRadius: 20,
+          boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+          zIndex: 9999,
+          display: 'flex', flexDirection: 'column',
+          animation: 'modalIn 200ms ease-out',
+          margin: '0 16px',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header — sticky */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '16px 24px', borderBottom: '1px solid rgba(0,0,0,0.06)',
+          borderRadius: '20px 20px 0 0', flexShrink: 0,
+        }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0D1B3D', letterSpacing: -0.3 }}>{title}</h2>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', padding: 6, borderRadius: 20, cursor: 'pointer', transition: 'background 150ms' }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#F3F4F6' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+          >
+            <X size={16} strokeWidth={1.5} color="#9CA3AF" />
+          </button>
+        </div>
+        {/* Body — scrollable */}
+        <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1 }}>
+          {children}
+        </div>
       </div>
-      <div className="px-6 py-5">{children}</div>
-    </dialog>
+    </>
   )
 }
