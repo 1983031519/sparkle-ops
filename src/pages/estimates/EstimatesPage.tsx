@@ -355,8 +355,8 @@ export default function EstimatesPage() {
 function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
   const mats = (est.materials_specified ?? {}) as MaterialsSpecified
   const items = est.line_items as EstimateLineItem[]
-  const deposit = (est as Record<string, unknown>).deposit_amount as number | undefined ?? est.total * 0.5
-  const balance = (est as Record<string, unknown>).balance_amount as number | undefined ?? est.total * 0.5
+  const deposit = est.deposit_amount ?? est.total * 0.5
+  const balance = est.balance_amount ?? est.total * 0.5
   const clientType = client?.type ?? 'Homeowner'
 
   return (
