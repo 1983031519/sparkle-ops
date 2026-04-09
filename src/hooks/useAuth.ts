@@ -91,7 +91,7 @@ export function useAuth() {
       clearTimeout(timeout)
       subscription.unsubscribe()
     }
-  }, [fetchProfile, loading])
+  }, [fetchProfile])
 
   const signIn = useCallback(async (email: string, password: string) => {
     console.log('[Auth] Attempting sign in for:', email)
@@ -103,14 +103,15 @@ export function useAuth() {
     console.log('[Auth] Sign in success:', data.user?.email)
     if (data.user) {
       setUser(data.user)
-      const p = await fetchProfile(data.user.id)
-      setProfile(p)
-      if (p && !p.active) {
-        await supabase.auth.signOut()
-        setUser(null)
-        setProfile(null)
-        throw new Error('Your account has been deactivated. Contact your admin.')
-      }
+      // Fetch profile in background — don't block sign-in
+      fetchProfile(data.user.id).then(p => {
+        setProfile(p)
+        if (p && !p.active) {
+          supabase.auth.signOut()
+          setUser(null)
+          setProfile(null)
+        }
+      })
     }
     return data
   }, [fetchProfile])
