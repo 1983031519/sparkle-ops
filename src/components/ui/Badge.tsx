@@ -1,14 +1,14 @@
 import { clsx } from 'clsx'
 
 const colors: Record<string, string> = {
-  green: 'bg-success-50 text-success-600',
-  blue: 'bg-info-50 text-info-600',
-  yellow: 'bg-warning-50 text-warning-600',
-  red: 'bg-danger-50 text-danger-600',
-  gray: 'bg-[#F3F4F6] text-[#6B7280]',
-  purple: 'bg-purple-50 text-purple-700',
-  orange: 'bg-orange-50 text-orange-700',
-  gold: 'bg-gold-100 text-gold-500',
+  green: 'bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]',
+  blue: 'bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]',
+  yellow: 'bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]',
+  red: 'bg-[#FFF1F2] text-[#E11D48] border border-[#FECDD3]',
+  gray: 'bg-[#F3F4F6] text-[#6B7280] border border-[#E5E7EB]',
+  purple: 'bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]',
+  orange: 'bg-orange-50 text-orange-700 border border-orange-200',
+  gold: 'bg-gold-100 text-gold-500 border border-gold-200',
 }
 
 interface Props {
@@ -20,7 +20,7 @@ interface Props {
 export function Badge({ children, color = 'gray', className }: Props) {
   return (
     <span className={clsx(
-      'inline-flex items-center rounded-full px-2.5 py-[3px] text-[11px] font-semibold tracking-[0.2px]',
+      'inline-flex items-center rounded-[20px] px-2.5 py-[2px] text-[11px] font-semibold tracking-[0.2px] transition-opacity duration-150',
       colors[color],
       className,
     )}>
@@ -31,9 +31,10 @@ export function Badge({ children, color = 'gray', className }: Props) {
 
 export function statusColor(status: string): keyof typeof colors {
   const map: Record<string, keyof typeof colors> = {
-    Lead: 'blue', Scheduled: 'purple', 'In Progress': 'yellow', Completed: 'green', Cancelled: 'gray',
+    Lead: 'blue', Scheduled: 'purple', 'In Progress': 'yellow', Completed: 'blue', Cancelled: 'gray',
     Draft: 'gray', Sent: 'blue', Approved: 'green',
-    Unpaid: 'yellow', Paid: 'green', Overdue: 'red',
+    Unpaid: 'red', Paid: 'green', Overdue: 'red',
+    Active: 'green', Inactive: 'gray',
   }
   return map[status] ?? 'gray'
 }

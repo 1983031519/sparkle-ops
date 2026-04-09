@@ -24,7 +24,7 @@ export function Layout() {
         className="no-print"
         style={{ width: 240, display: 'flex', flexDirection: 'column', backgroundColor: NAVY, minHeight: '100vh' }}
       >
-        <div style={{ backgroundColor: NAVY, padding: '20px 20px 16px' }}>
+        <div style={{ backgroundColor: NAVY, padding: '20px 20px 16px', borderBottom: '1px solid rgba(200,169,110,0.2)' }}>
           <img src="/logo-white.png" alt="Sparkle Stone & Pavers" style={{ width: 150, height: 'auto', maxHeight: 48, display: 'block', objectFit: 'contain' }} />
         </div>
 
@@ -41,13 +41,12 @@ export function Layout() {
               style={({ isActive }) => ({
                 display: 'flex', alignItems: 'center', gap: 12,
                 padding: '10px 12px', borderRadius: 8,
-                fontSize: 13, fontWeight: 500,
+                fontSize: 13, fontWeight: isActive ? 600 : 500,
                 textDecoration: 'none',
-                transition: 'all 150ms',
-                borderLeft: isActive ? '3px solid #C8A96E' : '3px solid transparent',
-                paddingLeft: isActive ? 9 : 12,
+                transition: 'all 150ms ease',
                 color: isActive ? '#C8A96E' : 'rgba(255,255,255,0.65)',
-                backgroundColor: isActive ? 'rgba(200,169,110,0.1)' : 'transparent',
+                backgroundColor: isActive ? 'rgba(200,169,110,0.08)' : 'transparent',
+                boxShadow: isActive ? 'inset 3px 0 0 #C8A96E' : 'none',
               })}
               onMouseEnter={e => {
                 const el = e.currentTarget
@@ -64,7 +63,7 @@ export function Layout() {
                 }
               }}
             >
-              <Icon style={{ width: 18, height: 18 }} />
+              <Icon size={18} strokeWidth={1.5} />
               {label}
             </NavLink>
           ))}
@@ -86,7 +85,7 @@ export function Layout() {
             onMouseEnter={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.8)'; e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)' }}
             onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; e.currentTarget.style.backgroundColor = 'transparent' }}
           >
-            <LogOut style={{ width: 16, height: 16 }} />
+            <LogOut size={16} strokeWidth={1.5} />
             Sign Out
           </button>
         </div>

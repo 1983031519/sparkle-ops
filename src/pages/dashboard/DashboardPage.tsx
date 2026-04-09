@@ -72,7 +72,7 @@ export default function DashboardPage() {
             borderBottom: kpi.accent ? '3px solid #C8A96E' : '1px solid rgba(0,0,0,0.06)',
           }}>
             <p style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1.5, color: '#9CA3AF', marginBottom: 8 }}>{kpi.label}</p>
-            <p style={{ fontSize: 36, fontWeight: 700, color: '#0D1B3D', lineHeight: 1.1 }}>{kpi.value}</p>
+            <p style={{ fontSize: 36, fontWeight: 700, color: '#0D1B3D', lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>{kpi.value}</p>
           </div>
         ))}
       </div>

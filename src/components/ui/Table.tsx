@@ -23,9 +23,9 @@ export function Table<T extends { id: string }>({ columns, data, onRowClick, emp
     <div className="overflow-x-auto">
       <table className="min-w-full">
         <thead>
-          <tr className="border-b border-stone-100">
+          <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
             {columns.map(col => (
-              <th key={col.key} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[1px] text-stone-400">
+              <th key={col.key} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF' }}>
                 {col.header}
               </th>
             ))}
@@ -36,10 +36,11 @@ export function Table<T extends { id: string }>({ columns, data, onRowClick, emp
             <tr
               key={row.id}
               onClick={() => onRowClick?.(row)}
-              className={`h-[44px] border-b border-stone-50 transition-colors duration-100 ${onRowClick ? 'cursor-pointer hover:bg-surface' : ''}`}
+              style={{ height: 52, borderBottom: '1px solid #F3F4F6', cursor: onRowClick ? 'pointer' : 'default', transition: 'background 0.1s' }}
+              className={onRowClick ? 'group hover:bg-[#FAFAF5]' : ''}
             >
-              {columns.map(col => (
-                <td key={col.key} className={`px-4 py-2.5 text-[13px] text-stone-700 ${col.className ?? ''}`}>
+              {columns.map((col, i) => (
+                <td key={col.key} style={{ padding: '10px 16px', fontSize: 13, color: i === 0 ? '#0D1B3D' : '#4B5563', fontWeight: i === 0 ? 600 : 400 }} className={col.className}>
                   {col.render(row)}
                 </td>
               ))}

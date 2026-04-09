@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 export function Card({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div className={clsx(
-      'rounded-[16px] border border-black/[0.06] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)]',
+      'rounded-[16px] border border-black/[0.06] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)] transition-shadow duration-200 hover:shadow-[0_4px_20px_rgba(0,0,0,0.08)]',
       className,
     )}>
       {children}
