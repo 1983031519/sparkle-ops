@@ -92,7 +92,7 @@ export default function ProjectsPage() {
       mid_percent: String(proj.mid_percent), final_percent: String(proj.final_percent),
       accepted_payment_methods: proj.accepted_payment_methods ?? ['Check', 'ACH', 'Zelle'],
       warranty: proj.warranty ?? DEFAULT_WARRANTY, notes: proj.notes ?? '', valid_until: proj.valid_until ?? '',
-      project_photos: [],  // TODO: load from storage if needed
+      project_photos: (proj.photos as string[]) ?? [],
     })
     const { data } = await supabase.from('project_phases').select('*').eq('project_id', proj.id).order('order_num')
     const ph = (data ?? []) as ProjectPhase[]
@@ -257,6 +257,7 @@ export default function ProjectsPage() {
                 folder={editing.id}
                 photos={form.project_photos}
                 onPhotosChange={urls => setForm(f => ({ ...f, project_photos: urls }))}
+                persistTo={{ table: 'projects', id: editing.id, column: 'photos' }}
                 maxPhotos={6}
                 label="Site Overview / Existing Conditions"
               />
@@ -297,6 +298,7 @@ export default function ProjectsPage() {
                       folder={`${editing.id}/phase-${ph.order_num}`}
                       photos={ph.photos}
                       onPhotosChange={urls => updatePhase(i, 'photos', urls)}
+                      persistTo={ph.id ? { table: 'project_phases', id: ph.id, column: 'photos' } : undefined}
                       maxPhotos={4}
                       label={`Phase ${ph.order_num} Photos`}
                     />

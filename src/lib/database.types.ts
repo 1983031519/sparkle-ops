@@ -210,6 +210,7 @@ export interface Project {
   accepted_payment_methods: string[]
   warranty: string | null
   notes: string | null
+  photos: string[]
   date: string | null
   valid_until: string | null
   created_at: string

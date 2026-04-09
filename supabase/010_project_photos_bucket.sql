@@ -1,3 +1,6 @@
+-- Add photos column to projects table
+alter table public.projects add column if not exists photos text[] default '{}';
+
 -- Create project-photos storage bucket + RLS policies
 -- Run in Supabase SQL Editor
 
