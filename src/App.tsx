@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { Layout } from '@/components/Layout'
+import { ToastProvider } from '@/components/ui/Toast'
 import LoginPage from '@/pages/auth/LoginPage'
 import DashboardPage from '@/pages/dashboard/DashboardPage'
 import ClientsPage from '@/pages/clients/ClientsPage'
@@ -20,20 +21,22 @@ function ProtectedRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route element={<ProtectedRoutes />}>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/clients" element={<ClientsPage />} />
-          <Route path="/jobs" element={<JobsPage />} />
-          <Route path="/estimates" element={<EstimatesPage />} />
-          <Route path="/invoices" element={<InvoicesPage />} />
-          <Route path="/suppliers" element={<SuppliersPage />} />
-          <Route path="/inventory" element={<InventoryPage />} />
-          <Route path="/reports" element={<ReportsPage />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <ToastProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route element={<ProtectedRoutes />}>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/clients" element={<ClientsPage />} />
+            <Route path="/jobs" element={<JobsPage />} />
+            <Route path="/estimates" element={<EstimatesPage />} />
+            <Route path="/invoices" element={<InvoicesPage />} />
+            <Route path="/suppliers" element={<SuppliersPage />} />
+            <Route path="/inventory" element={<InventoryPage />} />
+            <Route path="/reports" element={<ReportsPage />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </ToastProvider>
   )
 }

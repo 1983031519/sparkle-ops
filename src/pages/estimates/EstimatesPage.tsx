@@ -15,6 +15,7 @@ import {
 } from '@/lib/constants'
 import type { Estimate, EstimateStatus, EstimateLineItem, Client, Job, MaterialsSpecified } from '@/lib/database.types'
 import { fmtDate, fmtCurrency, futureISO, isoDatePart } from '@/lib/constants'
+import { useToast } from '@/components/ui/Toast'
 
 const emptyLine: EstimateLineItem = { description: '', qty: 1, unit: 'ea', unit_price: 0 }
 const emptyMaterials: MaterialsSpecified = { paver_type: '', paver_size: '', paver_color: '', sand_type: '', sealant: '', other: '' }
@@ -44,6 +45,8 @@ export default function EstimatesPage() {
   const [editing, setEditing] = useState<Estimate | null>(null)
   const [form, setForm] = useState<EstForm>(emptyForm)
   const [previewEst, setPreviewEst] = useState<Estimate | null>(null)
+  const [saving, setSaving] = useState(false)
+  const toast = useToast()
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -106,35 +109,80 @@ export default function EstimatesPage() {
   }
 
   async function handleSave() {
-    const { subtotal, tax_amount, total } = calcTotals(form.line_items, form.tax_rate)
-    const deposit = total * 0.5
-    const payload = {
-      estimate_number: editing?.estimate_number ?? generateEstimateNumber(estimates.length + 1),
-      client_id: form.client_id, status: form.status, division: form.division,
-      attn: form.attn || null, site_address: form.site_address || null,
-      re_line: form.re_line || null, scope_of_work: form.scope_of_work || null,
-      materials_specified: form.materials, start_date: form.start_date || null, end_date: form.end_date || null,
-      line_items: form.line_items, subtotal, tax_rate: form.tax_rate, tax_amount, total,
-      warranty: form.warranty || null,
-      payment_schedule: { deposit, balance: total - deposit, methods: paymentMethodsForClient(clientMap[form.client_id]?.type ?? 'Homeowner') },
-      notes: form.notes || null, valid_until: form.valid_until || null,
-      job_id: editing?.job_id ?? null,
+    // Validation
+    if (!form.client_id) {
+      toast.error('Please select a client before saving.')
+      return
     }
-    if (editing) {
-      await supabase.from('estimates').update(payload as never).eq('id', editing.id)
-    } else {
-      await supabase.from('estimates').insert(payload as never)
+
+    setSaving(true)
+    try {
+      const { subtotal, tax_amount, total } = calcTotals(form.line_items, form.tax_rate)
+      const deposit = total * 0.5
+      const clientType = clientMap[form.client_id]?.type ?? 'Homeowner'
+
+      const payload = {
+        estimate_number: editing?.estimate_number ?? generateEstimateNumber(estimates.length + 1),
+        client_id: form.client_id,
+        status: form.status,
+        division: form.division || 'Pavers',
+        attn: form.attn || null,
+        site_address: form.site_address || null,
+        re_line: form.re_line || null,
+        scope_of_work: form.scope_of_work || null,
+        materials_specified: form.materials,
+        start_date: form.start_date || null,
+        end_date: form.end_date || null,
+        line_items: form.line_items,
+        subtotal,
+        tax_rate: form.tax_rate,
+        tax_amount,
+        total,
+        warranty: form.warranty || null,
+        payment_schedule: { deposit, balance: total - deposit, methods: paymentMethodsForClient(clientType) },
+        notes: form.notes || null,
+        valid_until: form.valid_until || null,
+        job_id: editing?.job_id ?? null,
+      }
+
+      let error: { message: string } | null = null
+
+      if (editing) {
+        const res = await supabase.from('estimates').update(payload as never).eq('id', editing.id)
+        error = res.error
+      } else {
+        const res = await supabase.from('estimates').insert(payload as never)
+        error = res.error
+      }
+
+      if (error) {
+        console.error('Supabase estimate save error:', error)
+        toast.error(`Failed to save estimate: ${error.message}`)
+        return
+      }
+
+      await fetchAll()
+      setModalOpen(false)
+      toast.success(editing ? 'Estimate updated successfully.' : 'Estimate saved successfully.')
+    } catch (err) {
+      console.error('Unexpected error saving estimate:', err)
+      toast.error('An unexpected error occurred. Please try again.')
+    } finally {
+      setSaving(false)
     }
-    await fetchAll()
-    setModalOpen(false)
   }
 
   async function handleDelete() {
-    if (editing && confirm('Delete this estimate?')) {
-      await supabase.from('estimates').delete().eq('id', editing.id)
-      await fetchAll()
-      setModalOpen(false)
+    if (!editing || !confirm('Delete this estimate?')) return
+    const { error } = await supabase.from('estimates').delete().eq('id', editing.id)
+    if (error) {
+      console.error('Supabase delete error:', error)
+      toast.error(`Failed to delete: ${error.message}`)
+      return
     }
+    await fetchAll()
+    setModalOpen(false)
+    toast.success('Estimate deleted.')
   }
 
   async function convertToJob(est: Estimate) {
@@ -148,10 +196,14 @@ export default function EstimatesPage() {
       estimate_id: est.id, scheduled_date: est.start_date || null,
       checklist: [], photos: [],
     } as never)
-    if (!error) {
-      await supabase.from('estimates').update({ status: 'Accepted' } as never).eq('id', est.id)
-      await fetchAll()
+    if (error) {
+      console.error('Convert to job error:', error)
+      toast.error(`Failed to convert: ${error.message}`)
+      return
     }
+    await supabase.from('estimates').update({ status: 'Accepted' } as never).eq('id', est.id)
+    await fetchAll()
+    toast.success('Job created from estimate.')
   }
 
   function openPreview(est: Estimate) { setPreviewEst(est); setPreviewOpen(true) }
@@ -286,7 +338,7 @@ export default function EstimatesPage() {
             {editing && <Button variant="danger" onClick={handleDelete} type="button">Delete</Button>}
             <div className="ml-auto flex gap-2">
               <Button variant="secondary" onClick={() => setModalOpen(false)} type="button">Cancel</Button>
-              <Button onClick={handleSave} type="button">{editing ? 'Update' : 'Create'}</Button>
+              <Button onClick={handleSave} type="button" disabled={saving}>{saving ? 'Saving...' : editing ? 'Update' : 'Create'}</Button>
             </div>
           </div>
         </div>
