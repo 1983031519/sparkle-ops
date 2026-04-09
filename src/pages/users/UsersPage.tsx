@@ -43,7 +43,7 @@ export default function UsersPage() {
   const handleRoleChange = async (profileId: string, newRole: UserRole) => {
     const { error } = await supabase
       .from('profiles')
-      .update({ role: newRole, updated_at: new Date().toISOString() })
+      .update({ role: newRole, updated_at: new Date().toISOString() } as never)
       .eq('id', profileId)
     if (error) {
       toast.error('Failed to update role')
@@ -56,7 +56,7 @@ export default function UsersPage() {
   const handleToggleActive = async (profileId: string, currentActive: boolean) => {
     const { error } = await supabase
       .from('profiles')
-      .update({ active: !currentActive, updated_at: new Date().toISOString() })
+      .update({ active: !currentActive, updated_at: new Date().toISOString() } as never)
       .eq('id', profileId)
     if (error) {
       toast.error('Failed to update status')
