@@ -65,10 +65,10 @@ export default function ReportsPage() {
 
   // 1. Monthly Revenue (paid invoices)
   const monthlyRevenue = useMemo(() => {
-    const paid = invoices.filter(i => i.status === 'Paid' && inRange(i.paid_date ?? i.created_at, dateRange))
+    const paid = invoices.filter(i => i.status === 'Paid' && inRange(i.created_at ?? i.created_at, dateRange))
     const byMonth: Record<string, number> = {}
     paid.forEach(i => {
-      const month = format(parseISO(i.paid_date ?? i.created_at), 'yyyy-MM')
+      const month = format(parseISO(i.created_at ?? i.created_at), 'yyyy-MM')
       byMonth[month] = (byMonth[month] ?? 0) + i.total
     })
     return Object.entries(byMonth).sort().map(([month, total]) => ({
@@ -102,7 +102,7 @@ export default function ReportsPage() {
 
   // 5. Revenue by division
   const revenueByDivision = useMemo(() => {
-    const paidInvoices = invoices.filter(i => i.status === 'Paid' && inRange(i.paid_date ?? i.created_at, dateRange))
+    const paidInvoices = invoices.filter(i => i.status === 'Paid' && inRange(i.created_at ?? i.created_at, dateRange))
     const jobMap = new Map(jobs.map(j => [j.id, j]))
     const divTotals: Record<string, number> = { Pavers: 0, Stone: 0 }
     paidInvoices.forEach(i => {
@@ -111,10 +111,10 @@ export default function ReportsPage() {
         if (job) divTotals[job.division] = (divTotals[job.division] ?? 0) + i.total
       }
     })
-    // Also count jobs with total_amount as a fallback
-    const filteredJobs = jobs.filter(j => j.status === 'Completed' && inRange(j.completed_date ?? j.created_at, dateRange))
+    // Also count completed jobs total as fallback
+    const filteredJobs = jobs.filter(j => j.status === 'Completed' && inRange(j.end_date ?? j.created_at, dateRange))
     if (divTotals.Pavers === 0 && divTotals.Stone === 0) {
-      filteredJobs.forEach(j => { divTotals[j.division] = (divTotals[j.division] ?? 0) + j.total_amount })
+      filteredJobs.forEach(j => { divTotals[j.division] = (divTotals[j.division] ?? 0) + j.total })
     }
     return Object.entries(divTotals).filter(([, v]) => v > 0).map(([name, value]) => ({ name, value }))
   }, [invoices, jobs, dateRange])
@@ -184,7 +184,7 @@ export default function ReportsPage() {
                 {outstandingInvoices.map(inv => (
                   <div key={inv.id} className="flex items-center justify-between rounded-lg border border-stone-100 px-3 py-2 text-sm">
                     <div>
-                      <span className="font-mono text-xs text-stone-500">{inv.invoice_number}</span>
+                      <span className="font-mono text-xs text-stone-500">{inv.number}</span>
                       {inv.due_date && <span className="ml-2 text-xs text-stone-400">Due: {fmtDateShort(inv.due_date)}</span>}
                     </div>
                     <div className="flex items-center gap-2">

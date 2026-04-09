@@ -118,7 +118,7 @@ export default function InvoicesPage() {
             data={filtered}
             onRowClick={openEdit}
             columns={[
-              { key: 'number', header: '#', render: i => <span className="font-mono text-xs">{i.invoice_number}</span> },
+              { key: 'number', header: '#', render: i => <span className="font-mono text-xs">{i.number}</span> },
               { key: 'client', header: 'Client', render: i => clientMap[i.client_id]?.name ?? '-' },
               { key: 'status', header: 'Status', render: i => <Badge color={statusColor(i.status)}>{i.status}</Badge> },
               { key: 'total', header: 'Total', render: i => fmtCurrency(i.total) },
