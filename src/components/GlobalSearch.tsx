@@ -20,9 +20,9 @@ export function GlobalSearch({ mobile = false }: { mobile?: boolean }) {
   const navigate = useNavigate()
 
   // Debounce search
-  const timerRef = useRef<ReturnType<typeof setTimeout>>()
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   function handleChange(val: string) {
-    clearTimeout(timerRef.current)
+    if (timerRef.current) clearTimeout(timerRef.current)
     if (val.length < 2) { search(val); return }
     timerRef.current = setTimeout(() => search(val), 200)
   }
