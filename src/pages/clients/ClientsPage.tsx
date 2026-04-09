@@ -94,7 +94,7 @@ export default function ClientsPage() {
           email: c.email || null,
           preferred_contact: c.preferred_contact || null,
           notes: c.notes || null,
-        }))
+        })) as never
       )
     }
 

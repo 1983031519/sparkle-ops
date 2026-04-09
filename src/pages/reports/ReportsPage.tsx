@@ -160,7 +160,7 @@ export default function ReportsPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
                   <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(v: number) => [`$${v.toLocaleString()}`, 'Revenue']} />
+                  <Tooltip formatter={(v) => [`$${Number(v).toLocaleString()}`, 'Revenue']} />
                   <Bar dataKey="revenue" fill="#22c55e" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -248,7 +248,7 @@ export default function ReportsPage() {
                     <Cell fill="#f97316" />
                     <Cell fill="#3b82f6" />
                   </Pie>
-                  <Tooltip formatter={(v: number) => `$${v.toLocaleString()}`} />
+                  <Tooltip formatter={(v) => `$${Number(v).toLocaleString()}`} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
