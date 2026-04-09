@@ -9,6 +9,7 @@ import { Table } from '@/components/ui/Table'
 import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { INVENTORY_CATEGORIES, fmtCurrency } from '@/lib/constants'
+import { useToast } from '@/components/ui/Toast'
 import type { InventoryItem, InventoryCategory, Supplier } from '@/lib/database.types'
 
 const emptyForm = { name: '', category: 'Bricks' as InventoryCategory, supplier_id: '', quantity: 0, unit: 'pcs', low_stock_threshold: 10, unit_cost: 0 }
@@ -20,6 +21,8 @@ export default function InventoryPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<InventoryItem | null>(null)
   const [form, setForm] = useState(emptyForm)
+  const [saving, setSaving] = useState(false)
+  const toast = useToast()
 
   useEffect(() => {
     supabase.from('suppliers').select('*').order('name').then(({ data }) => setSuppliers(data ?? []))
@@ -40,14 +43,27 @@ export default function InventoryPage() {
   }
 
   async function handleSave() {
-    const payload = { ...form, supplier_id: form.supplier_id || null }
-    if (editing) await update(editing.id, payload)
-    else await insert(payload)
-    setModalOpen(false)
+    if (!form.name.trim()) { toast.error('Item name is required.'); return }
+    setSaving(true)
+    try {
+      const payload = { ...form, supplier_id: form.supplier_id || null }
+      if (editing) await update(editing.id, payload)
+      else await insert(payload)
+      setModalOpen(false)
+      toast.success(editing ? 'Item updated.' : 'Item saved.')
+    } catch (err) {
+      toast.error(`Failed to save item: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    } finally { setSaving(false) }
   }
 
   async function handleDelete() {
-    if (editing && confirm('Delete this item?')) { await remove(editing.id); setModalOpen(false) }
+    if (!editing || !confirm('Delete this item?')) return
+    try {
+      await remove(editing.id); setModalOpen(false)
+      toast.success('Item deleted.')
+    } catch (err) {
+      toast.error(`Failed to delete: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    }
   }
 
   const catColors: Record<string, string> = { Bricks: 'orange', Slabs: 'blue', Tiles: 'purple', Sand: 'yellow', Sealant: 'green' }
@@ -117,7 +133,7 @@ export default function InventoryPage() {
             {editing && <Button variant="danger" onClick={handleDelete}>Delete</Button>}
             <div className="ml-auto flex gap-2">
               <Button variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button onClick={handleSave}>{editing ? 'Update' : 'Create'}</Button>
+              <Button onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : editing ? 'Update' : 'Create'}</Button>
             </div>
           </div>
         </div>

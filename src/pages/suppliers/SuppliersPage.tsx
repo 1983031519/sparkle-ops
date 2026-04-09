@@ -6,6 +6,7 @@ import { Input, Textarea } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
 import { Table } from '@/components/ui/Table'
 import { Modal } from '@/components/ui/Modal'
+import { useToast } from '@/components/ui/Toast'
 import type { Supplier } from '@/lib/database.types'
 
 const emptyForm = { name: '', contact_name: '', email: '', phone: '', address: '', notes: '' }
@@ -16,6 +17,8 @@ export default function SuppliersPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Supplier | null>(null)
   const [form, setForm] = useState(emptyForm)
+  const [saving, setSaving] = useState(false)
+  const toast = useToast()
 
   const filtered = suppliers.filter(s => s.name.toLowerCase().includes(search.toLowerCase()))
 
@@ -27,14 +30,27 @@ export default function SuppliersPage() {
   }
 
   async function handleSave() {
-    const payload = { ...form, contact_name: form.contact_name || null, email: form.email || null, phone: form.phone || null, address: form.address || null, notes: form.notes || null }
-    if (editing) await update(editing.id, payload)
-    else await insert(payload)
-    setModalOpen(false)
+    if (!form.name.trim()) { toast.error('Supplier name is required.'); return }
+    setSaving(true)
+    try {
+      const payload = { ...form, contact_name: form.contact_name || null, email: form.email || null, phone: form.phone || null, address: form.address || null, notes: form.notes || null }
+      if (editing) await update(editing.id, payload)
+      else await insert(payload)
+      setModalOpen(false)
+      toast.success(editing ? 'Supplier updated.' : 'Supplier saved.')
+    } catch (err) {
+      toast.error(`Failed to save supplier: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    } finally { setSaving(false) }
   }
 
   async function handleDelete() {
-    if (editing && confirm('Delete this supplier?')) { await remove(editing.id); setModalOpen(false) }
+    if (!editing || !confirm('Delete this supplier?')) return
+    try {
+      await remove(editing.id); setModalOpen(false)
+      toast.success('Supplier deleted.')
+    } catch (err) {
+      toast.error(`Failed to delete: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    }
   }
 
   return (
@@ -79,7 +95,7 @@ export default function SuppliersPage() {
             {editing && <Button variant="danger" onClick={handleDelete}>Delete</Button>}
             <div className="ml-auto flex gap-2">
               <Button variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button onClick={handleSave}>{editing ? 'Update' : 'Create'}</Button>
+              <Button onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : editing ? 'Update' : 'Create'}</Button>
             </div>
           </div>
         </div>

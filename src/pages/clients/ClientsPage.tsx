@@ -9,6 +9,7 @@ import { Table } from '@/components/ui/Table'
 import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { CLIENT_TYPES, CONTACT_ROLES, PREFERRED_CONTACTS } from '@/lib/constants'
+import { useToast } from '@/components/ui/Toast'
 import type { Client, ClientType, ClientContact } from '@/lib/database.types'
 
 const typeColors: Record<string, string> = {
@@ -27,6 +28,8 @@ export default function ClientsPage() {
   const [editing, setEditing] = useState<Client | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [contacts, setContacts] = useState<ContactForm[]>([])
+  const [saving, setSaving] = useState(false)
+  const toast = useToast()
 
   const fetchContacts = useCallback(async () => {
     const { data } = await supabase.from('client_contacts').select('*').order('created_at')
@@ -70,43 +73,46 @@ export default function ClientsPage() {
   }
 
   async function handleSave() {
-    const payload = { ...form, email: form.email || null, phone: form.phone || null, address: form.address || null, notes: form.notes || null }
-    let clientId: string
-    if (editing) {
-      await update(editing.id, payload)
-      clientId = editing.id
-      // Delete existing contacts and re-insert
-      await supabase.from('client_contacts').delete().eq('client_id', clientId)
-    } else {
-      const newClient = await insert(payload)
-      clientId = (newClient as Client).id
-    }
-
-    // Insert contacts
-    const validContacts = contacts.filter(c => c.name.trim())
-    if (validContacts.length > 0) {
-      await supabase.from('client_contacts').insert(
-        validContacts.map(c => ({
-          client_id: clientId,
-          name: c.name,
-          role: c.role || null,
-          phone: c.phone || null,
-          email: c.email || null,
-          preferred_contact: c.preferred_contact || null,
-          notes: c.notes || null,
-        })) as never
-      )
-    }
-
-    await fetchContacts()
-    setModalOpen(false)
+    if (!form.name.trim()) { toast.error('Client name is required.'); return }
+    setSaving(true)
+    try {
+      const payload = { ...form, email: form.email || null, phone: form.phone || null, address: form.address || null, notes: form.notes || null }
+      let clientId: string
+      if (editing) {
+        await update(editing.id, payload)
+        clientId = editing.id
+        await supabase.from('client_contacts').delete().eq('client_id', clientId)
+      } else {
+        const newClient = await insert(payload)
+        clientId = (newClient as Client).id
+      }
+      const validContacts = contacts.filter(c => c.name.trim())
+      if (validContacts.length > 0) {
+        const { error } = await supabase.from('client_contacts').insert(
+          validContacts.map(c => ({
+            client_id: clientId, name: c.name, role: c.role || null, phone: c.phone || null,
+            email: c.email || null, preferred_contact: c.preferred_contact || null, notes: c.notes || null,
+          })) as never
+        )
+        if (error) { toast.error(`Contacts error: ${error.message}`); return }
+      }
+      await fetchContacts()
+      setModalOpen(false)
+      toast.success(editing ? 'Client updated.' : 'Client saved.')
+    } catch (err) {
+      toast.error(`Failed to save client: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    } finally { setSaving(false) }
   }
 
   async function handleDelete() {
-    if (editing && confirm('Delete this client and all their contacts?')) {
+    if (!editing || !confirm('Delete this client and all their contacts?')) return
+    try {
       await remove(editing.id)
       await fetchContacts()
       setModalOpen(false)
+      toast.success('Client deleted.')
+    } catch (err) {
+      toast.error(`Failed to delete: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
 
@@ -240,7 +246,7 @@ export default function ClientsPage() {
             {editing && <Button variant="danger" onClick={handleDelete}>Delete</Button>}
             <div className="ml-auto flex gap-2">
               <Button variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button onClick={handleSave}>{editing ? 'Update' : 'Create'}</Button>
+              <Button onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : editing ? 'Update' : 'Create'}</Button>
             </div>
           </div>
         </div>

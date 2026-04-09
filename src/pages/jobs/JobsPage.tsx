@@ -10,6 +10,7 @@ import { Badge, statusColor } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { FlowIndicator } from '@/components/FlowIndicator'
 import { JOB_DIVISIONS, JOB_STATUSES, CHANGE_ORDER_STATUSES, CHANGE_ORDER_REASONS, fmtDateShort, fmtCurrency } from '@/lib/constants'
+import { useToast } from '@/components/ui/Toast'
 import type { Job, JobDivision, JobStatus, Client, ChangeOrder, ChangeOrderStatus, ChecklistItem, Estimate, Invoice } from '@/lib/database.types'
 
 const emptyForm = {
@@ -35,6 +36,8 @@ export default function JobsPage() {
   const [changeOrders, setChangeOrders] = useState<ChangeOrder[]>([])
   const [coModalOpen, setCoModalOpen] = useState(false)
   const [coForm, setCoForm] = useState(emptyCO)
+  const [saving, setSaving] = useState(false)
+  const toast = useToast()
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -81,27 +84,40 @@ export default function JobsPage() {
   }
 
   async function handleSave() {
-    const payload = {
-      ...form, address: form.address || null, site_address: form.site_address || null,
-      re_line: form.re_line || null, start_date: form.start_date || null,
-      description: form.notes || null, assigned_to: form.assigned_to || null,
-      materials_used: form.materials_used || null, checklist,
-      end_date: form.status === 'Completed' ? new Date().toISOString().split('T')[0] : null,
-    }
-    if (editing) {
-      await supabase.from('jobs').update(payload as never).eq('id', editing.id)
-    } else {
-      await supabase.from('jobs').insert({ ...payload, estimate_id: null, photos: [] } as never)
-    }
-    await fetchAll()
-    setModalOpen(false)
+    if (!form.title.trim()) { toast.error('Job title is required.'); return }
+    if (!form.client_id) { toast.error('Please select a client.'); return }
+    setSaving(true)
+    try {
+      const payload = {
+        ...form, address: form.address || null, site_address: form.site_address || null,
+        re_line: form.re_line || null, start_date: form.start_date || null,
+        notes: form.notes || null, assigned_to: form.assigned_to || null,
+        materials_used: form.materials_used || null, checklist,
+        end_date: form.status === 'Completed' ? new Date().toISOString().split('T')[0] : null,
+      }
+      let error: { message: string } | null = null
+      if (editing) {
+        const res = await supabase.from('jobs').update(payload as never).eq('id', editing.id)
+        error = res.error
+      } else {
+        const res = await supabase.from('jobs').insert({ ...payload, estimate_id: null, photos: [] } as never)
+        error = res.error
+      }
+      if (error) { toast.error(`Failed to save job: ${error.message}`); return }
+      await fetchAll()
+      setModalOpen(false)
+      toast.success(editing ? 'Job updated.' : 'Job saved.')
+    } catch (err) {
+      toast.error(`Failed to save job: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    } finally { setSaving(false) }
   }
 
   async function handleDelete() {
-    if (editing && confirm('Delete this job?')) {
-      await supabase.from('jobs').delete().eq('id', editing.id)
-      await fetchAll(); setModalOpen(false)
-    }
+    if (!editing || !confirm('Delete this job?')) return
+    const { error } = await supabase.from('jobs').delete().eq('id', editing.id)
+    if (error) { toast.error(`Failed to delete: ${error.message}`); return }
+    await fetchAll(); setModalOpen(false)
+    toast.success('Job deleted.')
   }
 
   // Checklist
@@ -116,24 +132,30 @@ export default function JobsPage() {
   // Change Orders
   async function saveCO() {
     if (!editing) return
+    if (!coForm.description.trim()) { toast.error('Change order description is required.'); return }
     const total = coForm.qty * coForm.unit_price
-    await supabase.from('change_orders').insert({
+    const { error } = await supabase.from('change_orders').insert({
       job_id: editing.id, date: new Date().toISOString().split('T')[0],
       description: coForm.description, reason: coForm.reason,
       qty: coForm.qty, unit: coForm.unit, unit_price: coForm.unit_price, total, status: coForm.status,
     } as never)
+    if (error) { toast.error(`Failed to save change order: ${error.message}`); return }
     const { data } = await supabase.from('change_orders').select('*').eq('job_id', editing.id).order('created_at')
     setChangeOrders((data ?? []) as ChangeOrder[])
     setCoForm(emptyCO); setCoModalOpen(false)
+    toast.success('Change order saved.')
   }
 
   async function updateCOStatus(co: ChangeOrder, status: ChangeOrderStatus) {
-    await supabase.from('change_orders').update({ status } as never).eq('id', co.id)
+    const { error } = await supabase.from('change_orders').update({ status } as never).eq('id', co.id)
+    if (error) { toast.error(`Failed to update: ${error.message}`); return }
     setChangeOrders(cos => cos.map(c => c.id === co.id ? { ...c, status } : c))
+    toast.success(`Change order ${status.toLowerCase()}.`)
   }
 
   async function deleteCO(co: ChangeOrder) {
-    await supabase.from('change_orders').delete().eq('id', co.id)
+    const { error } = await supabase.from('change_orders').delete().eq('id', co.id)
+    if (error) { toast.error(`Failed to delete: ${error.message}`); return }
     setChangeOrders(cos => cos.filter(c => c.id !== co.id))
   }
 
@@ -162,13 +184,15 @@ export default function JobsPage() {
     const m = String(now.getMonth() + 1).padStart(2, '0')
     const d = String(now.getDate()).padStart(2, '0')
 
-    await supabase.from('invoices').insert({
+    const { error } = await supabase.from('invoices').insert({
       number: `${y}-${m}${d}-${String(invCount).padStart(3, '0')}`,
       client_id: job.client_id, job_id: job.id, estimate_id: job.estimate_id || null,
       status: 'Unpaid', line_items: allLines, subtotal, total: subtotal,
       notes: null, due_date: dueDate.toISOString().split('T')[0],
     } as never)
+    if (error) { toast.error(`Failed to generate invoice: ${error.message}`); return }
     await fetchAll()
+    toast.success('Invoice generated from job.')
   }
 
   return (
@@ -311,7 +335,7 @@ export default function JobsPage() {
             {editing && <Button variant="danger" onClick={handleDelete} type="button">Delete</Button>}
             <div className="ml-auto flex gap-2">
               <Button variant="secondary" onClick={() => setModalOpen(false)} type="button">Cancel</Button>
-              <Button onClick={handleSave} type="button">{editing ? 'Update' : 'Create'}</Button>
+              <Button onClick={handleSave} type="button" disabled={saving}>{saving ? 'Saving...' : editing ? 'Update' : 'Create'}</Button>
             </div>
           </div>
         </div>

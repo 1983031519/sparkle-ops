@@ -9,6 +9,7 @@ import { Table } from '@/components/ui/Table'
 import { Badge, statusColor } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { INVOICE_STATUSES, COMPANY, paymentMethodsForClient, generateInvoiceNumber, fmtDateShort, fmtDate, fmtCurrency, isoDatePart } from '@/lib/constants'
+import { useToast } from '@/components/ui/Toast'
 import type { Invoice, InvoiceStatus, InvoiceLineItem, Client, Job } from '@/lib/database.types'
 
 const emptyLine: InvoiceLineItem = { description: '', qty: 1, unit: 'ea', unit_price: 0 }
@@ -25,6 +26,8 @@ export default function InvoicesPage() {
   const [editing, setEditing] = useState<Invoice | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [previewInv, setPreviewInv] = useState<Invoice | null>(null)
+  const [saving, setSaving] = useState(false)
+  const toast = useToast()
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -73,28 +76,40 @@ export default function InvoicesPage() {
   }
 
   async function handleSave() {
-    const { subtotal, total } = calcTotals(form.line_items)
-    const payload = {
-      number: editing?.number ?? generateInvoiceNumber(invoices.length + 1),
-      client_id: form.client_id, job_id: form.job_id || null, estimate_id: editing?.estimate_id ?? null,
-      status: form.status, line_items: form.line_items, subtotal, total,
-      notes: form.notes || null, due_date: form.due_date || null,
-    }
-    if (editing) await supabase.from('invoices').update(payload as never).eq('id', editing.id)
-    else await supabase.from('invoices').insert(payload as never)
-    await fetchAll(); setModalOpen(false)
+    if (!form.client_id) { toast.error('Please select a client.'); return }
+    setSaving(true)
+    try {
+      const { subtotal, total } = calcTotals(form.line_items)
+      const payload = {
+        number: editing?.number ?? generateInvoiceNumber(invoices.length + 1),
+        client_id: form.client_id, job_id: form.job_id || null, estimate_id: editing?.estimate_id ?? null,
+        status: form.status, line_items: form.line_items, subtotal, total,
+        notes: form.notes || null, due_date: form.due_date || null,
+      }
+      let error: { message: string } | null = null
+      if (editing) { const res = await supabase.from('invoices').update(payload as never).eq('id', editing.id); error = res.error }
+      else { const res = await supabase.from('invoices').insert(payload as never); error = res.error }
+      if (error) { toast.error(`Failed to save invoice: ${error.message}`); return }
+      await fetchAll(); setModalOpen(false)
+      toast.success(editing ? 'Invoice updated.' : 'Invoice saved.')
+    } catch (err) {
+      toast.error(`Failed to save invoice: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    } finally { setSaving(false) }
   }
 
   async function markPaid(inv: Invoice) {
-    await supabase.from('invoices').update({ status: 'Paid' } as never).eq('id', inv.id)
+    const { error } = await supabase.from('invoices').update({ status: 'Paid' } as never).eq('id', inv.id)
+    if (error) { toast.error(`Failed to mark paid: ${error.message}`); return }
     await fetchAll()
+    toast.success('Invoice marked as paid.')
   }
 
   async function handleDelete() {
-    if (editing && confirm('Delete this invoice?')) {
-      await supabase.from('invoices').delete().eq('id', editing.id)
-      await fetchAll(); setModalOpen(false)
-    }
+    if (!editing || !confirm('Delete this invoice?')) return
+    const { error } = await supabase.from('invoices').delete().eq('id', editing.id)
+    if (error) { toast.error(`Failed to delete: ${error.message}`); return }
+    await fetchAll(); setModalOpen(false)
+    toast.success('Invoice deleted.')
   }
 
   const { subtotal, total } = calcTotals(form.line_items)
@@ -173,7 +188,7 @@ export default function InvoicesPage() {
             {editing && <Button variant="danger" onClick={handleDelete} type="button">Delete</Button>}
             <div className="ml-auto flex gap-2">
               <Button variant="secondary" onClick={() => setModalOpen(false)} type="button">Cancel</Button>
-              <Button onClick={handleSave} type="button">{editing ? 'Update' : 'Create'}</Button>
+              <Button onClick={handleSave} type="button" disabled={saving}>{saving ? 'Saving...' : editing ? 'Update' : 'Create'}</Button>
             </div>
           </div>
         </div>
