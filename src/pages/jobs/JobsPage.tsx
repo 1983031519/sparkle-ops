@@ -10,6 +10,7 @@ import { Badge, statusColor } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { FlowIndicator } from '@/components/FlowIndicator'
 import { PhotoUpload } from '@/components/PhotoUpload'
+import { JobCosting } from '@/components/JobCosting'
 import { JOB_DIVISIONS, JOB_STATUSES, CHANGE_ORDER_STATUSES, CHANGE_ORDER_REASONS, fmtDateShort, fmtCurrency } from '@/lib/constants'
 import { useToast } from '@/components/ui/Toast'
 import type { Job, JobDivision, JobStatus, Client, ChangeOrder, ChangeOrderStatus, ChecklistItem, Estimate, Invoice, Supplier } from '@/lib/database.types'
@@ -362,6 +363,14 @@ export default function JobsPage() {
               </h3>
               <p className="text-xs text-stone-400 italic">Save the job first, then you can upload photos.</p>
             </div>
+          )}
+
+          {/* Job Costing — only when editing */}
+          {editing && (
+            <JobCosting
+              jobId={editing.id}
+              jobRevenue={invByJob[editing.id]?.total ?? 0}
+            />
           )}
 
           <div className="flex justify-between border-t border-stone-200 pt-4">

@@ -41,21 +41,29 @@ export default function ReportsPage() {
   const [estimates, setEstimates] = useState<Estimate[]>([])
   const [jobs, setJobs] = useState<Job[]>([])
   const [clients, setClients] = useState<Client[]>([])
+  const [totalCosts, setTotalCosts] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
       setLoading(true)
-      const [invRes, estRes, jobRes, cliRes] = await Promise.all([
+      const [invRes, estRes, jobRes, cliRes, matRes, labRes, othRes] = await Promise.all([
         supabase.from('invoices').select('*'),
         supabase.from('estimates').select('*'),
         supabase.from('jobs').select('*'),
         supabase.from('clients').select('*'),
+        supabase.from('job_material_costs').select('total'),
+        supabase.from('job_labor_costs').select('total_amount'),
+        supabase.from('job_other_costs').select('amount'),
       ])
       setInvoices((invRes.data ?? []) as Invoice[])
       setEstimates((estRes.data ?? []) as Estimate[])
       setJobs((jobRes.data ?? []) as Job[])
       setClients((cliRes.data ?? []) as Client[])
+      const mc = ((matRes.data ?? []) as { total: number }[]).reduce((s, r) => s + (r.total || 0), 0)
+      const lc = ((labRes.data ?? []) as { total_amount: number }[]).reduce((s, r) => s + (r.total_amount || 0), 0)
+      const oc = ((othRes.data ?? []) as { amount: number }[]).reduce((s, r) => s + (r.amount || 0), 0)
+      setTotalCosts(mc + lc + oc)
       setLoading(false)
     }
     load()
@@ -150,6 +158,33 @@ export default function ReportsPage() {
           </select>
         </div>
       </div>
+
+      {/* Profitability Summary */}
+      {(() => {
+        const rev = invoices.filter(i => i.status === 'Paid').reduce((s, i) => s + (i.total || 0), 0)
+        const profit = rev - totalCosts
+        const pctMargin = rev > 0 ? (profit / rev) * 100 : 0
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+            <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid rgba(0,0,0,0.06)' }}>
+              <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Revenue</p>
+              <p style={{ fontSize: 24, fontWeight: 700, color: '#0D1B3D' }}>{fmtCurrency(rev)}</p>
+            </div>
+            <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid rgba(0,0,0,0.06)' }}>
+              <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Total Costs</p>
+              <p style={{ fontSize: 24, fontWeight: 700, color: '#333' }}>{fmtCurrency(totalCosts)}</p>
+            </div>
+            <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid rgba(0,0,0,0.06)' }}>
+              <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Gross Profit</p>
+              <p style={{ fontSize: 24, fontWeight: 700, color: profit >= 0 ? '#16A34A' : '#DC2626' }}>{fmtCurrency(profit)}</p>
+            </div>
+            <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid rgba(0,0,0,0.06)' }}>
+              <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Margin</p>
+              <p style={{ fontSize: 24, fontWeight: 700, color: profit >= 0 ? '#16A34A' : '#DC2626' }}>{pctMargin.toFixed(1)}%</p>
+            </div>
+          </div>
+        )
+      })()}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* 1. Monthly Revenue */}

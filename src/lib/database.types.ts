@@ -148,6 +148,17 @@ export interface Job {
   created_at: string
 }
 
+export interface JobMaterialCost {
+  id: string; job_id: string; description: string; quantity: number; unit: string
+  unit_cost: number; total: number; notes: string | null; created_at: string
+}
+export interface JobLaborCost {
+  id: string; job_id: string; description: string; total_amount: number; created_at: string
+}
+export interface JobOtherCost {
+  id: string; job_id: string; description: string; amount: number; created_at: string
+}
+
 export interface ChangeOrder {
   id: string
   job_id: string
