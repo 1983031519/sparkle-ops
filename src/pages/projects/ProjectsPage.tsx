@@ -416,11 +416,31 @@ function ProjectPreview({ project: p, phases, client }: { project: Project; phas
   }, [sitePhotosRaw, phases])
 
   async function handlePrint() {
-    const images = document.querySelectorAll('.print-area img') as NodeListOf<HTMLImageElement>
-    await Promise.all([...images].map(img =>
+    const el = document.querySelector('.print-area')
+    if (!el) return
+
+    // Open a clean window with just the content
+    const win = window.open('', '_blank', 'width=800,height=1100')
+    if (!win) { window.print(); return }  // fallback if popup blocked
+
+    win.document.write(`<!DOCTYPE html><html><head>
+      <title>Project Proposal — ${p.number}</title>
+      <style>
+        body { font-family: system-ui, -apple-system, sans-serif; color: #101114; margin: 30px 40px; font-size: 13px; line-height: 1.6; }
+        img { max-width: 100%; border-radius: 8px; }
+        .phase-section { page-break-inside: avoid; }
+        @media print { body { margin: 15px 20px; } }
+      </style>
+    </head><body>${el.innerHTML}</body></html>`)
+    win.document.close()
+
+    // Wait for images to load in the new window
+    const imgs = win.document.querySelectorAll('img') as NodeListOf<HTMLImageElement>
+    await Promise.all([...imgs].map(img =>
       img.complete ? Promise.resolve() : new Promise(r => { img.onload = r; img.onerror = r })
     ))
-    window.print()
+
+    setTimeout(() => { win.print(); win.close() }, 300)
   }
 
   return (

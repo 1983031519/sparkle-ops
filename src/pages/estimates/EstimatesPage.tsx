@@ -400,10 +400,23 @@ function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
   const deposit = est.deposit_amount ?? est.total * 0.5
   const balance = est.balance_amount ?? est.total * 0.5
 
+  function handlePrint() {
+    const el = document.querySelector('.print-area')
+    if (!el) return
+    const win = window.open('', '_blank', 'width=800,height=1100')
+    if (!win) { window.print(); return }
+    win.document.write(`<!DOCTYPE html><html><head><title>Proposal — ${est.number}</title>
+      <style>body{font-family:system-ui,-apple-system,sans-serif;color:#101114;margin:30px 40px;font-size:13px;line-height:1.6}img{max-width:100%;border-radius:8px}@media print{body{margin:15px 20px}}</style>
+    </head><body>${el.innerHTML}</body></html>`)
+    win.document.close()
+    const imgs = win.document.querySelectorAll('img') as NodeListOf<HTMLImageElement>
+    Promise.all([...imgs].map(i => i.complete ? Promise.resolve() : new Promise(r => { i.onload = r; i.onerror = r }))).then(() => { setTimeout(() => { win.print(); win.close() }, 300) })
+  }
+
   return (
     <>
-      <div className="mb-4 no-print"><Button onClick={() => window.print()}><Printer className="h-4 w-4" /> Print</Button></div>
-      <div className="space-y-6 text-sm leading-relaxed">
+      <div className="mb-4 no-print"><Button onClick={handlePrint}><Printer className="h-4 w-4" /> Print</Button></div>
+      <div className="print-area space-y-6 text-sm leading-relaxed">
         {/* Header */}
         <div className="flex justify-between items-start">
           <div>
