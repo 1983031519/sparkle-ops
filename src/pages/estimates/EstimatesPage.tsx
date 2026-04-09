@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { Plus, Search, Printer } from 'lucide-react'
-import { useTable } from '@/hooks/useSupabase'
+import { useState, useEffect, useCallback } from 'react'
+import { Plus, Search, Printer, ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input, Select, Textarea } from '@/components/ui/Input'
@@ -8,31 +7,68 @@ import { Card } from '@/components/ui/Card'
 import { Table } from '@/components/ui/Table'
 import { Badge, statusColor } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
-import { ESTIMATE_STATUSES, COMPANY } from '@/lib/constants'
-import type { Estimate, EstimateStatus, EstimateLineItem, Client, Job } from '@/lib/database.types'
+import { FlowIndicator } from '@/components/FlowIndicator'
+import { InlineClientCreate } from '@/components/InlineClientCreate'
+import {
+  ESTIMATE_STATUSES, JOB_DIVISIONS, COMPANY, DEFAULT_WARRANTY, TERMS_AND_CONDITIONS,
+  generateEstimateNumber, paymentMethodsForClient,
+} from '@/lib/constants'
+import type { Estimate, EstimateStatus, EstimateLineItem, Client, Job, MaterialsSpecified } from '@/lib/database.types'
+import { format, addDays } from 'date-fns'
 
 const emptyLine: EstimateLineItem = { description: '', qty: 1, unit: 'ea', unit_price: 0 }
-const emptyForm = { client_id: '', job_id: '', status: 'Draft' as EstimateStatus, line_items: [{ ...emptyLine }], tax_rate: 7, notes: '', valid_until: '' }
+const emptyMaterials: MaterialsSpecified = { paver_type: '', paver_size: '', paver_color: '', sand_type: '', sealant: '', other: '' }
+
+interface EstForm {
+  client_id: string; status: EstimateStatus; division: string; attn: string; site_address: string; re_line: string
+  scope_of_work: string; materials: MaterialsSpecified; start_date: string; end_date: string
+  line_items: EstimateLineItem[]; tax_rate: number; warranty: string; notes: string; valid_until: string
+}
+
+const today = format(new Date(), 'yyyy-MM-dd')
+const plus30 = format(addDays(new Date(), 30), 'yyyy-MM-dd')
+
+const emptyForm: EstForm = {
+  client_id: '', status: 'Draft', division: 'Pavers', attn: '', site_address: '', re_line: '',
+  scope_of_work: '', materials: { ...emptyMaterials }, start_date: '', end_date: '',
+  line_items: [{ ...emptyLine }], tax_rate: 0, warranty: DEFAULT_WARRANTY, notes: '', valid_until: plus30,
+}
 
 export default function EstimatesPage() {
-  const { data: estimates, loading, insert, update, remove, fetch: refetch } = useTable<Estimate>('estimates')
+  const [estimates, setEstimates] = useState<Estimate[]>([])
   const [clients, setClients] = useState<Client[]>([])
   const [jobs, setJobs] = useState<Job[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [editing, setEditing] = useState<Estimate | null>(null)
-  const [form, setForm] = useState(emptyForm)
-  const [previewEstimate, setPreviewEstimate] = useState<Estimate | null>(null)
-  const printRef = useRef<HTMLDivElement>(null)
+  const [form, setForm] = useState<EstForm>(emptyForm)
+  const [previewEst, setPreviewEst] = useState<Estimate | null>(null)
 
-  useEffect(() => {
-    supabase.from('clients').select('*').order('name').then(({ data }) => setClients(data ?? []))
-    supabase.from('jobs').select('*').order('title').then(({ data }) => setJobs(data ?? []))
+  const fetchAll = useCallback(async () => {
+    setLoading(true)
+    const [eRes, cRes, jRes] = await Promise.all([
+      supabase.from('estimates').select('*').order('created_at', { ascending: false }),
+      supabase.from('clients').select('*').order('name'),
+      supabase.from('jobs').select('*'),
+    ])
+    setEstimates((eRes.data ?? []) as Estimate[])
+    setClients((cRes.data ?? []) as Client[])
+    setJobs((jRes.data ?? []) as Job[])
+    setLoading(false)
   }, [])
 
-  const clientMap = Object.fromEntries(clients.map(c => [c.id, c.name]))
-  const filtered = estimates.filter(e => (clientMap[e.client_id] ?? '').toLowerCase().includes(search.toLowerCase()) || e.estimate_number.toLowerCase().includes(search.toLowerCase()))
+  useEffect(() => { fetchAll() }, [fetchAll])
+
+  const clientMap = Object.fromEntries(clients.map(c => [c.id, c]))
+  const jobByEstimate = Object.fromEntries(jobs.filter(j => j.estimate_id).map(j => [j.estimate_id!, j]))
+
+  const filtered = estimates.filter(e => {
+    const cl = clientMap[e.client_id]
+    return (cl?.name ?? '').toLowerCase().includes(search.toLowerCase()) ||
+      e.estimate_number.toLowerCase().includes(search.toLowerCase())
+  })
 
   function calcTotals(items: EstimateLineItem[], taxRate: number) {
     const subtotal = items.reduce((s, i) => s + i.qty * i.unit_price, 0)
@@ -42,23 +78,23 @@ export default function EstimatesPage() {
 
   function openNew() {
     setEditing(null)
-    setForm(emptyForm)
+    setForm({ ...emptyForm, valid_until: format(addDays(new Date(), 30), 'yyyy-MM-dd') })
     setModalOpen(true)
   }
 
   function openEdit(est: Estimate) {
     setEditing(est)
+    const mats = (est.materials_specified ?? emptyMaterials) as MaterialsSpecified
     setForm({
-      client_id: est.client_id, job_id: est.job_id ?? '', status: est.status,
+      client_id: est.client_id, status: est.status, division: est.division ?? 'Pavers',
+      attn: est.attn ?? '', site_address: est.site_address ?? '', re_line: est.re_line ?? '',
+      scope_of_work: est.scope_of_work ?? '', materials: mats,
+      start_date: est.start_date ?? '', end_date: est.end_date ?? '',
       line_items: (est.line_items as EstimateLineItem[]).length > 0 ? est.line_items as EstimateLineItem[] : [{ ...emptyLine }],
-      tax_rate: est.tax_rate, notes: est.notes ?? '', valid_until: est.valid_until ?? '',
+      tax_rate: est.tax_rate, warranty: est.warranty ?? DEFAULT_WARRANTY,
+      notes: est.notes ?? '', valid_until: est.valid_until ?? '',
     })
     setModalOpen(true)
-  }
-
-  function openPreview(est: Estimate) {
-    setPreviewEstimate(est)
-    setPreviewOpen(true)
   }
 
   function addLine() { setForm(f => ({ ...f, line_items: [...f.line_items, { ...emptyLine }] })) }
@@ -66,27 +102,63 @@ export default function EstimatesPage() {
   function updateLine(i: number, field: keyof EstimateLineItem, value: string | number) {
     setForm(f => ({ ...f, line_items: f.line_items.map((l, idx) => idx === i ? { ...l, [field]: value } : l) }))
   }
+  function setMat(field: keyof MaterialsSpecified, value: string) {
+    setForm(f => ({ ...f, materials: { ...f.materials, [field]: value } }))
+  }
 
   async function handleSave() {
     const { subtotal, tax_amount, total } = calcTotals(form.line_items, form.tax_rate)
-    const count = estimates.length + 1
+    const deposit = total * 0.5
     const payload = {
-      estimate_number: editing?.estimate_number ?? `EST-${String(count).padStart(4, '0')}`,
-      client_id: form.client_id, job_id: form.job_id || null, status: form.status,
+      estimate_number: editing?.estimate_number ?? generateEstimateNumber(estimates.length + 1),
+      client_id: form.client_id, status: form.status, division: form.division,
+      attn: form.attn || null, site_address: form.site_address || null,
+      re_line: form.re_line || null, scope_of_work: form.scope_of_work || null,
+      materials_specified: form.materials, start_date: form.start_date || null, end_date: form.end_date || null,
       line_items: form.line_items, subtotal, tax_rate: form.tax_rate, tax_amount, total,
+      warranty: form.warranty || null,
+      payment_schedule: { deposit, balance: total - deposit, methods: paymentMethodsForClient(clientMap[form.client_id]?.type ?? 'Homeowner') },
       notes: form.notes || null, valid_until: form.valid_until || null,
+      job_id: editing?.job_id ?? null,
     }
-    if (editing) await update(editing.id, payload)
-    else await insert(payload)
+    if (editing) {
+      await supabase.from('estimates').update(payload as never).eq('id', editing.id)
+    } else {
+      await supabase.from('estimates').insert(payload as never)
+    }
+    await fetchAll()
     setModalOpen(false)
-    refetch()
   }
 
   async function handleDelete() {
-    if (editing && confirm('Delete this estimate?')) { await remove(editing.id); setModalOpen(false) }
+    if (editing && confirm('Delete this estimate?')) {
+      await supabase.from('estimates').delete().eq('id', editing.id)
+      await fetchAll()
+      setModalOpen(false)
+    }
   }
 
+  async function convertToJob(est: Estimate) {
+    const client = clientMap[est.client_id]
+    const { error } = await supabase.from('jobs').insert({
+      title: est.re_line || `${client?.name ?? 'Job'} — ${est.division ?? 'Pavers'}`,
+      client_id: est.client_id, division: est.division || 'Pavers', status: 'Scheduled',
+      address: est.site_address || client?.address || null,
+      site_address: est.site_address || null, re_line: est.re_line || null,
+      description: est.scope_of_work || null, total_amount: est.total,
+      estimate_id: est.id, scheduled_date: est.start_date || null,
+      checklist: [], photos: [],
+    } as never)
+    if (!error) {
+      await supabase.from('estimates').update({ status: 'Accepted' } as never).eq('id', est.id)
+      await fetchAll()
+    }
+  }
+
+  function openPreview(est: Estimate) { setPreviewEst(est); setPreviewOpen(true) }
+  function getClientForEst(est: Estimate) { return clientMap[est.client_id] }
   const { subtotal, tax_amount, total } = calcTotals(form.line_items, form.tax_rate)
+  const deposit = total * 0.5
 
   return (
     <div className="space-y-6 p-6">
@@ -108,144 +180,261 @@ export default function EstimatesPage() {
             onRowClick={openEdit}
             columns={[
               { key: 'number', header: '#', render: e => <span className="font-mono text-xs">{e.estimate_number}</span> },
-              { key: 'client', header: 'Client', render: e => clientMap[e.client_id] ?? '-' },
+              { key: 'client', header: 'Client', render: e => clientMap[e.client_id]?.name ?? '-' },
+              { key: 'division', header: 'Div', render: e => <Badge color={e.division === 'Pavers' ? 'orange' : 'blue'}>{e.division ?? '-'}</Badge> },
               { key: 'status', header: 'Status', render: e => <Badge color={statusColor(e.status)}>{e.status}</Badge> },
               { key: 'total', header: 'Total', render: e => `$${e.total.toLocaleString()}` },
-              { key: 'valid', header: 'Valid Until', render: e => e.valid_until ?? '-' },
+              { key: 'flow', header: 'Flow', render: e => {
+                const job = jobByEstimate[e.id]
+                return <FlowIndicator steps={[
+                  { label: 'Estimate', status: 'done' },
+                  { label: 'Job', status: job ? 'done' : e.status === 'Accepted' ? 'active' : 'pending' },
+                  { label: 'Invoice', status: 'pending' },
+                ]} />
+              }},
               { key: 'actions', header: '', render: e => (
-                <Button variant="ghost" size="sm" onClick={(ev) => { ev.stopPropagation(); openPreview(e) }}>
-                  <Printer className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-1" onClick={ev => ev.stopPropagation()}>
+                  {e.status === 'Accepted' && !jobByEstimate[e.id] && (
+                    <Button variant="ghost" size="sm" onClick={() => convertToJob(e)} title="Convert to Job">
+                      <ArrowRight className="h-4 w-4 text-brand-600" />
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="sm" onClick={() => openPreview(e)}><Printer className="h-4 w-4" /></Button>
+                </div>
               )},
             ]}
           />
         )}
       </Card>
 
-      {/* Form Modal */}
+      {/* FORM MODAL */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Edit Estimate' : 'New Estimate'} wide>
-        <div className="space-y-4">
+        <div className="space-y-5 max-h-[75vh] overflow-y-auto pr-1">
+          {/* Header */}
           <div className="grid gap-4 sm:grid-cols-3">
-            <Select label="Client" id="est-client" value={form.client_id} onChange={e => setForm(f => ({ ...f, client_id: e.target.value }))} options={clients.map(c => ({ value: c.id, label: c.name }))} />
-            <Select label="Job (optional)" id="est-job" value={form.job_id} onChange={e => setForm(f => ({ ...f, job_id: e.target.value }))} options={jobs.map(j => ({ value: j.id, label: j.title }))} />
             <Select label="Status" id="est-status" value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as EstimateStatus }))} options={ESTIMATE_STATUSES.map(s => ({ value: s, label: s }))} />
+            <Select label="Division" id="est-div" value={form.division} onChange={e => setForm(f => ({ ...f, division: e.target.value }))} options={JOB_DIVISIONS.map(d => ({ value: d, label: d }))} />
+            <Input label="Valid Until" id="est-valid" type="date" value={form.valid_until} onChange={e => setForm(f => ({ ...f, valid_until: e.target.value }))} />
+          </div>
+          {/* Client */}
+          <div className="flex items-end gap-2">
+            <div className="flex-1">
+              <Select label="Client" id="est-client" value={form.client_id} onChange={e => setForm(f => ({ ...f, client_id: e.target.value }))} options={clients.map(c => ({ value: c.id, label: c.name }))} />
+            </div>
+            <InlineClientCreate onCreated={(c) => { setClients(cs => [...cs, c]); setForm(f => ({ ...f, client_id: c.id })) }} />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input label="Attn (Contact Name)" id="est-attn" value={form.attn} onChange={e => setForm(f => ({ ...f, attn: e.target.value }))} placeholder="e.g. Kamila" />
+            <Input label="Job Site Address" id="est-site" value={form.site_address} onChange={e => setForm(f => ({ ...f, site_address: e.target.value }))} />
+          </div>
+          <Input label="RE: (Service — Address)" id="est-re" value={form.re_line} onChange={e => setForm(f => ({ ...f, re_line: e.target.value }))} placeholder="e.g. Pool deck paver installation — 123 Main St" />
+
+          {/* Scope */}
+          <Textarea label="Scope of Work" id="est-scope" value={form.scope_of_work} onChange={e => setForm(f => ({ ...f, scope_of_work: e.target.value }))} />
+
+          {/* Materials */}
+          <div className="border rounded-lg border-stone-200 p-4 space-y-3">
+            <h3 className="text-sm font-semibold text-stone-700">Materials Specified</h3>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Input label="Paver/Stone Type" id="mat-type" value={form.materials.paver_type ?? ''} onChange={e => setMat('paver_type', e.target.value)} />
+              <Input label="Size" id="mat-size" value={form.materials.paver_size ?? ''} onChange={e => setMat('paver_size', e.target.value)} />
+              <Input label="Color" id="mat-color" value={form.materials.paver_color ?? ''} onChange={e => setMat('paver_color', e.target.value)} />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Input label="Sand Type" id="mat-sand" value={form.materials.sand_type ?? ''} onChange={e => setMat('sand_type', e.target.value)} />
+              <Input label="Sealant" id="mat-seal" value={form.materials.sealant ?? ''} onChange={e => setMat('sealant', e.target.value)} />
+              <Input label="Other Materials" id="mat-other" value={form.materials.other ?? ''} onChange={e => setMat('other', e.target.value)} />
+            </div>
           </div>
 
+          {/* Timeline */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input label="Estimated Start Date" id="est-start" type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} />
+            <Input label="Estimated Completion Date" id="est-end" type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} />
+          </div>
+
+          {/* Line Items */}
           <div>
-            <label className="mb-2 block text-sm font-medium text-stone-700">Line Items</label>
+            <label className="mb-2 block text-sm font-semibold text-stone-700">Line Items</label>
             <div className="space-y-2">
               {form.line_items.map((line, i) => (
                 <div key={i} className="grid grid-cols-12 gap-2 items-end">
-                  <div className="col-span-5">
-                    <input className="w-full rounded-lg border border-stone-300 px-2 py-1.5 text-sm" placeholder="Description" value={line.description} onChange={e => updateLine(i, 'description', e.target.value)} />
-                  </div>
-                  <div className="col-span-2">
-                    <input className="w-full rounded-lg border border-stone-300 px-2 py-1.5 text-sm" type="number" placeholder="Qty" value={line.qty} onChange={e => updateLine(i, 'qty', Number(e.target.value))} />
-                  </div>
-                  <div className="col-span-1">
-                    <input className="w-full rounded-lg border border-stone-300 px-2 py-1.5 text-sm" placeholder="Unit" value={line.unit} onChange={e => updateLine(i, 'unit', e.target.value)} />
-                  </div>
-                  <div className="col-span-2">
-                    <input className="w-full rounded-lg border border-stone-300 px-2 py-1.5 text-sm" type="number" placeholder="Price" value={line.unit_price} onChange={e => updateLine(i, 'unit_price', Number(e.target.value))} />
-                  </div>
+                  <div className="col-span-5"><input className="w-full rounded-lg border border-stone-300 px-2 py-1.5 text-sm" placeholder="Description" value={line.description} onChange={e => updateLine(i, 'description', e.target.value)} /></div>
+                  <div className="col-span-2"><input className="w-full rounded-lg border border-stone-300 px-2 py-1.5 text-sm" type="number" placeholder="Qty" value={line.qty} onChange={e => updateLine(i, 'qty', Number(e.target.value))} /></div>
+                  <div className="col-span-1"><input className="w-full rounded-lg border border-stone-300 px-2 py-1.5 text-sm" placeholder="Unit" value={line.unit} onChange={e => updateLine(i, 'unit', e.target.value)} /></div>
+                  <div className="col-span-2"><input className="w-full rounded-lg border border-stone-300 px-2 py-1.5 text-sm" type="number" step="0.01" placeholder="Price" value={line.unit_price} onChange={e => updateLine(i, 'unit_price', Number(e.target.value))} /></div>
                   <div className="col-span-1 text-right text-sm font-medium">${(line.qty * line.unit_price).toFixed(2)}</div>
-                  <div className="col-span-1">
-                    {form.line_items.length > 1 && <button onClick={() => removeLine(i)} className="text-red-500 text-sm hover:underline">X</button>}
-                  </div>
+                  <div className="col-span-1">{form.line_items.length > 1 && <button type="button" onClick={() => removeLine(i)} className="text-red-500 text-sm hover:underline">X</button>}</div>
                 </div>
               ))}
             </div>
-            <Button variant="ghost" size="sm" onClick={addLine} className="mt-2">+ Add Line</Button>
+            <Button variant="ghost" size="sm" type="button" onClick={addLine} className="mt-2">+ Add Line</Button>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Input label="Tax Rate (%)" id="tax_rate" type="number" value={form.tax_rate} onChange={e => setForm(f => ({ ...f, tax_rate: Number(e.target.value) }))} />
-            <Input label="Valid Until" id="valid_until" type="date" value={form.valid_until} onChange={e => setForm(f => ({ ...f, valid_until: e.target.value }))} />
-            <div className="space-y-1 text-right text-sm pt-5">
-              <p>Subtotal: <strong>${subtotal.toFixed(2)}</strong></p>
-              <p>Tax: <strong>${tax_amount.toFixed(2)}</strong></p>
-              <p className="text-base">Total: <strong>${total.toFixed(2)}</strong></p>
-            </div>
+          {/* Totals */}
+          <div className="rounded-lg bg-stone-50 p-4 space-y-1 text-right text-sm">
+            <div className="flex justify-end gap-8"><span>Subtotal:</span><strong>${subtotal.toFixed(2)}</strong></div>
+            <div className="flex justify-end gap-8"><span>Tax ({form.tax_rate}%):</span><strong>${tax_amount.toFixed(2)}</strong></div>
+            <div className="flex justify-end gap-8 text-base border-t border-stone-200 pt-1 mt-1"><span>Total:</span><strong>${total.toFixed(2)}</strong></div>
+            <div className="flex justify-end gap-8 text-xs text-stone-500"><span>Deposit (50%):</span><span>${deposit.toFixed(2)}</span></div>
+            <div className="flex justify-end gap-8 text-xs text-stone-500"><span>Balance (50%):</span><span>${(total - deposit).toFixed(2)}</span></div>
           </div>
 
+          <Textarea label="Warranty" id="est-warranty" value={form.warranty} onChange={e => setForm(f => ({ ...f, warranty: e.target.value }))} />
           <Textarea label="Notes" id="est-notes" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
 
-          <div className="flex justify-between pt-2">
-            {editing && <Button variant="danger" onClick={handleDelete}>Delete</Button>}
+          <div className="flex justify-between border-t border-stone-200 pt-4">
+            {editing && <Button variant="danger" onClick={handleDelete} type="button">Delete</Button>}
             <div className="ml-auto flex gap-2">
-              <Button variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button onClick={handleSave}>{editing ? 'Update' : 'Create'}</Button>
+              <Button variant="secondary" onClick={() => setModalOpen(false)} type="button">Cancel</Button>
+              <Button onClick={handleSave} type="button">{editing ? 'Update' : 'Create'}</Button>
             </div>
           </div>
         </div>
       </Modal>
 
-      {/* Print Preview Modal */}
-      <Modal open={previewOpen} onClose={() => setPreviewOpen(false)} title="Estimate Preview" wide>
-        {previewEstimate && (
-          <>
-            <div className="mb-4 no-print">
-              <Button onClick={() => window.print()}><Printer className="h-4 w-4" /> Print</Button>
-            </div>
-            <div ref={printRef} className="space-y-6 text-sm">
-              <div className="flex justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-brand-700">{COMPANY.brand}</h2>
-                  <p className="text-xs text-stone-500">{COMPANY.legal_name}</p>
-                  <p className="text-xs text-stone-500">{COMPANY.address}</p>
-                  <p className="text-xs text-stone-500">{COMPANY.phone} | {COMPANY.email}</p>
-                </div>
-                <div className="text-right">
-                  <h3 className="text-lg font-bold">ESTIMATE</h3>
-                  <p className="font-mono">{previewEstimate.estimate_number}</p>
-                  <p className="text-stone-500">Date: {previewEstimate.created_at?.split('T')[0]}</p>
-                  {previewEstimate.valid_until && <p className="text-stone-500">Valid Until: {previewEstimate.valid_until}</p>}
-                </div>
-              </div>
-
-              <div>
-                <p className="font-semibold">Bill To:</p>
-                <p>{clientMap[previewEstimate.client_id] ?? 'N/A'}</p>
-              </div>
-
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b-2 border-stone-300">
-                    <th className="py-2 text-left">Description</th>
-                    <th className="py-2 text-right">Qty</th>
-                    <th className="py-2 text-right">Unit</th>
-                    <th className="py-2 text-right">Unit Price</th>
-                    <th className="py-2 text-right">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(previewEstimate.line_items as EstimateLineItem[]).map((item, i) => (
-                    <tr key={i} className="border-b border-stone-100">
-                      <td className="py-2">{item.description}</td>
-                      <td className="py-2 text-right">{item.qty}</td>
-                      <td className="py-2 text-right">{item.unit}</td>
-                      <td className="py-2 text-right">${item.unit_price.toFixed(2)}</td>
-                      <td className="py-2 text-right">${(item.qty * item.unit_price).toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              <div className="ml-auto w-64 space-y-1 text-right">
-                <div className="flex justify-between"><span>Subtotal</span><span>${previewEstimate.subtotal.toFixed(2)}</span></div>
-                <div className="flex justify-between"><span>Tax ({previewEstimate.tax_rate}%)</span><span>${previewEstimate.tax_amount.toFixed(2)}</span></div>
-                <div className="flex justify-between border-t border-stone-300 pt-1 text-base font-bold"><span>Total</span><span>${previewEstimate.total.toFixed(2)}</span></div>
-              </div>
-
-              {previewEstimate.notes && <div><p className="font-semibold">Notes:</p><p className="text-stone-600">{previewEstimate.notes}</p></div>}
-
-              <div className="mt-8 border-t border-stone-200 pt-4">
-                <p className="text-xs text-stone-400">Authorized by: {COMPANY.signatory} | {COMPANY.brand}</p>
-              </div>
-            </div>
-          </>
-        )}
+      {/* PRINT PREVIEW MODAL */}
+      <Modal open={previewOpen} onClose={() => setPreviewOpen(false)} title="Proposal Preview" wide>
+        {previewEst && <ProposalPreview est={previewEst} client={getClientForEst(previewEst)} />}
       </Modal>
     </div>
+  )
+}
+
+/* ─── Printable Proposal Preview ─── */
+function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
+  const mats = (est.materials_specified ?? {}) as MaterialsSpecified
+  const ps = (est.payment_schedule ?? {}) as { deposit?: number; balance?: number; methods?: string }
+  const items = est.line_items as EstimateLineItem[]
+
+  return (
+    <>
+      <div className="mb-4 no-print"><Button onClick={() => window.print()}><Printer className="h-4 w-4" /> Print</Button></div>
+      <div className="space-y-6 text-sm leading-relaxed">
+        {/* Header */}
+        <div className="flex justify-between items-start">
+          <div>
+            <h2 className="text-xl font-bold text-brand-700">{COMPANY.legal_name}</h2>
+            <p className="text-xs text-stone-500">{COMPANY.tagline}</p>
+            <p className="text-xs text-stone-500">{COMPANY.address}</p>
+            <p className="text-xs text-stone-500">{COMPANY.phone} | {COMPANY.email}</p>
+          </div>
+          <div className="text-right">
+            <h3 className="text-2xl font-bold text-stone-800">PROPOSAL</h3>
+            <p className="font-mono text-sm">{est.estimate_number}</p>
+            <p className="text-stone-500">Date: {est.created_at?.split('T')[0]}</p>
+            {est.valid_until && <p className="text-stone-500">Valid Until: {est.valid_until}</p>}
+          </div>
+        </div>
+
+        {/* Client info */}
+        <div className="grid grid-cols-2 gap-4 rounded-lg bg-stone-50 p-4">
+          <div>
+            <p className="text-xs font-semibold uppercase text-stone-500">Prepared For</p>
+            <p className="font-medium">{client?.name ?? 'N/A'}</p>
+            {est.attn && <p>Attn: {est.attn}</p>}
+            {client?.address && <p className="text-stone-600">{client.address}</p>}
+            {client?.phone && <p className="text-stone-600">{client.phone}</p>}
+          </div>
+          <div>
+            {est.site_address && <><p className="text-xs font-semibold uppercase text-stone-500">Job Site</p><p>{est.site_address}</p></>}
+            {est.division && <p className="mt-1"><span className="text-xs font-semibold text-stone-500">Division:</span> {est.division}</p>}
+          </div>
+        </div>
+
+        {est.re_line && <p><span className="font-semibold">RE:</span> {est.re_line}</p>}
+
+        {/* Scope */}
+        {est.scope_of_work && (
+          <div><h4 className="font-semibold mb-1">Scope of Work</h4><p className="whitespace-pre-wrap text-stone-700">{est.scope_of_work}</p></div>
+        )}
+
+        {/* Materials */}
+        {Object.values(mats).some(v => v) && (
+          <div>
+            <h4 className="font-semibold mb-1">Materials Specified</h4>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              {mats.paver_type && <p><span className="text-stone-500">Type:</span> {mats.paver_type}</p>}
+              {mats.paver_size && <p><span className="text-stone-500">Size:</span> {mats.paver_size}</p>}
+              {mats.paver_color && <p><span className="text-stone-500">Color:</span> {mats.paver_color}</p>}
+              {mats.sand_type && <p><span className="text-stone-500">Sand:</span> {mats.sand_type}</p>}
+              {mats.sealant && <p><span className="text-stone-500">Sealant:</span> {mats.sealant}</p>}
+              {mats.other && <p><span className="text-stone-500">Other:</span> {mats.other}</p>}
+            </div>
+          </div>
+        )}
+
+        {/* Timeline */}
+        {(est.start_date || est.end_date) && (
+          <div><h4 className="font-semibold mb-1">Timeline</h4>
+            <p className="text-stone-700">
+              {est.start_date && <>Estimated Start: <strong>{est.start_date}</strong></>}
+              {est.start_date && est.end_date && ' — '}
+              {est.end_date && <>Estimated Completion: <strong>{est.end_date}</strong></>}
+            </p>
+          </div>
+        )}
+
+        {/* Line Items Table */}
+        <table className="w-full border-collapse">
+          <thead><tr className="border-b-2 border-stone-300 text-left"><th className="py-2">Description</th><th className="py-2 text-right">Qty</th><th className="py-2 text-right">Unit</th><th className="py-2 text-right">Unit Price</th><th className="py-2 text-right">Amount</th></tr></thead>
+          <tbody>
+            {items.map((item, i) => (
+              <tr key={i} className="border-b border-stone-100">
+                <td className="py-2">{item.description}</td><td className="py-2 text-right">{item.qty}</td><td className="py-2 text-right">{item.unit}</td>
+                <td className="py-2 text-right">${item.unit_price.toFixed(2)}</td><td className="py-2 text-right">${(item.qty * item.unit_price).toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div className="ml-auto w-64 space-y-1 text-right">
+          <div className="flex justify-between"><span>Subtotal</span><span>${est.subtotal.toFixed(2)}</span></div>
+          <div className="flex justify-between"><span>Tax ({est.tax_rate}%)</span><span>${est.tax_amount.toFixed(2)}</span></div>
+          <div className="flex justify-between border-t border-stone-300 pt-1 text-base font-bold"><span>Total</span><span>${est.total.toFixed(2)}</span></div>
+        </div>
+
+        {/* Payment Schedule */}
+        <div className="rounded-lg bg-stone-50 p-4">
+          <h4 className="font-semibold mb-2">Payment Schedule</h4>
+          <p>Deposit (50%): <strong>${(ps.deposit ?? est.total * 0.5).toFixed(2)}</strong> — due upon acceptance</p>
+          <p>Balance (50%): <strong>${(ps.balance ?? est.total * 0.5).toFixed(2)}</strong> — due upon completion</p>
+          <p className="mt-2 text-xs text-stone-500">Payment Methods: {ps.methods ?? paymentMethodsForClient(client?.type ?? 'Homeowner')}</p>
+          <p className="text-xs text-stone-500">Check payable to: {COMPANY.check_payable}</p>
+        </div>
+
+        {/* Warranty */}
+        {est.warranty && <div><h4 className="font-semibold mb-1">Warranty</h4><p className="text-stone-700">{est.warranty}</p></div>}
+
+        {/* Terms */}
+        <div>
+          <h4 className="font-semibold mb-1">Terms & Conditions</h4>
+          <ol className="list-decimal list-inside space-y-1 text-xs text-stone-600">
+            {TERMS_AND_CONDITIONS.map((t, i) => <li key={i}>{t}</li>)}
+          </ol>
+        </div>
+
+        {/* Notes */}
+        {est.notes && <div><h4 className="font-semibold mb-1">Notes</h4><p className="text-stone-600">{est.notes}</p></div>}
+
+        {/* Signatures */}
+        <div className="grid grid-cols-2 gap-8 mt-8 pt-4 border-t border-stone-200">
+          <div>
+            <p className="text-xs font-semibold uppercase text-stone-500 mb-8">Authorized By</p>
+            <div className="border-b border-stone-400 mb-1" />
+            <p className="text-sm">{COMPANY.signatory} — {COMPANY.legal_name}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase text-stone-500 mb-8">Accepted By</p>
+            <div className="border-b border-stone-400 mb-1" />
+            <p className="text-sm">Client Printed Name, Signature & Date</p>
+          </div>
+        </div>
+
+        <div className="mt-4 text-center text-[10px] text-stone-400 border-t border-stone-100 pt-2">
+          {COMPANY.legal_name} | {COMPANY.tagline} | {COMPANY.address} | {COMPANY.phone} | {COMPANY.email}
+        </div>
+      </div>
+    </>
   )
 }

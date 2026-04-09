@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Plus, Search } from 'lucide-react'
-import { useTable } from '@/hooks/useSupabase'
+import { useState, useEffect, useCallback } from 'react'
+import { Plus, Search, ArrowRight, CheckSquare, Square, Trash2, PlusCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input, Select, Textarea } from '@/components/ui/Input'
@@ -8,24 +7,54 @@ import { Card } from '@/components/ui/Card'
 import { Table } from '@/components/ui/Table'
 import { Badge, statusColor } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
-import { JOB_DIVISIONS, JOB_STATUSES } from '@/lib/constants'
-import type { Job, JobDivision, JobStatus, Client } from '@/lib/database.types'
+import { FlowIndicator } from '@/components/FlowIndicator'
+import { JOB_DIVISIONS, JOB_STATUSES, CHANGE_ORDER_STATUSES, CHANGE_ORDER_REASONS } from '@/lib/constants'
+import type { Job, JobDivision, JobStatus, Client, ChangeOrder, ChangeOrderStatus, ChecklistItem, Estimate, Invoice } from '@/lib/database.types'
 
-const emptyForm = { title: '', client_id: '', division: 'Pavers' as JobDivision, status: 'Lead' as JobStatus, address: '', scheduled_date: '', description: '', total_amount: 0 }
+const emptyForm = {
+  title: '', client_id: '', division: 'Pavers' as JobDivision, status: 'Lead' as JobStatus,
+  address: '', site_address: '', re_line: '', scheduled_date: '', description: '', total_amount: 0,
+  assigned_to: '', materials_used: '',
+}
+
+const emptyCO = { description: '', reason: 'Area increase', qty: 1, unit: 'job', unit_price: 0, status: 'Pending Client Approval' as ChangeOrderStatus }
 
 export default function JobsPage() {
-  const { data: jobs, loading, insert, update, remove } = useTable<Job>('jobs')
+  const [jobs, setJobs] = useState<Job[]>([])
   const [clients, setClients] = useState<Client[]>([])
+  const [estimates, setEstimates] = useState<Estimate[]>([])
+  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Job | null>(null)
   const [form, setForm] = useState(emptyForm)
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([])
+  const [newCheckItem, setNewCheckItem] = useState('')
+  const [changeOrders, setChangeOrders] = useState<ChangeOrder[]>([])
+  const [coModalOpen, setCoModalOpen] = useState(false)
+  const [coForm, setCoForm] = useState(emptyCO)
 
-  useEffect(() => {
-    supabase.from('clients').select('*').order('name').then(({ data }) => setClients(data ?? []))
+  const fetchAll = useCallback(async () => {
+    setLoading(true)
+    const [jRes, cRes, eRes, iRes] = await Promise.all([
+      supabase.from('jobs').select('*').order('created_at', { ascending: false }),
+      supabase.from('clients').select('*').order('name'),
+      supabase.from('estimates').select('*'),
+      supabase.from('invoices').select('*'),
+    ])
+    setJobs((jRes.data ?? []) as Job[])
+    setClients((cRes.data ?? []) as Client[])
+    setEstimates((eRes.data ?? []) as Estimate[])
+    setInvoices((iRes.data ?? []) as Invoice[])
+    setLoading(false)
   }, [])
 
+  useEffect(() => { fetchAll() }, [fetchAll])
+
   const clientMap = Object.fromEntries(clients.map(c => [c.id, c.name]))
+  const estMap = Object.fromEntries(estimates.map(e => [e.id, e]))
+  const invByJob = Object.fromEntries(invoices.filter(i => i.job_id).map(i => [i.job_id!, i]))
 
   const filtered = jobs.filter(j =>
     j.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -33,29 +62,112 @@ export default function JobsPage() {
     j.status.toLowerCase().includes(search.toLowerCase())
   )
 
-  function openNew() { setEditing(null); setForm(emptyForm); setModalOpen(true) }
-  function openEdit(job: Job) {
+  function openNew() { setEditing(null); setForm(emptyForm); setChecklist([]); setChangeOrders([]); setModalOpen(true) }
+
+  async function openEdit(job: Job) {
     setEditing(job)
     setForm({
       title: job.title, client_id: job.client_id, division: job.division, status: job.status,
-      address: job.address ?? '', scheduled_date: job.scheduled_date ?? '', description: job.description ?? '', total_amount: job.total_amount,
+      address: job.address ?? '', site_address: job.site_address ?? '', re_line: job.re_line ?? '',
+      scheduled_date: job.scheduled_date ?? '', description: job.description ?? '', total_amount: job.total_amount,
+      assigned_to: job.assigned_to ?? '', materials_used: job.materials_used ?? '',
     })
+    setChecklist((job.checklist as ChecklistItem[]) ?? [])
+    // Fetch change orders
+    const { data } = await supabase.from('change_orders').select('*').eq('job_id', job.id).order('created_at')
+    setChangeOrders((data ?? []) as ChangeOrder[])
     setModalOpen(true)
   }
 
   async function handleSave() {
     const payload = {
-      ...form,
-      address: form.address || null, scheduled_date: form.scheduled_date || null, description: form.description || null,
+      ...form, address: form.address || null, site_address: form.site_address || null,
+      re_line: form.re_line || null, scheduled_date: form.scheduled_date || null,
+      description: form.description || null, assigned_to: form.assigned_to || null,
+      materials_used: form.materials_used || null, checklist,
       completed_date: form.status === 'Completed' ? new Date().toISOString().split('T')[0] : null,
     }
-    if (editing) await update(editing.id, payload)
-    else await insert(payload)
+    if (editing) {
+      await supabase.from('jobs').update(payload as never).eq('id', editing.id)
+    } else {
+      await supabase.from('jobs').insert({ ...payload, estimate_id: null, photos: [] } as never)
+    }
+    await fetchAll()
     setModalOpen(false)
   }
 
   async function handleDelete() {
-    if (editing && confirm('Delete this job?')) { await remove(editing.id); setModalOpen(false) }
+    if (editing && confirm('Delete this job?')) {
+      await supabase.from('jobs').delete().eq('id', editing.id)
+      await fetchAll(); setModalOpen(false)
+    }
+  }
+
+  // Checklist
+  function addCheckItem() {
+    if (!newCheckItem.trim()) return
+    setChecklist(cl => [...cl, { text: newCheckItem.trim(), done: false }])
+    setNewCheckItem('')
+  }
+  function toggleCheckItem(i: number) { setChecklist(cl => cl.map((c, idx) => idx === i ? { ...c, done: !c.done } : c)) }
+  function removeCheckItem(i: number) { setChecklist(cl => cl.filter((_, idx) => idx !== i)) }
+
+  // Change Orders
+  async function saveCO() {
+    if (!editing) return
+    const total = coForm.qty * coForm.unit_price
+    await supabase.from('change_orders').insert({
+      job_id: editing.id, date: new Date().toISOString().split('T')[0],
+      description: coForm.description, reason: coForm.reason,
+      qty: coForm.qty, unit: coForm.unit, unit_price: coForm.unit_price, total, status: coForm.status,
+    } as never)
+    const { data } = await supabase.from('change_orders').select('*').eq('job_id', editing.id).order('created_at')
+    setChangeOrders((data ?? []) as ChangeOrder[])
+    setCoForm(emptyCO); setCoModalOpen(false)
+  }
+
+  async function updateCOStatus(co: ChangeOrder, status: ChangeOrderStatus) {
+    await supabase.from('change_orders').update({ status } as never).eq('id', co.id)
+    setChangeOrders(cos => cos.map(c => c.id === co.id ? { ...c, status } : c))
+  }
+
+  async function deleteCO(co: ChangeOrder) {
+    await supabase.from('change_orders').delete().eq('id', co.id)
+    setChangeOrders(cos => cos.filter(c => c.id !== co.id))
+  }
+
+  // Generate Invoice from Job
+  async function generateInvoice(job: Job) {
+    const est = job.estimate_id ? estMap[job.estimate_id] : null
+    const baseLine = est
+      ? (est.line_items as { description: string; qty: number; unit: string; unit_price: number }[])
+      : [{ description: job.title, qty: 1, unit: 'job', unit_price: job.total_amount }]
+
+    // Fetch approved change orders
+    const { data: cos } = await supabase.from('change_orders').select('*').eq('job_id', job.id).eq('status', 'Approved')
+    const coLines = ((cos ?? []) as ChangeOrder[]).map((co, i) => ({
+      description: `Change Order #${i + 1} — ${co.description}`,
+      qty: co.qty, unit: co.unit, unit_price: co.unit_price, is_change_order: true,
+    }))
+
+    const allLines = [...baseLine, ...coLines]
+    const subtotal = allLines.reduce((s, l) => s + l.qty * l.unit_price, 0)
+    const now = new Date()
+    const dueDate = new Date(now)
+    dueDate.setDate(dueDate.getDate() + 30)
+
+    const invCount = invoices.length + 1
+    const y = now.getFullYear()
+    const m = String(now.getMonth() + 1).padStart(2, '0')
+    const d = String(now.getDate()).padStart(2, '0')
+
+    await supabase.from('invoices').insert({
+      invoice_number: `${y}-${m}${d}-${String(invCount).padStart(3, '0')}`,
+      client_id: job.client_id, job_id: job.id, estimate_id: job.estimate_id || null,
+      status: 'Draft', line_items: allLines, subtotal, tax_rate: 0, tax_amount: 0, total: subtotal,
+      notes: null, due_date: dueDate.toISOString().split('T')[0], paid_date: null,
+    } as never)
+    await fetchAll()
   }
 
   return (
@@ -79,35 +191,146 @@ export default function JobsPage() {
             columns={[
               { key: 'title', header: 'Job Title', render: j => <span className="font-medium">{j.title}</span> },
               { key: 'client', header: 'Client', render: j => clientMap[j.client_id] ?? '-' },
-              { key: 'division', header: 'Division', render: j => <Badge color={j.division === 'Pavers' ? 'orange' : 'blue'}>{j.division}</Badge> },
+              { key: 'division', header: 'Div', render: j => <Badge color={j.division === 'Pavers' ? 'orange' : 'blue'}>{j.division}</Badge> },
               { key: 'status', header: 'Status', render: j => <Badge color={statusColor(j.status)}>{j.status}</Badge> },
               { key: 'date', header: 'Scheduled', render: j => j.scheduled_date ?? '-' },
               { key: 'amount', header: 'Amount', render: j => `$${j.total_amount.toLocaleString()}` },
+              { key: 'flow', header: 'Flow', render: j => {
+                const hasEst = !!j.estimate_id
+                const hasInv = !!invByJob[j.id]
+                return <FlowIndicator steps={[
+                  { label: 'Estimate', status: hasEst ? 'done' : 'none' },
+                  { label: 'Job', status: j.status === 'Completed' ? 'done' : 'active' },
+                  { label: 'Invoice', status: hasInv ? 'done' : 'pending' },
+                ]} />
+              }},
+              { key: 'actions', header: '', render: j => (
+                <div className="flex gap-1" onClick={ev => ev.stopPropagation()}>
+                  {!invByJob[j.id] && (j.status === 'In Progress' || j.status === 'Completed') && (
+                    <Button variant="ghost" size="sm" onClick={() => generateInvoice(j)} title="Generate Invoice">
+                      <ArrowRight className="h-4 w-4 text-brand-600" />
+                    </Button>
+                  )}
+                </div>
+              )},
             ]}
           />
         )}
       </Card>
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Edit Job' : 'New Job'}>
-        <div className="space-y-4">
+      {/* JOB FORM MODAL */}
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Edit Job' : 'New Job'} wide>
+        <div className="space-y-5 max-h-[75vh] overflow-y-auto pr-1">
+          {/* Flow indicator at top */}
+          {editing && (
+            <div className="rounded-lg bg-stone-50 p-3 flex items-center justify-between">
+              <FlowIndicator steps={[
+                { label: 'Estimate', status: editing.estimate_id ? 'done' : 'none' },
+                { label: 'Job', status: editing.status === 'Completed' ? 'done' : 'active' },
+                { label: 'Invoice', status: invByJob[editing.id] ? 'done' : 'pending' },
+              ]} />
+              {!invByJob[editing.id] && (editing.status === 'In Progress' || editing.status === 'Completed') && (
+                <Button size="sm" onClick={() => { generateInvoice(editing); setModalOpen(false) }}>Generate Invoice</Button>
+              )}
+            </div>
+          )}
+
           <Input label="Job Title" id="title" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} required />
           <Select label="Client" id="client_id" value={form.client_id} onChange={e => setForm(f => ({ ...f, client_id: e.target.value }))} options={clients.map(c => ({ value: c.id, label: c.name }))} />
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             <Select label="Division" id="division" value={form.division} onChange={e => setForm(f => ({ ...f, division: e.target.value as JobDivision }))} options={JOB_DIVISIONS.map(d => ({ value: d, label: d }))} />
             <Select label="Status" id="status" value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as JobStatus }))} options={JOB_STATUSES.map(s => ({ value: s, label: s }))} />
+            <Input label="Scheduled Date" id="scheduled_date" type="date" value={form.scheduled_date} onChange={e => setForm(f => ({ ...f, scheduled_date: e.target.value }))} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="Scheduled Date" id="scheduled_date" type="date" value={form.scheduled_date} onChange={e => setForm(f => ({ ...f, scheduled_date: e.target.value }))} />
+            <Input label="Job Address" id="address" value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
             <Input label="Total Amount ($)" id="total_amount" type="number" value={form.total_amount} onChange={e => setForm(f => ({ ...f, total_amount: Number(e.target.value) }))} />
           </div>
-          <Input label="Job Address" id="address" value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input label="Assigned Technician" id="assigned_to" value={form.assigned_to} onChange={e => setForm(f => ({ ...f, assigned_to: e.target.value }))} />
+            <Input label="RE: Line" id="re_line" value={form.re_line} onChange={e => setForm(f => ({ ...f, re_line: e.target.value }))} />
+          </div>
           <Textarea label="Description" id="description" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
-          <div className="flex justify-between pt-2">
-            {editing && <Button variant="danger" onClick={handleDelete}>Delete</Button>}
-            <div className="ml-auto flex gap-2">
-              <Button variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button onClick={handleSave}>{editing ? 'Update' : 'Create'}</Button>
+          <Textarea label="Materials Used" id="materials_used" value={form.materials_used} onChange={e => setForm(f => ({ ...f, materials_used: e.target.value }))} />
+
+          {/* Checklist */}
+          <div className="border rounded-lg border-stone-200 p-4">
+            <h3 className="text-sm font-semibold text-stone-700 mb-2">Checklist</h3>
+            <div className="space-y-1">
+              {checklist.map((item, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm">
+                  <button type="button" onClick={() => toggleCheckItem(i)}>
+                    {item.done ? <CheckSquare className="h-4 w-4 text-green-600" /> : <Square className="h-4 w-4 text-stone-400" />}
+                  </button>
+                  <span className={item.done ? 'line-through text-stone-400' : ''}>{item.text}</span>
+                  <button type="button" onClick={() => removeCheckItem(i)} className="ml-auto"><Trash2 className="h-3 w-3 text-red-400" /></button>
+                </div>
+              ))}
             </div>
+            <div className="flex gap-2 mt-2">
+              <input className="flex-1 rounded-lg border border-stone-300 px-2 py-1.5 text-sm" placeholder="Add checklist item..." value={newCheckItem} onChange={e => setNewCheckItem(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCheckItem())} />
+              <Button variant="ghost" size="sm" type="button" onClick={addCheckItem}><PlusCircle className="h-4 w-4" /></Button>
+            </div>
+          </div>
+
+          {/* Change Orders (only when editing) */}
+          {editing && (
+            <div className="border rounded-lg border-stone-200 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold text-stone-700">Change Orders</h3>
+                <Button variant="ghost" size="sm" type="button" onClick={() => { setCoForm(emptyCO); setCoModalOpen(true) }}><Plus className="h-3 w-3" /> Add Change Order</Button>
+              </div>
+              {changeOrders.length === 0 ? <p className="text-xs text-stone-400">No change orders.</p> : (
+                <div className="space-y-2">
+                  {changeOrders.map((co, i) => (
+                    <div key={co.id} className="flex items-center justify-between rounded-lg bg-stone-50 px-3 py-2 text-sm">
+                      <div>
+                        <span className="font-medium">CO #{i + 1}</span> — {co.description}
+                        <span className="ml-2 text-xs text-stone-500">({co.reason})</span>
+                        <span className="ml-2 font-medium">${co.total.toFixed(2)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge color={co.status === 'Approved' ? 'green' : co.status === 'Declined' ? 'red' : 'yellow'}>{co.status}</Badge>
+                        {co.status === 'Pending Client Approval' && (
+                          <>
+                            <Button variant="ghost" size="sm" type="button" onClick={() => updateCOStatus(co, 'Approved')}>Approve</Button>
+                            <Button variant="ghost" size="sm" type="button" onClick={() => updateCOStatus(co, 'Declined')}>Decline</Button>
+                          </>
+                        )}
+                        <button type="button" onClick={() => deleteCO(co)}><Trash2 className="h-3 w-3 text-red-400" /></button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="flex justify-between border-t border-stone-200 pt-4">
+            {editing && <Button variant="danger" onClick={handleDelete} type="button">Delete</Button>}
+            <div className="ml-auto flex gap-2">
+              <Button variant="secondary" onClick={() => setModalOpen(false)} type="button">Cancel</Button>
+              <Button onClick={handleSave} type="button">{editing ? 'Update' : 'Create'}</Button>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Change Order Modal */}
+      <Modal open={coModalOpen} onClose={() => setCoModalOpen(false)} title="Add Change Order">
+        <div className="space-y-4">
+          <Input label="Description" id="co-desc" value={coForm.description} onChange={e => setCoForm(f => ({ ...f, description: e.target.value }))} required />
+          <Select label="Reason" id="co-reason" value={coForm.reason} onChange={e => setCoForm(f => ({ ...f, reason: e.target.value }))} options={CHANGE_ORDER_REASONS.map(r => ({ value: r, label: r }))} />
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Input label="Qty" id="co-qty" type="number" value={coForm.qty} onChange={e => setCoForm(f => ({ ...f, qty: Number(e.target.value) }))} />
+            <Input label="Unit" id="co-unit" value={coForm.unit} onChange={e => setCoForm(f => ({ ...f, unit: e.target.value }))} />
+            <Input label="Unit Price ($)" id="co-price" type="number" step="0.01" value={coForm.unit_price} onChange={e => setCoForm(f => ({ ...f, unit_price: Number(e.target.value) }))} />
+          </div>
+          <p className="text-right text-sm font-medium">Total: ${(coForm.qty * coForm.unit_price).toFixed(2)}</p>
+          <Select label="Status" id="co-status" value={coForm.status} onChange={e => setCoForm(f => ({ ...f, status: e.target.value as ChangeOrderStatus }))} options={CHANGE_ORDER_STATUSES.map(s => ({ value: s, label: s }))} />
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="secondary" onClick={() => setCoModalOpen(false)} type="button">Cancel</Button>
+            <Button onClick={saveCO} type="button">Save Change Order</Button>
           </div>
         </div>
       </Modal>

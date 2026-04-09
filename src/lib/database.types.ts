@@ -6,6 +6,7 @@ export type InvoiceStatus = 'Draft' | 'Sent' | 'Paid' | 'Overdue'
 export type InventoryCategory = 'Bricks' | 'Slabs' | 'Tiles' | 'Sand' | 'Sealant'
 export type ContactRole = 'Owner' | 'Manager' | 'AP' | 'Superintendent' | 'Other'
 export type PreferredContact = 'Phone' | 'Email' | 'Text'
+export type ChangeOrderStatus = 'Pending Client Approval' | 'Approved' | 'Declined'
 
 export interface Client {
   id: string
@@ -30,19 +31,13 @@ export interface ClientContact {
   created_at: string
 }
 
-export interface Job {
-  id: string
-  title: string
-  client_id: string
-  client?: Client
-  division: JobDivision
-  status: JobStatus
-  address: string | null
-  scheduled_date: string | null
-  completed_date: string | null
-  description: string | null
-  total_amount: number
-  created_at: string
+export interface MaterialsSpecified {
+  paver_type?: string
+  paver_size?: string
+  paver_color?: string
+  sand_type?: string
+  sealant?: string
+  other?: string
 }
 
 export interface EstimateLineItem {
@@ -60,11 +55,21 @@ export interface Estimate {
   job_id: string | null
   job?: Job
   status: EstimateStatus
+  division: string | null
+  attn: string | null
+  site_address: string | null
+  re_line: string | null
+  scope_of_work: string | null
+  materials_specified: MaterialsSpecified | null
+  start_date: string | null
+  end_date: string | null
   line_items: EstimateLineItem[]
   subtotal: number
   tax_rate: number
   tax_amount: number
   total: number
+  warranty: string | null
+  payment_schedule: Record<string, unknown> | null
   notes: string | null
   valid_until: string | null
   created_at: string
@@ -75,6 +80,7 @@ export interface InvoiceLineItem {
   qty: number
   unit: string
   unit_price: number
+  is_change_order?: boolean
 }
 
 export interface Invoice {
@@ -94,6 +100,47 @@ export interface Invoice {
   notes: string | null
   due_date: string | null
   paid_date: string | null
+  created_at: string
+}
+
+export interface ChecklistItem {
+  text: string
+  done: boolean
+}
+
+export interface Job {
+  id: string
+  title: string
+  client_id: string
+  client?: Client
+  division: JobDivision
+  status: JobStatus
+  address: string | null
+  site_address: string | null
+  re_line: string | null
+  scheduled_date: string | null
+  completed_date: string | null
+  description: string | null
+  total_amount: number
+  estimate_id: string | null
+  assigned_to: string | null
+  materials_used: string | null
+  checklist: ChecklistItem[]
+  photos: string[]
+  created_at: string
+}
+
+export interface ChangeOrder {
+  id: string
+  job_id: string
+  date: string
+  description: string
+  reason: string | null
+  qty: number
+  unit: string
+  unit_price: number
+  total: number
+  status: ChangeOrderStatus
   created_at: string
 }
 
@@ -132,6 +179,7 @@ export interface Database {
       suppliers: { Row: Supplier; Insert: Omit<Supplier, 'id' | 'created_at'>; Update: Partial<Omit<Supplier, 'id' | 'created_at'>> }
       inventory: { Row: InventoryItem; Insert: Omit<InventoryItem, 'id' | 'created_at'>; Update: Partial<Omit<InventoryItem, 'id' | 'created_at'>> }
       client_contacts: { Row: ClientContact; Insert: Omit<ClientContact, 'id' | 'created_at'>; Update: Partial<Omit<ClientContact, 'id' | 'created_at'>> }
+      change_orders: { Row: ChangeOrder; Insert: Omit<ChangeOrder, 'id' | 'created_at'>; Update: Partial<Omit<ChangeOrder, 'id' | 'created_at'>> }
     }
   }
 }
