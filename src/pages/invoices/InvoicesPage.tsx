@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Plus, Search, Printer, CheckCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
-import { Select, Textarea } from '@/components/ui/Input'
+import { Input, Select, Textarea } from '@/components/ui/Input'
 import { DateInput } from '@/components/ui/DateInput'
 import { Card } from '@/components/ui/Card'
 import { Table } from '@/components/ui/Table'
@@ -62,13 +62,12 @@ export default function InvoicesPage() {
   function openNew() { setEditing(null); setForm(emptyForm); setModalOpen(true) }
   function openEdit(inv: Invoice) {
     setEditing(inv)
-    const r = inv as Record<string, unknown>
-    const depRcv = r.deposit_received as number ?? 0
+    const depRcv = inv.deposit_received ?? 0
     setForm({
       client_id: inv.client_id, job_id: inv.job_id ?? '', status: inv.status,
       line_items: (inv.line_items as InvoiceLineItem[]).length > 0 ? inv.line_items as InvoiceLineItem[] : [{ ...emptyLine }],
       notes: inv.notes ?? '', due_date: inv.due_date ?? '',
-      payment_terms: r.payment_terms as string ?? '', payment_method_used: r.payment_method_used as string ?? '',
+      payment_terms: inv.payment_terms ?? '', payment_method_used: inv.payment_method_used ?? '',
       deposit_received: depRcv, has_deposit: depRcv > 0,
     })
     setModalOpen(true)
@@ -297,13 +296,13 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
         {/* Payment Details */}
         <div className="rounded-lg bg-stone-50 p-4 space-y-1">
           <h4 className="font-semibold mb-2">Payment Information</h4>
-          {(inv as Record<string, unknown>).payment_terms && <p>Payment Terms: <strong>{(inv as Record<string, unknown>).payment_terms as string}</strong></p>}
+          {inv.payment_terms && <p>Payment Terms: <strong>{inv.payment_terms}</strong></p>}
           <p>Accepted Payment Methods: <strong>{methods}</strong></p>
-          {((inv as Record<string, unknown>).deposit_received as number ?? 0) > 0 && (
-            <p>Deposit Received: <strong>${((inv as Record<string, unknown>).deposit_received as number).toFixed(2)}</strong></p>
+          {(inv.deposit_received ?? 0) > 0 && (
+            <p>Deposit Received: <strong>${inv.deposit_received.toFixed(2)}</strong></p>
           )}
-          {((inv as Record<string, unknown>).balance_due as number ?? 0) > 0 && (
-            <p className="text-base font-bold">Balance Due: ${((inv as Record<string, unknown>).balance_due as number).toFixed(2)}</p>
+          {(inv.balance_due ?? 0) > 0 && (
+            <p className="text-base font-bold">Balance Due: ${(inv.balance_due ?? inv.total).toFixed(2)}</p>
           )}
           <p className="text-xs text-stone-500 mt-2">Check payable to: {COMPANY.check_payable}</p>
           <p className="text-xs text-stone-500">Zelle: {COMPANY.zelle}</p>

@@ -76,6 +76,8 @@ export interface Estimate {
   notes: string | null
   valid_until: string | null
   job_id: string | null
+  payment_terms: string | null
+  accepted_payment_methods: string[]
   created_at: string
 }
 
@@ -100,6 +102,10 @@ export interface Invoice {
   notes: string | null
   due_date: string | null
   re_line: string | null
+  payment_terms: string | null
+  payment_method_used: string | null
+  deposit_received: number
+  balance_due: number | null
   created_at: string
 }
 

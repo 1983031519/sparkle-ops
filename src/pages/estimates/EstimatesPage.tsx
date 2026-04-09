@@ -12,7 +12,7 @@ import { FlowIndicator } from '@/components/FlowIndicator'
 import { InlineClientCreate } from '@/components/InlineClientCreate'
 import {
   ESTIMATE_STATUSES, JOB_DIVISIONS, COMPANY, DEFAULT_WARRANTY, TERMS_AND_CONDITIONS,
-  generateEstimateNumber, paymentMethodsForClient,
+  generateEstimateNumber,
 } from '@/lib/constants'
 import type { Estimate, EstimateStatus, EstimateLineItem, Client, Job, Invoice, MaterialsSpecified } from '@/lib/database.types'
 import { fmtDate, fmtCurrency, futureISO, isoDatePart } from '@/lib/constants'
@@ -101,8 +101,8 @@ export default function EstimatesPage() {
       line_items: (est.line_items as EstimateLineItem[]).length > 0 ? est.line_items as EstimateLineItem[] : [{ ...emptyLine }],
       warranty: est.warranty ?? DEFAULT_WARRANTY,
       notes: est.notes ?? '', valid_until: est.valid_until ?? '',
-      payment_terms: (est as Record<string, unknown>).payment_terms as string ?? '50% deposit + 50% on completion',
-      accepted_payment_methods: ((est as Record<string, unknown>).accepted_payment_methods as string[]) ?? ['Check', 'ACH', 'Zelle'],
+      payment_terms: est.payment_terms ?? '50% deposit + 50% on completion',
+      accepted_payment_methods: est.accepted_payment_methods ?? ['Check', 'ACH', 'Zelle'],
     })
     setModalOpen(true)
   }
@@ -399,7 +399,6 @@ function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
   const items = est.line_items as EstimateLineItem[]
   const deposit = est.deposit_amount ?? est.total * 0.5
   const balance = est.balance_amount ?? est.total * 0.5
-  const clientType = client?.type ?? 'Homeowner'
 
   return (
     <>
@@ -490,9 +489,9 @@ function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
         {/* Payment Terms */}
         <div className="rounded-lg bg-stone-50 p-4">
           <h4 className="font-semibold mb-2">Payment Terms</h4>
-          <p className="font-medium">{(est as Record<string, unknown>).payment_terms as string || '50% deposit + 50% on completion'}</p>
+          <p className="font-medium">{est.payment_terms || '50% deposit + 50% on completion'}</p>
           <p className="mt-1">Deposit: <strong>${deposit.toFixed(2)}</strong> — Balance: <strong>${balance.toFixed(2)}</strong></p>
-          <p className="mt-2 text-xs text-stone-600">Accepted Payment Methods: {((est as Record<string, unknown>).accepted_payment_methods as string[] || ['Check', 'ACH', 'Zelle']).join(' \u00b7 ')}</p>
+          <p className="mt-2 text-xs text-stone-600">Accepted Payment Methods: {(est.accepted_payment_methods ?? ['Check', 'ACH', 'Zelle']).join(' \u00b7 ')}</p>
           <p className="text-xs text-stone-500">Check payable to: {COMPANY.check_payable}</p>
           <p className="text-xs text-stone-500">Zelle: {COMPANY.zelle}</p>
         </div>
