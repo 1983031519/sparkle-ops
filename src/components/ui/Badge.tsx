@@ -5,7 +5,7 @@ const colors: Record<string, string> = {
   blue: 'bg-info-50 text-info-600',
   yellow: 'bg-warning-50 text-warning-600',
   red: 'bg-danger-50 text-danger-600',
-  gray: 'bg-stone-100 text-stone-500',
+  gray: 'bg-[#F3F4F6] text-[#6B7280]',
   purple: 'bg-purple-50 text-purple-700',
   orange: 'bg-orange-50 text-orange-700',
   gold: 'bg-gold-100 text-gold-500',
@@ -31,7 +31,7 @@ export function Badge({ children, color = 'gray', className }: Props) {
 
 export function statusColor(status: string): keyof typeof colors {
   const map: Record<string, keyof typeof colors> = {
-    Lead: 'blue', Scheduled: 'purple', 'In Progress': 'gold', Completed: 'green', Cancelled: 'gray',
+    Lead: 'blue', Scheduled: 'purple', 'In Progress': 'yellow', Completed: 'green', Cancelled: 'gray',
     Draft: 'gray', Sent: 'blue', Approved: 'green',
     Unpaid: 'yellow', Paid: 'green', Overdue: 'red',
   }

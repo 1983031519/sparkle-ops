@@ -20,60 +20,80 @@ export function Layout() {
 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
-      {/* Sidebar — 100% inline styles to guarantee navy background */}
       <aside
         className="no-print"
-        style={{
-          width: 240,
-          display: 'flex',
-          flexDirection: 'column',
-          backgroundColor: NAVY,
-          minHeight: '100vh',
-        }}
+        style={{ width: 240, display: 'flex', flexDirection: 'column', backgroundColor: NAVY, minHeight: '100vh' }}
       >
-        {/* Logo */}
-        <div style={{ backgroundColor: NAVY, padding: '24px 20px 16px' }}>
-          <img src="/logo-white.svg" alt="Sparkle Stone & Pavers" style={{ width: 140, height: 'auto', display: 'block' }} />
+        {/* Logo — single img, no filter, no fallback */}
+        <div style={{ backgroundColor: NAVY, padding: '20px 20px 12px' }}>
+          <img src="/logo-white.svg" alt="Sparkle Stone & Pavers" style={{ width: 160, height: 'auto', display: 'block' }} />
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 space-y-0.5 px-3 py-2">
+        <nav style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           {nav.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}
               end={to === '/'}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-150 ${
-                  isActive
-                    ? 'border-l-[3px] border-gold-500 bg-white/[0.08] text-gold-500 pl-[9px]'
-                    : 'border-l-[3px] border-transparent text-white/60 hover:text-white/90 hover:bg-white/[0.05]'
-                }`
+                isActive ? 'nav-item nav-active' : 'nav-item nav-inactive'
               }
+              style={({ isActive }) => ({
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '10px 12px', borderRadius: 8,
+                fontSize: 13, fontWeight: 500,
+                textDecoration: 'none',
+                transition: 'all 150ms',
+                borderLeft: isActive ? '3px solid #C8A96E' : '3px solid transparent',
+                paddingLeft: isActive ? 9 : 12,
+                color: isActive ? '#C8A96E' : 'rgba(255,255,255,0.65)',
+                backgroundColor: isActive ? 'rgba(200,169,110,0.1)' : 'transparent',
+              })}
+              onMouseEnter={e => {
+                const el = e.currentTarget
+                if (!el.classList.contains('nav-active')) {
+                  el.style.color = 'white'
+                  el.style.backgroundColor = 'rgba(255,255,255,0.06)'
+                }
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget
+                if (!el.classList.contains('nav-active')) {
+                  el.style.color = 'rgba(255,255,255,0.65)'
+                  el.style.backgroundColor = 'transparent'
+                }
+              }}
             >
-              <Icon className="h-[18px] w-[18px]" />
+              <Icon style={{ width: 18, height: 18 }} />
               {label}
             </NavLink>
           ))}
         </nav>
 
         {/* User + Sign Out */}
-        <div className="border-t border-white/10 px-4 py-4">
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '12px 16px' }}>
           {user?.email && (
-            <p className="mb-2 truncate text-[11px] text-white/40">{user.email}</p>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</p>
           )}
           <button
             onClick={signOut}
-            className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-[13px] font-medium text-white/50 transition-colors hover:text-white/80 hover:bg-white/[0.05]"
+            style={{
+              display: 'flex', width: '100%', alignItems: 'center', gap: 10,
+              padding: '8px 8px', borderRadius: 8, border: 'none', cursor: 'pointer',
+              fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.5)',
+              backgroundColor: 'transparent', transition: 'all 150ms',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.8)'; e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)' }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; e.currentTarget.style.backgroundColor = 'transparent' }}
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut style={{ width: 16, height: 16 }} />
             Sign Out
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto bg-surface">
+      <main className="flex-1 overflow-auto" style={{ backgroundColor: '#FAFAF7' }}>
         <Outlet />
       </main>
     </div>
