@@ -368,8 +368,7 @@ function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
         {/* Header */}
         <div className="flex justify-between items-start">
           <div>
-            <h2 className="text-xl font-bold text-brand-700">{COMPANY.legal_name}</h2>
-            <p className="text-xs text-stone-500">{COMPANY.tagline}</p>
+            <img src="/sparkle-logo-dark.png" alt="Sparkle Stone & Pavers" width={160} style={{ height: 'auto', marginBottom: 8 }} />
             <p className="text-xs text-stone-500">{COMPANY.address}</p>
             <p className="text-xs text-stone-500">{COMPANY.phone} | {COMPANY.email}</p>
           </div>
