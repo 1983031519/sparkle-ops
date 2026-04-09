@@ -14,7 +14,7 @@ import type { Job, JobDivision, JobStatus, Client, ChangeOrder, ChangeOrderStatu
 
 const emptyForm = {
   title: '', client_id: '', division: 'Pavers' as JobDivision, status: 'Lead' as JobStatus,
-  address: '', site_address: '', re_line: '', scheduled_date: '', description: '', total_amount: 0,
+  address: '', site_address: '', re_line: '', start_date: '', notes: '', total: 0,
   assigned_to: '', materials_used: '',
 }
 
@@ -70,7 +70,7 @@ export default function JobsPage() {
     setForm({
       title: job.title, client_id: job.client_id, division: job.division, status: job.status,
       address: job.address ?? '', site_address: job.site_address ?? '', re_line: job.re_line ?? '',
-      scheduled_date: job.scheduled_date ?? '', description: job.description ?? '', total_amount: job.total_amount,
+      start_date: job.start_date ?? '', notes: job.notes ?? '', total: job.total,
       assigned_to: job.assigned_to ?? '', materials_used: job.materials_used ?? '',
     })
     setChecklist((job.checklist as ChecklistItem[]) ?? [])
@@ -83,10 +83,10 @@ export default function JobsPage() {
   async function handleSave() {
     const payload = {
       ...form, address: form.address || null, site_address: form.site_address || null,
-      re_line: form.re_line || null, scheduled_date: form.scheduled_date || null,
-      description: form.description || null, assigned_to: form.assigned_to || null,
+      re_line: form.re_line || null, start_date: form.start_date || null,
+      description: form.notes || null, assigned_to: form.assigned_to || null,
       materials_used: form.materials_used || null, checklist,
-      completed_date: form.status === 'Completed' ? new Date().toISOString().split('T')[0] : null,
+      end_date: form.status === 'Completed' ? new Date().toISOString().split('T')[0] : null,
     }
     if (editing) {
       await supabase.from('jobs').update(payload as never).eq('id', editing.id)
@@ -142,7 +142,7 @@ export default function JobsPage() {
     const est = job.estimate_id ? estMap[job.estimate_id] : null
     const baseLine = est
       ? (est.line_items as { description: string; qty: number; unit: string; unit_price: number }[])
-      : [{ description: job.title, qty: 1, unit: 'job', unit_price: job.total_amount }]
+      : [{ description: job.title, qty: 1, unit: 'job', unit_price: job.total }]
 
     // Fetch approved change orders
     const { data: cos } = await supabase.from('change_orders').select('*').eq('job_id', job.id).eq('status', 'Approved')
@@ -163,10 +163,10 @@ export default function JobsPage() {
     const d = String(now.getDate()).padStart(2, '0')
 
     await supabase.from('invoices').insert({
-      invoice_number: `${y}-${m}${d}-${String(invCount).padStart(3, '0')}`,
+      number: `${y}-${m}${d}-${String(invCount).padStart(3, '0')}`,
       client_id: job.client_id, job_id: job.id, estimate_id: job.estimate_id || null,
-      status: 'Draft', line_items: allLines, subtotal, total: subtotal,
-      notes: null, due_date: dueDate.toISOString().split('T')[0], paid_date: null,
+      status: 'Unpaid', line_items: allLines, subtotal, total: subtotal,
+      notes: null, due_date: dueDate.toISOString().split('T')[0],
     } as never)
     await fetchAll()
   }
@@ -194,8 +194,8 @@ export default function JobsPage() {
               { key: 'client', header: 'Client', render: j => clientMap[j.client_id] ?? '-' },
               { key: 'division', header: 'Div', render: j => <Badge color={j.division === 'Pavers' ? 'orange' : 'blue'}>{j.division}</Badge> },
               { key: 'status', header: 'Status', render: j => <Badge color={statusColor(j.status)}>{j.status}</Badge> },
-              { key: 'date', header: 'Scheduled', render: j => fmtDateShort(j.scheduled_date) },
-              { key: 'amount', header: 'Amount', render: j => fmtCurrency(j.total_amount) },
+              { key: 'date', header: 'Scheduled', render: j => fmtDateShort(j.start_date) },
+              { key: 'amount', header: 'Amount', render: j => fmtCurrency(j.total) },
               { key: 'flow', header: 'Flow', render: j => {
                 const hasEst = !!j.estimate_id
                 const hasInv = !!invByJob[j.id]
@@ -241,17 +241,17 @@ export default function JobsPage() {
           <div className="grid gap-4 sm:grid-cols-3">
             <Select label="Division" id="division" value={form.division} onChange={e => setForm(f => ({ ...f, division: e.target.value as JobDivision }))} options={JOB_DIVISIONS.map(d => ({ value: d, label: d }))} />
             <Select label="Status" id="status" value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as JobStatus }))} options={JOB_STATUSES.map(s => ({ value: s, label: s }))} />
-            <DateInput label="Scheduled Date" id="scheduled_date" value={form.scheduled_date} onChange={v => setForm(f => ({ ...f, scheduled_date: v }))} />
+            <DateInput label="Scheduled Date" id="start_date" value={form.start_date} onChange={v => setForm(f => ({ ...f, start_date: v }))} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Input label="Job Address" id="address" value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
-            <Input label="Total Amount ($)" id="total_amount" type="number" value={form.total_amount} onChange={e => setForm(f => ({ ...f, total_amount: Number(e.target.value) }))} />
+            <Input label="Total Amount ($)" id="total" type="number" value={form.total} onChange={e => setForm(f => ({ ...f, total: Number(e.target.value) }))} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Input label="Assigned Technician" id="assigned_to" value={form.assigned_to} onChange={e => setForm(f => ({ ...f, assigned_to: e.target.value }))} />
             <Input label="RE: Line" id="re_line" value={form.re_line} onChange={e => setForm(f => ({ ...f, re_line: e.target.value }))} />
           </div>
-          <Textarea label="Description" id="description" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+          <Textarea label="Description" id="notes" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
           <Textarea label="Materials Used" id="materials_used" value={form.materials_used} onChange={e => setForm(f => ({ ...f, materials_used: e.target.value }))} />
 
           {/* Checklist */}

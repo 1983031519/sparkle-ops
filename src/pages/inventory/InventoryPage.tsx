@@ -11,7 +11,7 @@ import { Modal } from '@/components/ui/Modal'
 import { INVENTORY_CATEGORIES, fmtCurrency } from '@/lib/constants'
 import type { InventoryItem, InventoryCategory, Supplier } from '@/lib/database.types'
 
-const emptyForm = { name: '', category: 'Bricks' as InventoryCategory, supplier_id: '', quantity: 0, unit: 'pcs', min_stock: 10, cost_per_unit: 0, location: '' }
+const emptyForm = { name: '', category: 'Bricks' as InventoryCategory, supplier_id: '', quantity: 0, unit: 'pcs', low_stock_threshold: 10, unit_cost: 0 }
 
 export default function InventoryPage() {
   const { data: items, loading, insert, update, remove } = useTable<InventoryItem>('inventory')
@@ -27,20 +27,20 @@ export default function InventoryPage() {
 
   const supplierMap = Object.fromEntries(suppliers.map(s => [s.id, s.name]))
   const filtered = items.filter(i => i.name.toLowerCase().includes(search.toLowerCase()) || i.category.toLowerCase().includes(search.toLowerCase()))
-  const lowStockCount = items.filter(i => i.quantity <= i.min_stock).length
+  const lowStockCount = items.filter(i => i.quantity <= i.low_stock_threshold).length
 
   function openNew() { setEditing(null); setForm(emptyForm); setModalOpen(true) }
   function openEdit(item: InventoryItem) {
     setEditing(item)
     setForm({
       name: item.name, category: item.category, supplier_id: item.supplier_id ?? '',
-      quantity: item.quantity, unit: item.unit, min_stock: item.min_stock, cost_per_unit: item.cost_per_unit, location: item.location ?? '',
+      quantity: item.quantity, unit: item.unit, low_stock_threshold: item.low_stock_threshold, unit_cost: item.unit_cost,
     })
     setModalOpen(true)
   }
 
   async function handleSave() {
-    const payload = { ...form, supplier_id: form.supplier_id || null, location: form.location || null }
+    const payload = { ...form, supplier_id: form.supplier_id || null }
     if (editing) await update(editing.id, payload)
     else await insert(payload)
     setModalOpen(false)
@@ -81,19 +81,18 @@ export default function InventoryPage() {
               { key: 'name', header: 'Item', render: i => (
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{i.name}</span>
-                  {i.quantity <= i.min_stock && <AlertTriangle className="h-4 w-4 text-orange-500" />}
+                  {i.quantity <= i.low_stock_threshold && <AlertTriangle className="h-4 w-4 text-orange-500" />}
                 </div>
               )},
               { key: 'category', header: 'Category', render: i => <Badge color={catColors[i.category] as never}>{i.category}</Badge> },
               { key: 'qty', header: 'Quantity', render: i => (
-                <span className={i.quantity <= i.min_stock ? 'font-bold text-red-600' : ''}>
+                <span className={i.quantity <= i.low_stock_threshold ? 'font-bold text-red-600' : ''}>
                   {i.quantity} {i.unit}
                 </span>
               )},
-              { key: 'min', header: 'Min Stock', render: i => `${i.min_stock} ${i.unit}` },
-              { key: 'cost', header: 'Cost/Unit', render: i => fmtCurrency(i.cost_per_unit) },
+              { key: 'min', header: 'Min Stock', render: i => `${i.low_stock_threshold} ${i.unit}` },
+              { key: 'cost', header: 'Cost/Unit', render: i => fmtCurrency(i.unit_cost) },
               { key: 'supplier', header: 'Supplier', render: i => i.supplier_id ? supplierMap[i.supplier_id] ?? '-' : '-' },
-              { key: 'location', header: 'Location', render: i => i.location ?? '-' },
             ]}
           />
         )}
@@ -109,11 +108,10 @@ export default function InventoryPage() {
           <div className="grid gap-4 sm:grid-cols-3">
             <Input label="Quantity" id="inv-qty" type="number" value={form.quantity} onChange={e => setForm(f => ({ ...f, quantity: Number(e.target.value) }))} />
             <Input label="Unit" id="inv-unit" value={form.unit} onChange={e => setForm(f => ({ ...f, unit: e.target.value }))} />
-            <Input label="Min Stock" id="inv-min" type="number" value={form.min_stock} onChange={e => setForm(f => ({ ...f, min_stock: Number(e.target.value) }))} />
+            <Input label="Min Stock" id="inv-min" type="number" value={form.low_stock_threshold} onChange={e => setForm(f => ({ ...f, low_stock_threshold: Number(e.target.value) }))} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="Cost per Unit ($)" id="inv-cost" type="number" step="0.01" value={form.cost_per_unit} onChange={e => setForm(f => ({ ...f, cost_per_unit: Number(e.target.value) }))} />
-            <Input label="Storage Location" id="inv-loc" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} />
+            <Input label="Cost per Unit ($)" id="inv-cost" type="number" step="0.01" value={form.unit_cost} onChange={e => setForm(f => ({ ...f, unit_cost: Number(e.target.value) }))} />
           </div>
           <div className="flex justify-between pt-2">
             {editing && <Button variant="danger" onClick={handleDelete}>Delete</Button>}

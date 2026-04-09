@@ -70,7 +70,7 @@ export default function EstimatesPage() {
   const filtered = estimates.filter(e => {
     const cl = clientMap[e.client_id]
     return (cl?.name ?? '').toLowerCase().includes(search.toLowerCase()) ||
-      e.estimate_number.toLowerCase().includes(search.toLowerCase())
+      e.number.toLowerCase().includes(search.toLowerCase())
   })
 
   function calcTotals(items: EstimateLineItem[]) {
@@ -122,8 +122,10 @@ export default function EstimatesPage() {
       const deposit_amount = total * 0.5
       const balance_amount = total - deposit_amount
 
+      const estNum = editing?.number ?? generateEstimateNumber(estimates.length + 1)
       const payload = {
-        estimate_number: editing?.estimate_number ?? generateEstimateNumber(estimates.length + 1),
+        number: estNum,
+        estimate_number: estNum,
         client_id: form.client_id,
         status: form.status,
         division: form.division || 'Pavers',
@@ -191,8 +193,8 @@ export default function EstimatesPage() {
       client_id: est.client_id, division: est.division || 'Pavers', status: 'Scheduled',
       address: est.site_address || client?.address || null,
       site_address: est.site_address || null, re_line: est.re_line || null,
-      description: est.scope_of_work || null, total_amount: est.total,
-      estimate_id: est.id, scheduled_date: est.start_date || null,
+      notes: est.scope_of_work || null, total: est.total,
+      estimate_id: est.id, start_date: est.start_date || null,
       checklist: [], photos: [],
     } as never)
     if (error) {
@@ -200,7 +202,7 @@ export default function EstimatesPage() {
       toast.error(`Failed to convert: ${error.message}`)
       return
     }
-    await supabase.from('estimates').update({ status: 'Accepted' } as never).eq('id', est.id)
+    await supabase.from('estimates').update({ status: 'Approved' } as never).eq('id', est.id)
     await fetchAll()
     toast.success('Job created from estimate.')
   }
@@ -229,7 +231,7 @@ export default function EstimatesPage() {
             data={filtered}
             onRowClick={openEdit}
             columns={[
-              { key: 'number', header: '#', render: e => <span className="font-mono text-xs">{e.estimate_number}</span> },
+              { key: 'number', header: '#', render: e => <span className="font-mono text-xs">{e.number}</span> },
               { key: 'client', header: 'Client', render: e => clientMap[e.client_id]?.name ?? '-' },
               { key: 'division', header: 'Div', render: e => <Badge color={e.division === 'Pavers' ? 'orange' : 'blue'}>{e.division ?? '-'}</Badge> },
               { key: 'status', header: 'Status', render: e => <Badge color={statusColor(e.status)}>{e.status}</Badge> },
@@ -238,13 +240,13 @@ export default function EstimatesPage() {
                 const job = jobByEstimate[e.id]
                 return <FlowIndicator steps={[
                   { label: 'Estimate', status: 'done' },
-                  { label: 'Job', status: job ? 'done' : e.status === 'Accepted' ? 'active' : 'pending' },
+                  { label: 'Job', status: job ? 'done' : e.status === 'Approved' ? 'active' : 'pending' },
                   { label: 'Invoice', status: 'pending' },
                 ]} />
               }},
               { key: 'actions', header: '', render: e => (
                 <div className="flex gap-1" onClick={ev => ev.stopPropagation()}>
-                  {e.status === 'Accepted' && !jobByEstimate[e.id] && (
+                  {e.status === 'Approved' && !jobByEstimate[e.id] && (
                     <Button variant="ghost" size="sm" onClick={() => convertToJob(e)} title="Convert to Job">
                       <ArrowRight className="h-4 w-4 text-brand-600" />
                     </Button>
@@ -373,7 +375,7 @@ function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
           </div>
           <div className="text-right">
             <h3 className="text-2xl font-bold text-stone-800">PROPOSAL</h3>
-            <p className="font-mono text-sm">{est.estimate_number}</p>
+            <p className="font-mono text-sm">{est.number}</p>
             <p className="text-stone-500">Date: {fmtDate(isoDatePart(est.created_at))}</p>
             {est.valid_until && <p className="text-stone-500">Valid Until: {fmtDate(est.valid_until)}</p>}
           </div>

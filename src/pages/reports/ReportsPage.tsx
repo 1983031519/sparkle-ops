@@ -79,7 +79,7 @@ export default function ReportsPage() {
 
   // 2. Outstanding invoices
   const outstandingInvoices = useMemo(() => {
-    return invoices.filter(i => (i.status === 'Sent' || i.status === 'Overdue') && inRange(i.created_at, dateRange))
+    return invoices.filter(i => (i.status === 'Unpaid' || i.status === 'Overdue') && inRange(i.created_at, dateRange))
   }, [invoices, dateRange])
 
   const outstandingTotal = outstandingInvoices.reduce((s, i) => s + i.total, 0)

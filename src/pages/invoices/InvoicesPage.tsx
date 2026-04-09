@@ -12,7 +12,7 @@ import { INVOICE_STATUSES, COMPANY, paymentMethodsForClient, generateInvoiceNumb
 import type { Invoice, InvoiceStatus, InvoiceLineItem, Client, Job } from '@/lib/database.types'
 
 const emptyLine: InvoiceLineItem = { description: '', qty: 1, unit: 'ea', unit_price: 0 }
-const emptyForm = { client_id: '', job_id: '', status: 'Draft' as InvoiceStatus, line_items: [{ ...emptyLine }], notes: '', due_date: '' }
+const emptyForm = { client_id: '', job_id: '', status: 'Unpaid' as InvoiceStatus, line_items: [{ ...emptyLine }], notes: '', due_date: '' }
 
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
@@ -46,7 +46,7 @@ export default function InvoicesPage() {
 
   const filtered = invoices.filter(e =>
     (clientMap[e.client_id]?.name ?? '').toLowerCase().includes(search.toLowerCase()) ||
-    e.invoice_number.toLowerCase().includes(search.toLowerCase())
+    e.number.toLowerCase().includes(search.toLowerCase())
   )
 
   function calcTotals(items: InvoiceLineItem[]) {
@@ -75,11 +75,10 @@ export default function InvoicesPage() {
   async function handleSave() {
     const { subtotal, total } = calcTotals(form.line_items)
     const payload = {
-      invoice_number: editing?.invoice_number ?? generateInvoiceNumber(invoices.length + 1),
+      number: editing?.number ?? generateInvoiceNumber(invoices.length + 1),
       client_id: form.client_id, job_id: form.job_id || null, estimate_id: editing?.estimate_id ?? null,
       status: form.status, line_items: form.line_items, subtotal, total,
       notes: form.notes || null, due_date: form.due_date || null,
-      paid_date: form.status === 'Paid' ? new Date().toISOString().split('T')[0] : null,
     }
     if (editing) await supabase.from('invoices').update(payload as never).eq('id', editing.id)
     else await supabase.from('invoices').insert(payload as never)
@@ -87,7 +86,7 @@ export default function InvoicesPage() {
   }
 
   async function markPaid(inv: Invoice) {
-    await supabase.from('invoices').update({ status: 'Paid', paid_date: new Date().toISOString().split('T')[0] } as never).eq('id', inv.id)
+    await supabase.from('invoices').update({ status: 'Paid' } as never).eq('id', inv.id)
     await fetchAll()
   }
 
@@ -207,7 +206,7 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
           </div>
           <div className="text-right">
             <h3 className="text-2xl font-bold text-stone-800">INVOICE</h3>
-            <p className="font-mono text-sm">{inv.invoice_number}</p>
+            <p className="font-mono text-sm">{inv.number}</p>
             <p className="text-stone-500">Date: {fmtDate(isoDatePart(inv.created_at))}</p>
             {inv.due_date && <p className="text-stone-500">Due: {fmtDate(inv.due_date)}</p>}
             <Badge color={statusColor(inv.status)}>{inv.status}</Badge>

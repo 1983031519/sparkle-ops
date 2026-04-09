@@ -13,7 +13,7 @@ interface KPI { label: string; value: string; icon: React.ElementType; color: st
 export default function DashboardPage() {
   const [kpis, setKpis] = useState<KPI[]>([])
   const [jobs, setJobs] = useState<Job[]>([])
-  const [lowStock, setLowStock] = useState<{ name: string; quantity: number; min_stock: number }[]>([])
+  const [lowStock, setLowStock] = useState<{ name: string; quantity: number; low_stock_threshold: number }[]>([])
   const [currentMonth, setCurrentMonth] = useState(new Date())
 
   useEffect(() => { loadDashboard() }, [])
@@ -23,7 +23,7 @@ export default function DashboardPage() {
       supabase.from('clients').select('id', { count: 'exact', head: true }),
       supabase.from('jobs').select('*'),
       supabase.from('invoices').select('total, status'),
-      supabase.from('inventory').select('name, quantity, min_stock'),
+      supabase.from('inventory').select('name, quantity, low_stock_threshold'),
     ])
 
     const allJobs = (jobRes.data ?? []) as Job[]
@@ -31,7 +31,7 @@ export default function DashboardPage() {
 
     const invoices = (invRes.data ?? []) as { total: number; status: string }[]
     const revenue = invoices.filter(i => i.status === 'Paid').reduce((s, i) => s + (i.total || 0), 0)
-    const outstanding = invoices.filter(i => i.status === 'Sent' || i.status === 'Overdue').reduce((s, i) => s + (i.total || 0), 0)
+    const outstanding = invoices.filter(i => i.status === 'Unpaid' || i.status === 'Overdue').reduce((s, i) => s + (i.total || 0), 0)
     const activeJobs = allJobs.filter(j => j.status === 'In Progress' || j.status === 'Scheduled').length
 
     setKpis([
@@ -41,15 +41,15 @@ export default function DashboardPage() {
       { label: 'Active Jobs', value: String(activeJobs), icon: Briefcase, color: 'text-purple-600 bg-purple-50' },
     ])
 
-    const items = (stockRes.data ?? []) as { name: string; quantity: number; min_stock: number }[]
-    setLowStock(items.filter(i => i.quantity <= i.min_stock))
+    const items = (stockRes.data ?? []) as { name: string; quantity: number; low_stock_threshold: number }[]
+    setLowStock(items.filter(i => i.quantity <= i.low_stock_threshold))
   }
 
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(currentMonth)
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd })
   const startDow = monthStart.getDay()
-  const scheduledJobs = jobs.filter(j => j.scheduled_date)
+  const scheduledJobs = jobs.filter(j => j.start_date)
 
   return (
     <div className="space-y-6 p-6">
@@ -92,7 +92,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-7 gap-px">
               {Array.from({ length: startDow }).map((_, i) => <div key={`e${i}`} />)}
               {days.map(day => {
-                const dayJobs = scheduledJobs.filter(j => j.scheduled_date && isSameDay(parseISO(j.scheduled_date), day))
+                const dayJobs = scheduledJobs.filter(j => j.start_date && isSameDay(parseISO(j.start_date), day))
                 const isToday = isSameDay(day, new Date())
                 return (
                   <div key={day.toISOString()} className={`min-h-[60px] rounded-lg p-1 text-xs ${isToday ? 'bg-brand-50 ring-1 ring-brand-300' : 'hover:bg-stone-50'}`}>
@@ -124,7 +124,7 @@ export default function DashboardPage() {
                 {lowStock.map(item => (
                   <div key={item.name} className="flex items-center justify-between text-sm">
                     <span>{item.name}</span>
-                    <Badge color="red">{item.quantity} left (min: {item.min_stock})</Badge>
+                    <Badge color="red">{item.quantity} left (min: {item.low_stock_threshold})</Badge>
                   </div>
                 ))}
               </CardBody>

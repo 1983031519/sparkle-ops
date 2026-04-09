@@ -1,12 +1,14 @@
 export type ClientType = 'Homeowner' | 'HOA' | 'Builder' | 'Company' | 'Commercial' | 'Property Manager'
 export type JobDivision = 'Pavers' | 'Stone'
 export type JobStatus = 'Lead' | 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled'
-export type EstimateStatus = 'Draft' | 'Sent' | 'Accepted' | 'Declined'
-export type InvoiceStatus = 'Draft' | 'Sent' | 'Paid' | 'Overdue'
+export type EstimateStatus = 'Draft' | 'Sent' | 'Approved'
+export type InvoiceStatus = 'Unpaid' | 'Paid' | 'Overdue'
 export type InventoryCategory = 'Bricks' | 'Slabs' | 'Tiles' | 'Sand' | 'Sealant'
 export type ContactRole = 'Owner' | 'Manager' | 'AP' | 'Superintendent' | 'Other'
 export type PreferredContact = 'Phone' | 'Email' | 'Text'
 export type ChangeOrderStatus = 'Pending Client Approval' | 'Approved' | 'Declined'
+
+// ── Matches actual Supabase schema exactly ──
 
 export interface Client {
   id: string
@@ -15,6 +17,10 @@ export interface Client {
   email: string | null
   phone: string | null
   address: string | null
+  city: string | null
+  state: string | null
+  zip: string | null
+  contact_name: string | null
   notes: string | null
   created_at: string
 }
@@ -49,11 +55,9 @@ export interface EstimateLineItem {
 
 export interface Estimate {
   id: string
-  estimate_number: string
+  number: string                  // DB column: "number" (NOT NULL)
+  estimate_number: string | null  // DB column: "estimate_number" (nullable duplicate)
   client_id: string
-  client?: Client
-  job_id: string | null
-  job?: Job
   status: EstimateStatus
   division: string | null
   attn: string | null
@@ -71,6 +75,7 @@ export interface Estimate {
   warranty: string | null
   notes: string | null
   valid_until: string | null
+  job_id: string | null
   created_at: string
 }
 
@@ -84,11 +89,9 @@ export interface InvoiceLineItem {
 
 export interface Invoice {
   id: string
-  invoice_number: string
+  number: string                  // DB column: "number"
   client_id: string
-  client?: Client
   job_id: string | null
-  job?: Job
   estimate_id: string | null
   status: InvoiceStatus
   line_items: InvoiceLineItem[]
@@ -96,7 +99,7 @@ export interface Invoice {
   total: number
   notes: string | null
   due_date: string | null
-  paid_date: string | null
+  re_line: string | null
   created_at: string
 }
 
@@ -109,16 +112,15 @@ export interface Job {
   id: string
   title: string
   client_id: string
-  client?: Client
   division: JobDivision
   status: JobStatus
   address: string | null
   site_address: string | null
   re_line: string | null
-  scheduled_date: string | null
-  completed_date: string | null
-  description: string | null
-  total_amount: number
+  start_date: string | null       // DB: "start_date" (was scheduled_date)
+  end_date: string | null          // DB: "end_date" (was completed_date)
+  notes: string | null             // DB: "notes" (was description)
+  total: number                    // DB: "total" (was total_amount)
   estimate_id: string | null
   assigned_to: string | null
   materials_used: string | null
@@ -148,6 +150,7 @@ export interface Supplier {
   email: string | null
   phone: string | null
   address: string | null
+  category: string | null
   notes: string | null
   created_at: string
 }
@@ -157,12 +160,11 @@ export interface InventoryItem {
   name: string
   category: InventoryCategory
   supplier_id: string | null
-  supplier?: Supplier
   quantity: number
   unit: string
-  min_stock: number
-  cost_per_unit: number
-  location: string | null
+  low_stock_threshold: number      // DB: "low_stock_threshold" (was min_stock)
+  unit_cost: number                // DB: "unit_cost" (was cost_per_unit)
+  notes: string | null
   created_at: string
 }
 

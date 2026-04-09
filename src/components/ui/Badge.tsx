@@ -27,8 +27,8 @@ export function Badge({ children, color = 'gray', className }: Props) {
 export function statusColor(status: string): keyof typeof colors {
   const map: Record<string, keyof typeof colors> = {
     Lead: 'blue', Scheduled: 'purple', 'In Progress': 'yellow', Completed: 'green', Cancelled: 'gray',
-    Draft: 'gray', Sent: 'blue', Accepted: 'green', Declined: 'red',
-    Paid: 'green', Overdue: 'red',
+    Draft: 'gray', Sent: 'blue', Approved: 'green',
+    Unpaid: 'yellow', Paid: 'green', Overdue: 'red',
   }
   return map[status] ?? 'gray'
 }
