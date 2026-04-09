@@ -25,7 +25,6 @@ interface EstForm {
   line_items: EstimateLineItem[]; tax_rate: number; warranty: string; notes: string; valid_until: string
 }
 
-const today = format(new Date(), 'yyyy-MM-dd')
 const plus30 = format(addDays(new Date(), 30), 'yyyy-MM-dd')
 
 const emptyForm: EstForm = {
