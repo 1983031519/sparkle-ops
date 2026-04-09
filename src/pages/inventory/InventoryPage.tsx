@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Table } from '@/components/ui/Table'
 import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
-import { INVENTORY_CATEGORIES } from '@/lib/constants'
+import { INVENTORY_CATEGORIES, fmtCurrency } from '@/lib/constants'
 import type { InventoryItem, InventoryCategory, Supplier } from '@/lib/database.types'
 
 const emptyForm = { name: '', category: 'Bricks' as InventoryCategory, supplier_id: '', quantity: 0, unit: 'pcs', min_stock: 10, cost_per_unit: 0, location: '' }
@@ -91,7 +91,7 @@ export default function InventoryPage() {
                 </span>
               )},
               { key: 'min', header: 'Min Stock', render: i => `${i.min_stock} ${i.unit}` },
-              { key: 'cost', header: 'Cost/Unit', render: i => `$${i.cost_per_unit.toFixed(2)}` },
+              { key: 'cost', header: 'Cost/Unit', render: i => fmtCurrency(i.cost_per_unit) },
               { key: 'supplier', header: 'Supplier', render: i => i.supplier_id ? supplierMap[i.supplier_id] ?? '-' : '-' },
               { key: 'location', header: 'Location', render: i => i.location ?? '-' },
             ]}

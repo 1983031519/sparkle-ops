@@ -14,7 +14,7 @@ import {
   generateEstimateNumber, paymentMethodsForClient,
 } from '@/lib/constants'
 import type { Estimate, EstimateStatus, EstimateLineItem, Client, Job, MaterialsSpecified } from '@/lib/database.types'
-import { format, addDays } from 'date-fns'
+import { fmtDate, fmtCurrency, futureISO, isoDatePart } from '@/lib/constants'
 
 const emptyLine: EstimateLineItem = { description: '', qty: 1, unit: 'ea', unit_price: 0 }
 const emptyMaterials: MaterialsSpecified = { paver_type: '', paver_size: '', paver_color: '', sand_type: '', sealant: '', other: '' }
@@ -25,7 +25,7 @@ interface EstForm {
   line_items: EstimateLineItem[]; tax_rate: number; warranty: string; notes: string; valid_until: string
 }
 
-const plus30 = format(addDays(new Date(), 30), 'yyyy-MM-dd')
+const plus30 = futureISO(30)
 
 const emptyForm: EstForm = {
   client_id: '', status: 'Draft', division: 'Pavers', attn: '', site_address: '', re_line: '',
@@ -77,7 +77,7 @@ export default function EstimatesPage() {
 
   function openNew() {
     setEditing(null)
-    setForm({ ...emptyForm, valid_until: format(addDays(new Date(), 30), 'yyyy-MM-dd') })
+    setForm({ ...emptyForm, valid_until: futureISO(30) })
     setModalOpen(true)
   }
 
@@ -182,7 +182,7 @@ export default function EstimatesPage() {
               { key: 'client', header: 'Client', render: e => clientMap[e.client_id]?.name ?? '-' },
               { key: 'division', header: 'Div', render: e => <Badge color={e.division === 'Pavers' ? 'orange' : 'blue'}>{e.division ?? '-'}</Badge> },
               { key: 'status', header: 'Status', render: e => <Badge color={statusColor(e.status)}>{e.status}</Badge> },
-              { key: 'total', header: 'Total', render: e => `$${e.total.toLocaleString()}` },
+              { key: 'total', header: 'Total', render: e => fmtCurrency(e.total) },
               { key: 'flow', header: 'Flow', render: e => {
                 const job = jobByEstimate[e.id]
                 return <FlowIndicator steps={[
@@ -321,8 +321,8 @@ function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
           <div className="text-right">
             <h3 className="text-2xl font-bold text-stone-800">PROPOSAL</h3>
             <p className="font-mono text-sm">{est.estimate_number}</p>
-            <p className="text-stone-500">Date: {est.created_at?.split('T')[0]}</p>
-            {est.valid_until && <p className="text-stone-500">Valid Until: {est.valid_until}</p>}
+            <p className="text-stone-500">Date: {fmtDate(isoDatePart(est.created_at))}</p>
+            {est.valid_until && <p className="text-stone-500">Valid Until: {fmtDate(est.valid_until)}</p>}
           </div>
         </div>
 
@@ -367,9 +367,9 @@ function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
         {(est.start_date || est.end_date) && (
           <div><h4 className="font-semibold mb-1">Timeline</h4>
             <p className="text-stone-700">
-              {est.start_date && <>Estimated Start: <strong>{est.start_date}</strong></>}
+              {est.start_date && <>Estimated Start: <strong>{fmtDate(est.start_date)}</strong></>}
               {est.start_date && est.end_date && ' — '}
-              {est.end_date && <>Estimated Completion: <strong>{est.end_date}</strong></>}
+              {est.end_date && <>Estimated Completion: <strong>{fmtDate(est.end_date)}</strong></>}
             </p>
           </div>
         )}

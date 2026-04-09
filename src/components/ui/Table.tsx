@@ -14,7 +14,7 @@ interface Props<T> {
   emptyMessage?: string
 }
 
-export function Table<T extends { id: string }>({ columns, data, onRowClick, emptyMessage = 'No data found.' }: Props<T>) {
+export function Table<T extends { id: string }>({ columns, data, onRowClick, emptyMessage = 'No records yet.' }: Props<T>) {
   if (data.length === 0) {
     return <p className="py-12 text-center text-sm text-stone-500">{emptyMessage}</p>
   }

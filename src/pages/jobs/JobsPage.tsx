@@ -8,7 +8,7 @@ import { Table } from '@/components/ui/Table'
 import { Badge, statusColor } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { FlowIndicator } from '@/components/FlowIndicator'
-import { JOB_DIVISIONS, JOB_STATUSES, CHANGE_ORDER_STATUSES, CHANGE_ORDER_REASONS } from '@/lib/constants'
+import { JOB_DIVISIONS, JOB_STATUSES, CHANGE_ORDER_STATUSES, CHANGE_ORDER_REASONS, fmtDateShort, fmtCurrency } from '@/lib/constants'
 import type { Job, JobDivision, JobStatus, Client, ChangeOrder, ChangeOrderStatus, ChecklistItem, Estimate, Invoice } from '@/lib/database.types'
 
 const emptyForm = {
@@ -193,8 +193,8 @@ export default function JobsPage() {
               { key: 'client', header: 'Client', render: j => clientMap[j.client_id] ?? '-' },
               { key: 'division', header: 'Div', render: j => <Badge color={j.division === 'Pavers' ? 'orange' : 'blue'}>{j.division}</Badge> },
               { key: 'status', header: 'Status', render: j => <Badge color={statusColor(j.status)}>{j.status}</Badge> },
-              { key: 'date', header: 'Scheduled', render: j => j.scheduled_date ?? '-' },
-              { key: 'amount', header: 'Amount', render: j => `$${j.total_amount.toLocaleString()}` },
+              { key: 'date', header: 'Scheduled', render: j => fmtDateShort(j.scheduled_date) },
+              { key: 'amount', header: 'Amount', render: j => fmtCurrency(j.total_amount) },
               { key: 'flow', header: 'Flow', render: j => {
                 const hasEst = !!j.estimate_id
                 const hasInv = !!invByJob[j.id]

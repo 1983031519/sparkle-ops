@@ -4,6 +4,8 @@ import { supabase } from '@/lib/supabase'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
 import { Badge, statusColor } from '@/components/ui/Badge'
 import { format, subMonths, startOfMonth, endOfMonth, parseISO, isWithinInterval, startOfYear } from 'date-fns'
+import { enUS } from 'date-fns/locale'
+import { fmtCurrency, fmtDateShort } from '@/lib/constants'
 import type { Invoice, Estimate, Job, Client } from '@/lib/database.types'
 
 const COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316']
@@ -70,7 +72,7 @@ export default function ReportsPage() {
       byMonth[month] = (byMonth[month] ?? 0) + i.total
     })
     return Object.entries(byMonth).sort().map(([month, total]) => ({
-      month: format(parseISO(month + '-01'), 'MMM yyyy'),
+      month: format(parseISO(month + '-01'), 'MMM yyyy', { locale: enUS }),
       revenue: total,
     }))
   }, [invoices, dateRange])
@@ -126,7 +128,7 @@ export default function ReportsPage() {
       byMonth[month] = (byMonth[month] ?? 0) + 1
     })
     return Object.entries(byMonth).sort().map(([month, count]) => ({
-      month: format(parseISO(month + '-01'), 'MMM yyyy'),
+      month: format(parseISO(month + '-01'), 'MMM yyyy', { locale: enUS }),
       clients: count,
     }))
   }, [clients, dateRange])
@@ -159,8 +161,8 @@ export default function ReportsPage() {
                 <BarChart data={monthlyRevenue}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
                   <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(v) => [`$${Number(v).toLocaleString()}`, 'Revenue']} />
+                  <YAxis tick={{ fontSize: 12 }} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip formatter={(v) => [fmtCurrency(Number(v)), 'Revenue']} />
                   <Bar dataKey="revenue" fill="#22c55e" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -173,7 +175,7 @@ export default function ReportsPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">Outstanding Invoices</h2>
-              <span className="text-lg font-bold text-red-600">${outstandingTotal.toLocaleString()}</span>
+              <span className="text-lg font-bold text-red-600">{fmtCurrency(outstandingTotal)}</span>
             </div>
           </CardHeader>
           <CardBody>
@@ -183,11 +185,11 @@ export default function ReportsPage() {
                   <div key={inv.id} className="flex items-center justify-between rounded-lg border border-stone-100 px-3 py-2 text-sm">
                     <div>
                       <span className="font-mono text-xs text-stone-500">{inv.invoice_number}</span>
-                      {inv.due_date && <span className="ml-2 text-xs text-stone-400">Due: {inv.due_date}</span>}
+                      {inv.due_date && <span className="ml-2 text-xs text-stone-400">Due: {fmtDateShort(inv.due_date)}</span>}
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge color={statusColor(inv.status)}>{inv.status}</Badge>
-                      <span className="font-medium">${inv.total.toLocaleString()}</span>
+                      <span className="font-medium">{fmtCurrency(inv.total)}</span>
                     </div>
                   </div>
                 ))}
@@ -244,11 +246,11 @@ export default function ReportsPage() {
             {revenueByDivision.length === 0 ? <p className="py-8 text-center text-sm text-stone-400">No revenue data for this period</p> : (
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
-                  <Pie data={revenueByDivision} cx="50%" cy="50%" outerRadius={90} dataKey="value" label={({ name, value }) => `${name}: $${value.toLocaleString()}`}>
+                  <Pie data={revenueByDivision} cx="50%" cy="50%" outerRadius={90} dataKey="value" label={({ name, value }) => `${name}: ${fmtCurrency(value)}`}>
                     <Cell fill="#f97316" />
                     <Cell fill="#3b82f6" />
                   </Pie>
-                  <Tooltip formatter={(v) => `$${Number(v).toLocaleString()}`} />
+                  <Tooltip formatter={(v) => fmtCurrency(Number(v))} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>

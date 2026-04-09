@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { Table } from '@/components/ui/Table'
 import { Badge, statusColor } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
-import { INVOICE_STATUSES, COMPANY, paymentMethodsForClient, generateInvoiceNumber } from '@/lib/constants'
+import { INVOICE_STATUSES, COMPANY, paymentMethodsForClient, generateInvoiceNumber, fmtDateShort, fmtDate, fmtCurrency, isoDatePart } from '@/lib/constants'
 import type { Invoice, InvoiceStatus, InvoiceLineItem, Client, Job } from '@/lib/database.types'
 
 const emptyLine: InvoiceLineItem = { description: '', qty: 1, unit: 'ea', unit_price: 0 }
@@ -122,8 +122,8 @@ export default function InvoicesPage() {
               { key: 'number', header: '#', render: i => <span className="font-mono text-xs">{i.invoice_number}</span> },
               { key: 'client', header: 'Client', render: i => clientMap[i.client_id]?.name ?? '-' },
               { key: 'status', header: 'Status', render: i => <Badge color={statusColor(i.status)}>{i.status}</Badge> },
-              { key: 'total', header: 'Total', render: i => `$${i.total.toLocaleString()}` },
-              { key: 'due', header: 'Due Date', render: i => i.due_date ?? '-' },
+              { key: 'total', header: 'Total', render: i => fmtCurrency(i.total) },
+              { key: 'due', header: 'Due Date', render: i => fmtDateShort(i.due_date) },
               { key: 'actions', header: '', render: i => (
                 <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                   {i.status !== 'Paid' && <Button variant="ghost" size="sm" onClick={() => markPaid(i)} title="Mark Paid"><CheckCircle className="h-4 w-4 text-green-600" /></Button>}
@@ -208,8 +208,8 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
           <div className="text-right">
             <h3 className="text-2xl font-bold text-stone-800">INVOICE</h3>
             <p className="font-mono text-sm">{inv.invoice_number}</p>
-            <p className="text-stone-500">Date: {inv.created_at?.split('T')[0]}</p>
-            {inv.due_date && <p className="text-stone-500">Due: {inv.due_date}</p>}
+            <p className="text-stone-500">Date: {fmtDate(isoDatePart(inv.created_at))}</p>
+            {inv.due_date && <p className="text-stone-500">Due: {fmtDate(inv.due_date)}</p>}
             <Badge color={statusColor(inv.status)}>{inv.status}</Badge>
           </div>
         </div>

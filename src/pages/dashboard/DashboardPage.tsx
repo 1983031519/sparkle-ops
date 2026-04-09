@@ -4,6 +4,8 @@ import { supabase } from '@/lib/supabase'
 import { Card, CardBody } from '@/components/ui/Card'
 import { Badge, statusColor } from '@/components/ui/Badge'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO } from 'date-fns'
+import { enUS } from 'date-fns/locale'
+import { fmtCurrency } from '@/lib/constants'
 import type { Job } from '@/lib/database.types'
 
 interface KPI { label: string; value: string; icon: React.ElementType; color: string }
@@ -14,9 +16,7 @@ export default function DashboardPage() {
   const [lowStock, setLowStock] = useState<{ name: string; quantity: number; min_stock: number }[]>([])
   const [currentMonth, setCurrentMonth] = useState(new Date())
 
-  useEffect(() => {
-    loadDashboard()
-  }, [])
+  useEffect(() => { loadDashboard() }, [])
 
   async function loadDashboard() {
     const [clientRes, jobRes, invRes, stockRes] = await Promise.all([
@@ -35,8 +35,8 @@ export default function DashboardPage() {
     const activeJobs = allJobs.filter(j => j.status === 'In Progress' || j.status === 'Scheduled').length
 
     setKpis([
-      { label: 'Revenue (Paid)', value: `$${revenue.toLocaleString()}`, icon: DollarSign, color: 'text-green-600 bg-green-50' },
-      { label: 'Outstanding', value: `$${outstanding.toLocaleString()}`, icon: DollarSign, color: 'text-yellow-600 bg-yellow-50' },
+      { label: 'Revenue (Paid)', value: fmtCurrency(revenue), icon: DollarSign, color: 'text-green-600 bg-green-50' },
+      { label: 'Outstanding', value: fmtCurrency(outstanding), icon: DollarSign, color: 'text-yellow-600 bg-yellow-50' },
       { label: 'Total Clients', value: String(clientRes.count ?? 0), icon: Users, color: 'text-blue-600 bg-blue-50' },
       { label: 'Active Jobs', value: String(activeJobs), icon: Briefcase, color: 'text-purple-600 bg-purple-50' },
     ])
@@ -49,7 +49,6 @@ export default function DashboardPage() {
   const monthEnd = endOfMonth(currentMonth)
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd })
   const startDow = monthStart.getDay()
-
   const scheduledJobs = jobs.filter(j => j.scheduled_date)
 
   return (
@@ -82,7 +81,7 @@ export default function DashboardPage() {
             </h2>
             <div className="flex items-center gap-2">
               <button onClick={() => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() - 1))} className="rounded-lg px-2 py-1 text-sm hover:bg-stone-100">&lt;</button>
-              <span className="text-sm font-medium">{format(currentMonth, 'MMMM yyyy')}</span>
+              <span className="text-sm font-medium">{format(currentMonth, 'MMMM yyyy', { locale: enUS })}</span>
               <button onClick={() => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() + 1))} className="rounded-lg px-2 py-1 text-sm hover:bg-stone-100">&gt;</button>
             </div>
           </div>
@@ -98,7 +97,7 @@ export default function DashboardPage() {
                 return (
                   <div key={day.toISOString()} className={`min-h-[60px] rounded-lg p-1 text-xs ${isToday ? 'bg-brand-50 ring-1 ring-brand-300' : 'hover:bg-stone-50'}`}>
                     <span className={`inline-block rounded-full px-1.5 py-0.5 ${isToday ? 'bg-brand-600 text-white' : 'text-stone-600'}`}>
-                      {format(day, 'd')}
+                      {format(day, 'd', { locale: enUS })}
                     </span>
                     {dayJobs.slice(0, 2).map(j => (
                       <div key={j.id} className="mt-0.5 truncate rounded bg-brand-100 px-1 text-[10px] text-brand-800">
