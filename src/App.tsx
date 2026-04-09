@@ -7,6 +7,7 @@ import DashboardPage from '@/pages/dashboard/DashboardPage'
 import ClientsPage from '@/pages/clients/ClientsPage'
 import JobsPage from '@/pages/jobs/JobsPage'
 import EstimatesPage from '@/pages/estimates/EstimatesPage'
+import ProjectsPage from '@/pages/projects/ProjectsPage'
 import InvoicesPage from '@/pages/invoices/InvoicesPage'
 import VendorsPage from '@/pages/vendors/VendorsPage'
 import InventoryPage from '@/pages/inventory/InventoryPage'
@@ -30,6 +31,7 @@ export default function App() {
             <Route path="/clients" element={<ClientsPage />} />
             <Route path="/jobs" element={<JobsPage />} />
             <Route path="/estimates" element={<EstimatesPage />} />
+            <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/invoices" element={<InvoicesPage />} />
             <Route path="/vendors" element={<VendorsPage />} />
             <Route path="/inventory" element={<InventoryPage />} />

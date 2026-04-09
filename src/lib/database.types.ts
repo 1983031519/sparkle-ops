@@ -128,6 +128,7 @@ export interface Job {
   notes: string | null             // DB: "notes" (was description)
   total: number                    // DB: "total" (was total_amount)
   estimate_id: string | null
+  project_id: string | null
   assigned_to: string | null
   materials_used: string | null
   checklist: ChecklistItem[]
@@ -190,6 +191,45 @@ export interface InventoryItem {
   created_at: string
 }
 
+export interface Project {
+  id: string
+  number: string
+  client_id: string | null
+  client_name: string | null
+  title: string
+  site_address: string | null
+  division: string | null
+  status: string
+  description: string | null
+  total_value: number
+  payment_schedule: string | null
+  payment_terms: string | null
+  deposit_percent: number
+  mid_percent: number
+  final_percent: number
+  accepted_payment_methods: string[]
+  warranty: string | null
+  notes: string | null
+  date: string | null
+  valid_until: string | null
+  created_at: string
+}
+
+export interface ProjectPhase {
+  id: string
+  project_id: string
+  order_num: number
+  title: string
+  description: string | null
+  timeline: string | null
+  value: number | null
+  show_value: boolean
+  status: string
+  photos: string[]
+  notes: string | null
+  created_at: string
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -201,6 +241,8 @@ export interface Database {
       inventory: { Row: InventoryItem; Insert: Omit<InventoryItem, 'id' | 'created_at'>; Update: Partial<Omit<InventoryItem, 'id' | 'created_at'>> }
       client_contacts: { Row: ClientContact; Insert: Omit<ClientContact, 'id' | 'created_at'>; Update: Partial<Omit<ClientContact, 'id' | 'created_at'>> }
       change_orders: { Row: ChangeOrder; Insert: Omit<ChangeOrder, 'id' | 'created_at'>; Update: Partial<Omit<ChangeOrder, 'id' | 'created_at'>> }
+      projects: { Row: Project; Insert: Omit<Project, 'id' | 'created_at'>; Update: Partial<Omit<Project, 'id' | 'created_at'>> }
+      project_phases: { Row: ProjectPhase; Insert: Omit<ProjectPhase, 'id' | 'created_at'>; Update: Partial<Omit<ProjectPhase, 'id' | 'created_at'>> }
     }
   }
 }

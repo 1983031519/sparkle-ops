@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Users, Briefcase, FileText, Receipt, UsersRound, Package, BarChart3, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Users, Briefcase, FileText, FolderOpen, Receipt, UsersRound, Package, BarChart3, LogOut, Menu, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 const NAVY = '#0D1B3D'
@@ -10,6 +10,7 @@ const allNav = [
   { to: '/clients', icon: Users, label: 'Clients' },
   { to: '/jobs', icon: Briefcase, label: 'Jobs' },
   { to: '/estimates', icon: FileText, label: 'Estimates' },
+  { to: '/projects', icon: FolderOpen, label: 'Projects' },
   { to: '/invoices', icon: Receipt, label: 'Invoices' },
   { to: '/vendors', icon: UsersRound, label: 'Vendors & Team' },
   { to: '/inventory', icon: Package, label: 'Inventory' },

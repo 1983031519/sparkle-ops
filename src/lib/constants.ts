@@ -98,6 +98,14 @@ export function generateEstimateNumber(count: number): string {
   return `${y}-${m}${d}-P-${String(count).padStart(3, '0')}`
 }
 
+export function generateProjectNumber(count: number): string {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  return `${y}-${m}${d}-PP-${String(count).padStart(3, '0')}`
+}
+
 export function generateInvoiceNumber(count: number): string {
   const now = new Date()
   const y = now.getFullYear()

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { DollarSign, Users, Briefcase, FileText, Package, AlertTriangle, ChevronLeft, ChevronRight, UserCheck } from 'lucide-react'
+import { DollarSign, Users, Briefcase, FileText, FolderOpen, Package, AlertTriangle, ChevronLeft, ChevronRight, UserCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { Badge, statusColor } from '@/components/ui/Badge'
@@ -21,6 +21,7 @@ export default function DashboardPage() {
   const [activeJobs, setActiveJobs] = useState(0)
   const [pendingEstimates, setPendingEstimates] = useState(0)
   const [activeVendors, setActiveVendors] = useState(0)
+  const [activeProjects, setActiveProjects] = useState(0)
   const [jobs, setJobs] = useState<Job[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [lowStock, setLowStock] = useState<{ name: string; quantity: number; low_stock_threshold: number }[]>([])
@@ -32,7 +33,7 @@ export default function DashboardPage() {
   useEffect(() => { loadDashboard() }, [])
 
   async function loadDashboard() {
-    const [clientRes, jobRes, invRes, stockRes, clientsRes, estRes, vendorRes] = await Promise.all([
+    const [clientRes, jobRes, invRes, stockRes, clientsRes, estRes, vendorRes, projRes] = await Promise.all([
       supabase.from('clients').select('id', { count: 'exact', head: true }),
       supabase.from('jobs').select('*').order('created_at', { ascending: false }),
       supabase.from('invoices').select('*').order('created_at', { ascending: false }),
@@ -40,6 +41,7 @@ export default function DashboardPage() {
       supabase.from('clients').select('id, name'),
       supabase.from('estimates').select('status'),
       supabase.from('suppliers').select('status'),
+      supabase.from('projects').select('status'),
     ])
 
     const allJobs = (jobRes.data ?? []) as Job[]
@@ -55,6 +57,7 @@ export default function DashboardPage() {
     setActiveJobs(allJobs.filter(j => j.status === 'In Progress' || j.status === 'Scheduled').length)
     setPendingEstimates(((estRes.data ?? []) as { status: string }[]).filter(e => e.status === 'Draft' || e.status === 'Sent').length)
     setActiveVendors(((vendorRes.data ?? []) as { status: string }[]).filter(v => (v.status ?? 'Active') === 'Active').length)
+    setActiveProjects(((projRes.data ?? []) as { status: string }[]).filter(p => p.status === 'Draft' || p.status === 'Sent' || p.status === 'In Progress').length)
 
     const items = (stockRes.data ?? []) as { name: string; quantity: number; low_stock_threshold: number }[]
     setLowStock(items.filter(i => i.quantity <= i.low_stock_threshold))
@@ -67,7 +70,8 @@ export default function DashboardPage() {
       { icon: FileText, label: 'Estimates', value: String(pendingEstimates), sub: 'pending', to: '/estimates', color: '#2563EB' },
       { icon: Briefcase, label: 'Jobs', value: String(activeJobs), sub: 'active', to: '/jobs', color: '#7C3AED' },
       { icon: DollarSign, label: 'Invoices', value: fmtCurrency(outstanding), sub: 'unpaid', to: '/invoices', color: '#D97706' },
-      { icon: Users, label: 'Clients', value: String(clientCount), sub: 'total', to: '/clients', color: '#0D1B3D' },
+      { icon: FolderOpen, label: 'Projects', value: String(activeProjects), sub: 'active', to: '/projects', color: '#0D1B3D' },
+      { icon: Users, label: 'Clients', value: String(clientCount), sub: 'total', to: '/clients', color: '#6B7280' },
       { icon: UserCheck, label: 'Vendors & Team', value: String(activeVendors), sub: 'active', to: '/vendors', color: '#16A34A' },
       { icon: Package, label: 'Inventory', value: lowStock.length > 0 ? String(lowStock.length) : '0', sub: lowStock.length > 0 ? 'low stock' : 'all good', to: '/inventory', color: lowStock.length > 0 ? '#E11D48' : '#6B7280' },
     ]
