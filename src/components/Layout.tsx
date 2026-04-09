@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { LayoutDashboard, Users, Briefcase, FileText, FolderOpen, Receipt, UsersRound, Package, BarChart3, Shield, LogOut, Menu, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { GlobalSearch } from '@/components/GlobalSearch'
 
 const NAVY = '#0D1B3D'
 
@@ -54,9 +55,12 @@ export function Layout() {
           borderBottom: '1px solid #F3F4F6', position: 'sticky', top: 0, zIndex: 40,
         }}>
           <img src="/logo-dark.png" alt="Sparkle" style={{ height: 28, width: 'auto' }} />
-          <button onClick={() => setDrawerOpen(true)} style={{ background: 'none', border: 'none', padding: 8, cursor: 'pointer' }}>
-            <Menu size={22} strokeWidth={1.5} color={NAVY} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <GlobalSearch mobile />
+            <button onClick={() => setDrawerOpen(true)} style={{ background: 'none', border: 'none', padding: 8, cursor: 'pointer' }}>
+              <Menu size={22} strokeWidth={1.5} color={NAVY} />
+            </button>
+          </div>
         </header>
 
         {/* Content */}
@@ -182,9 +186,19 @@ export function Layout() {
           </button>
         </div>
       </aside>
-      <main className="flex-1 overflow-auto" style={{ backgroundColor: '#FAFAF7' }}>
-        <Outlet />
-      </main>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Top bar with search */}
+        <header className="no-print" style={{
+          height: 56, display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
+          padding: '0 24px', background: 'white', borderBottom: '1px solid rgba(0,0,0,0.06)',
+          flexShrink: 0,
+        }}>
+          <GlobalSearch />
+        </header>
+        <main style={{ flex: 1, overflow: 'auto', backgroundColor: '#FAFAF7' }}>
+          <Outlet />
+        </main>
+      </div>
     </div>
   )
 }
