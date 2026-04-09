@@ -8,7 +8,7 @@ import ClientsPage from '@/pages/clients/ClientsPage'
 import JobsPage from '@/pages/jobs/JobsPage'
 import EstimatesPage from '@/pages/estimates/EstimatesPage'
 import InvoicesPage from '@/pages/invoices/InvoicesPage'
-import SuppliersPage from '@/pages/suppliers/SuppliersPage'
+import VendorsPage from '@/pages/vendors/VendorsPage'
 import InventoryPage from '@/pages/inventory/InventoryPage'
 import ReportsPage from '@/pages/reports/ReportsPage'
 
@@ -31,7 +31,7 @@ export default function App() {
             <Route path="/jobs" element={<JobsPage />} />
             <Route path="/estimates" element={<EstimatesPage />} />
             <Route path="/invoices" element={<InvoicesPage />} />
-            <Route path="/suppliers" element={<SuppliersPage />} />
+            <Route path="/vendors" element={<VendorsPage />} />
             <Route path="/inventory" element={<InventoryPage />} />
             <Route path="/reports" element={<ReportsPage />} />
           </Route>

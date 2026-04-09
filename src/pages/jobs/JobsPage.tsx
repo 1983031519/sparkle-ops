@@ -12,7 +12,7 @@ import { FlowIndicator } from '@/components/FlowIndicator'
 import { PhotoUpload } from '@/components/PhotoUpload'
 import { JOB_DIVISIONS, JOB_STATUSES, CHANGE_ORDER_STATUSES, CHANGE_ORDER_REASONS, fmtDateShort, fmtCurrency } from '@/lib/constants'
 import { useToast } from '@/components/ui/Toast'
-import type { Job, JobDivision, JobStatus, Client, ChangeOrder, ChangeOrderStatus, ChecklistItem, Estimate, Invoice } from '@/lib/database.types'
+import type { Job, JobDivision, JobStatus, Client, ChangeOrder, ChangeOrderStatus, ChecklistItem, Estimate, Invoice, Supplier } from '@/lib/database.types'
 
 const emptyForm = {
   title: '', client_id: '', division: 'Pavers' as JobDivision, status: 'Lead' as JobStatus,
@@ -27,6 +27,7 @@ export default function JobsPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [estimates, setEstimates] = useState<Estimate[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [teamMembers, setTeamMembers] = useState<Supplier[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
@@ -43,16 +44,23 @@ export default function JobsPage() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
-    const [jRes, cRes, eRes, iRes] = await Promise.all([
+    const [jRes, cRes, eRes, iRes, tRes] = await Promise.all([
       supabase.from('jobs').select('*').order('created_at', { ascending: false }),
       supabase.from('clients').select('*').order('name'),
       supabase.from('estimates').select('*'),
       supabase.from('invoices').select('*'),
+      supabase.from('suppliers').select('*').eq('status', 'Active').order('name'),
     ])
     setJobs((jRes.data ?? []) as Job[])
     setClients((cRes.data ?? []) as Client[])
     setEstimates((eRes.data ?? []) as Estimate[])
     setInvoices((iRes.data ?? []) as Invoice[])
+    // Filter to employees and subcontractors
+    const allVendors = (tRes.data ?? []) as Supplier[]
+    setTeamMembers(allVendors.filter(v => {
+      const roles = (v.roles as string[]) ?? []
+      return roles.includes('Employee') || roles.includes('Subcontractor')
+    }))
     setLoading(false)
   }, [])
 
@@ -279,7 +287,13 @@ export default function JobsPage() {
             <Input label="Total Amount ($)" id="total" type="number" value={form.total} onChange={e => setForm(f => ({ ...f, total: Number(e.target.value) }))} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="Assigned Technician" id="assigned_to" value={form.assigned_to} onChange={e => setForm(f => ({ ...f, assigned_to: e.target.value }))} />
+            <Select label="Assigned Technician" id="assigned_to" value={form.assigned_to} onChange={e => setForm(f => ({ ...f, assigned_to: e.target.value }))} options={teamMembers.map(t => {
+              const name = t.record_type === 'Individual' && (t.first_name || t.last_name)
+                ? [t.first_name, t.last_name].filter(Boolean).join(' ')
+                : t.name
+              const detail = t.trade ?? t.role_title ?? ((t.roles as string[]) ?? []).join(', ')
+              return { value: name, label: detail ? `${name} — ${detail}` : name }
+            })} />
             <Input label="RE: Line" id="re_line" value={form.re_line} onChange={e => setForm(f => ({ ...f, re_line: e.target.value }))} />
           </div>
           <Textarea label="Description" id="notes" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />

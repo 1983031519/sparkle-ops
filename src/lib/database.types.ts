@@ -146,11 +146,27 @@ export interface ChangeOrder {
 export interface Supplier {
   id: string
   name: string
+  record_type: string
+  roles: string[]
+  first_name: string | null
+  last_name: string | null
   contact_name: string | null
   email: string | null
   phone: string | null
   address: string | null
   category: string | null
+  trade: string | null
+  ein: string | null
+  pay_type: string | null
+  pay_rate: number | null
+  payment_method: string | null
+  requires_1099: boolean
+  division: string | null
+  start_date: string | null
+  status: string
+  account_number: string | null
+  payment_terms: string | null
+  role_title: string | null
   notes: string | null
   created_at: string
 }
