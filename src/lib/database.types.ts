@@ -4,6 +4,8 @@ export type JobStatus = 'Lead' | 'Scheduled' | 'In Progress' | 'Completed' | 'Ca
 export type EstimateStatus = 'Draft' | 'Sent' | 'Accepted' | 'Declined'
 export type InvoiceStatus = 'Draft' | 'Sent' | 'Paid' | 'Overdue'
 export type InventoryCategory = 'Bricks' | 'Slabs' | 'Tiles' | 'Sand' | 'Sealant'
+export type ContactRole = 'Owner' | 'Manager' | 'AP' | 'Superintendent' | 'Other'
+export type PreferredContact = 'Phone' | 'Email' | 'Text'
 
 export interface Client {
   id: string
@@ -12,6 +14,18 @@ export interface Client {
   email: string | null
   phone: string | null
   address: string | null
+  notes: string | null
+  created_at: string
+}
+
+export interface ClientContact {
+  id: string
+  client_id: string
+  name: string
+  role: string | null
+  phone: string | null
+  email: string | null
+  preferred_contact: string | null
   notes: string | null
   created_at: string
 }
@@ -117,6 +131,7 @@ export interface Database {
       invoices: { Row: Invoice; Insert: Omit<Invoice, 'id' | 'created_at'>; Update: Partial<Omit<Invoice, 'id' | 'created_at'>> }
       suppliers: { Row: Supplier; Insert: Omit<Supplier, 'id' | 'created_at'>; Update: Partial<Omit<Supplier, 'id' | 'created_at'>> }
       inventory: { Row: InventoryItem; Insert: Omit<InventoryItem, 'id' | 'created_at'>; Update: Partial<Omit<InventoryItem, 'id' | 'created_at'>> }
+      client_contacts: { Row: ClientContact; Insert: Omit<ClientContact, 'id' | 'created_at'>; Update: Partial<Omit<ClientContact, 'id' | 'created_at'>> }
     }
   }
 }

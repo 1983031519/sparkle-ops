@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutDashboard, Users, Briefcase, FileText, Receipt, Truck, Package, LogOut } from 'lucide-react'
+import { LayoutDashboard, Users, Briefcase, FileText, Receipt, Truck, Package, BarChart3, LogOut } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { COMPANY } from '@/lib/constants'
 
@@ -11,6 +11,7 @@ const nav = [
   { to: '/invoices', icon: Receipt, label: 'Invoices' },
   { to: '/suppliers', icon: Truck, label: 'Suppliers' },
   { to: '/inventory', icon: Package, label: 'Inventory' },
+  { to: '/reports', icon: BarChart3, label: 'Reports' },
 ]
 
 export function Layout() {

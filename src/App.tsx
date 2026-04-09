@@ -9,6 +9,7 @@ import EstimatesPage from '@/pages/estimates/EstimatesPage'
 import InvoicesPage from '@/pages/invoices/InvoicesPage'
 import SuppliersPage from '@/pages/suppliers/SuppliersPage'
 import InventoryPage from '@/pages/inventory/InventoryPage'
+import ReportsPage from '@/pages/reports/ReportsPage'
 
 function ProtectedRoutes() {
   const { user, loading } = useAuth()
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="/invoices" element={<InvoicesPage />} />
           <Route path="/suppliers" element={<SuppliersPage />} />
           <Route path="/inventory" element={<InventoryPage />} />
+          <Route path="/reports" element={<ReportsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

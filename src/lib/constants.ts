@@ -13,3 +13,5 @@ export const JOB_STATUSES = ['Lead', 'Scheduled', 'In Progress', 'Completed', 'C
 export const ESTIMATE_STATUSES = ['Draft', 'Sent', 'Accepted', 'Declined'] as const
 export const INVOICE_STATUSES = ['Draft', 'Sent', 'Paid', 'Overdue'] as const
 export const INVENTORY_CATEGORIES = ['Bricks', 'Slabs', 'Tiles', 'Sand', 'Sealant'] as const
+export const CONTACT_ROLES = ['Owner', 'Manager', 'AP', 'Superintendent', 'Other'] as const
+export const PREFERRED_CONTACTS = ['Phone', 'Email', 'Text'] as const

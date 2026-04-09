@@ -93,6 +93,19 @@ create table public.inventory (
   created_at timestamptz default now()
 );
 
+-- Client Contacts
+create table public.client_contacts (
+  id uuid primary key default uuid_generate_v4(),
+  client_id uuid references public.clients(id) on delete cascade,
+  name text not null,
+  role text,
+  phone text,
+  email text,
+  preferred_contact text,
+  notes text,
+  created_at timestamptz default now()
+);
+
 -- Enable Row Level Security on all tables
 alter table public.clients enable row level security;
 alter table public.suppliers enable row level security;
@@ -100,6 +113,7 @@ alter table public.jobs enable row level security;
 alter table public.estimates enable row level security;
 alter table public.invoices enable row level security;
 alter table public.inventory enable row level security;
+alter table public.client_contacts enable row level security;
 
 -- RLS policies: allow authenticated users full access
 create policy "Authenticated users can do everything on clients" on public.clients for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
@@ -108,3 +122,4 @@ create policy "Authenticated users can do everything on jobs" on public.jobs for
 create policy "Authenticated users can do everything on estimates" on public.estimates for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "Authenticated users can do everything on invoices" on public.invoices for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "Authenticated users can do everything on inventory" on public.inventory for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "Authenticated users can do everything on client_contacts" on public.client_contacts for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
