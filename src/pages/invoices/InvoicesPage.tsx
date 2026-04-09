@@ -308,7 +308,7 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
   const balanceDue = inv.balance_due ?? inv.total
 
   async function handlePrint() {
-    const el = document.querySelector('.print-area')
+    const el = document.querySelector('.print-area') as HTMLElement | null
     if (!el) return
     const html2pdf = (await import('html2pdf.js')).default
     html2pdf().set({
