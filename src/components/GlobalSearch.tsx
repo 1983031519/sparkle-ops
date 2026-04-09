@@ -1,14 +1,16 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, X, Users, Briefcase, FileText, Receipt, FolderOpen, Loader2 } from 'lucide-react'
+import { Search, X, Users, UserCircle, Briefcase, FileText, Receipt, FolderOpen, Layers, Loader2 } from 'lucide-react'
 import { useGlobalSearch, type SearchResult } from '@/hooks/useGlobalSearch'
 
 const TYPE_CONFIG: Record<SearchResult['type'], { icon: typeof Users; color: string; label: string }> = {
   client:   { icon: Users,      color: '#2563EB', label: 'Client' },
+  contact:  { icon: UserCircle, color: '#6366F1', label: 'Contact' },
   job:      { icon: Briefcase,  color: '#7C3AED', label: 'Job' },
   estimate: { icon: FileText,   color: '#D97706', label: 'Estimate' },
   invoice:  { icon: Receipt,    color: '#059669', label: 'Invoice' },
   project:  { icon: FolderOpen, color: '#0D1B3D', label: 'Project' },
+  phase:    { icon: Layers,     color: '#0D6E6E', label: 'Phase' },
 }
 
 export function GlobalSearch({ mobile = false }: { mobile?: boolean }) {
@@ -169,6 +171,7 @@ function Dropdown({ results, loading, activeIdx, onSelect }: { results: SearchRe
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#0D1B3D', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.primary}</div>
               {r.secondary && <div style={{ fontSize: 11, color: '#9CA3AF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.secondary}</div>}
+              {r.snippet && <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontStyle: 'italic' }}>{r.snippet}</div>}
             </div>
             <span style={{ fontSize: 10, fontWeight: 600, color: cfg.color, textTransform: 'uppercase', letterSpacing: '0.05em', flexShrink: 0 }}>{cfg.label}</span>
           </button>
