@@ -27,7 +27,10 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-surface px-4">
       <div className="w-full max-w-[380px]">
         <div className="mb-8 text-center">
-          <img src="/logo-navy-on-white.svg" alt="Sparkle Stone & Pavers" className="mx-auto mb-4" style={{ width: 180, height: 'auto', display: 'block' }} />
+          <div className="mb-4 text-center">
+            <div style={{ fontSize: 22, fontWeight: 700, color: '#0D1B3D' }}>sparkle</div>
+            <div style={{ fontSize: 11, letterSpacing: 2, color: '#0D1B3D' }}>STONE &amp; PAVERS</div>
+          </div>
           <h1 className="text-[22px] font-bold text-navy-900">Welcome back</h1>
           <p className="mt-1 text-[13px] text-stone-500">Sign in to your operations portal</p>
         </div>

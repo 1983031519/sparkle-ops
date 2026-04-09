@@ -314,7 +314,10 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
         {/* Header */}
         <div className="flex justify-between items-start">
           <div>
-            <img src="/logo-navy-on-white.svg" alt="Sparkle Stone & Pavers" style={{ width: 160, height: 'auto', display: 'block', marginBottom: 8 }} />
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: '#0D1B3D' }}>sparkle</div>
+              <div style={{ fontSize: 11, letterSpacing: 2, color: '#0D1B3D' }}>STONE &amp; PAVERS</div>
+            </div>
             <p className="text-xs text-stone-500">{COMPANY.address}</p>
             <p className="text-xs text-stone-500">{COMPANY.phone} | {COMPANY.email}</p>
           </div>
