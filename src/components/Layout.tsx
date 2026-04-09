@@ -19,13 +19,13 @@ export function Layout() {
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
-      <aside className="no-print flex w-[240px] flex-col bg-navy-900">
+      <aside className="no-print flex w-[240px] flex-col" style={{ background: '#0D1B3D' }}>
         {/* Logo */}
-        <div className="px-6 py-6">
+        <div style={{ background: '#0D1B3D', padding: '24px 24px 16px' }}>
           <img
             src="/sparkle-logo.png"
             alt="Sparkle Stone & Pavers"
-            style={{ width: 160, height: 'auto', filter: 'brightness(0) invert(1)' }}
+            style={{ width: 160, height: 'auto', filter: 'brightness(0) invert(1)', display: 'block' }}
           />
         </div>
 
