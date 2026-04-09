@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Search, ArrowRight, CheckSquare, Square, Trash2, PlusCircle } from 'lucide-react'
+import { Plus, Search, ArrowRight, CheckSquare, Square, Trash2, PlusCircle, ImageIcon } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input, Select, Textarea } from '@/components/ui/Input'
@@ -9,6 +9,7 @@ import { Table } from '@/components/ui/Table'
 import { Badge, statusColor } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { FlowIndicator } from '@/components/FlowIndicator'
+import { PhotoUpload } from '@/components/PhotoUpload'
 import { JOB_DIVISIONS, JOB_STATUSES, CHANGE_ORDER_STATUSES, CHANGE_ORDER_REASONS, fmtDateShort, fmtCurrency } from '@/lib/constants'
 import { useToast } from '@/components/ui/Toast'
 import type { Job, JobDivision, JobStatus, Client, ChangeOrder, ChangeOrderStatus, ChecklistItem, Estimate, Invoice } from '@/lib/database.types'
@@ -36,6 +37,7 @@ export default function JobsPage() {
   const [changeOrders, setChangeOrders] = useState<ChangeOrder[]>([])
   const [coModalOpen, setCoModalOpen] = useState(false)
   const [coForm, setCoForm] = useState(emptyCO)
+  const [photos, setPhotos] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const toast = useToast()
 
@@ -66,7 +68,7 @@ export default function JobsPage() {
     j.status.toLowerCase().includes(search.toLowerCase())
   )
 
-  function openNew() { setEditing(null); setForm(emptyForm); setChecklist([]); setChangeOrders([]); setModalOpen(true) }
+  function openNew() { setEditing(null); setForm(emptyForm); setChecklist([]); setChangeOrders([]); setPhotos([]); setModalOpen(true) }
 
   async function openEdit(job: Job) {
     setEditing(job)
@@ -77,6 +79,7 @@ export default function JobsPage() {
       assigned_to: job.assigned_to ?? '', materials_used: job.materials_used ?? '',
     })
     setChecklist((job.checklist as ChecklistItem[]) ?? [])
+    setPhotos((job.photos as string[]) ?? [])
     // Fetch change orders
     const { data } = await supabase.from('change_orders').select('*').eq('job_id', job.id).order('created_at')
     setChangeOrders((data ?? []) as ChangeOrder[])
@@ -218,6 +221,10 @@ export default function JobsPage() {
               { key: 'client', header: 'Client', render: j => clientMap[j.client_id] ?? '-' },
               { key: 'division', header: 'Div', render: j => <Badge color={j.division === 'Pavers' ? 'orange' : 'blue'}>{j.division}</Badge> },
               { key: 'status', header: 'Status', render: j => <Badge color={statusColor(j.status)}>{j.status}</Badge> },
+              { key: 'photos', header: 'Photos', render: j => {
+                const count = (j.photos as string[])?.length ?? 0
+                return count > 0 ? <span className="inline-flex items-center gap-1 text-xs text-stone-500"><ImageIcon className="h-3 w-3" />{count}</span> : <span className="text-stone-300">-</span>
+              }},
               { key: 'date', header: 'Scheduled', render: j => fmtDateShort(j.start_date) },
               { key: 'amount', header: 'Amount', render: j => fmtCurrency(j.total) },
               { key: 'flow', header: 'Flow', render: j => {
@@ -329,6 +336,11 @@ export default function JobsPage() {
                 </div>
               )}
             </div>
+          )}
+
+          {/* Photos (only when editing — need a job ID for storage path) */}
+          {editing && (
+            <PhotoUpload jobId={editing.id} photos={photos} onPhotosChange={setPhotos} />
           )}
 
           <div className="flex justify-between border-t border-stone-200 pt-4">
