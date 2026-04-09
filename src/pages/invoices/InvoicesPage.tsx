@@ -323,97 +323,86 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
   return (
     <>
       <div className="mb-4 no-print"><Button onClick={handlePrint}><Printer className="h-4 w-4" /> Download PDF</Button></div>
-      <div className="print-area space-y-6 text-sm leading-relaxed">
+      <div className="print-area" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: 13, lineHeight: 1.65, color: '#333' }}>
         {/* Header */}
-        <div className="flex justify-between items-start">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: 16, borderBottom: '1px solid #e0e0e0', marginBottom: 20 }}>
           <div>
-            <img src="/logo-dark.png" alt="Sparkle Stone & Pavers" style={{ width: 160, height: 'auto', display: 'block', marginBottom: 8 }} />
-            <p className="text-xs text-stone-500">{COMPANY.address}</p>
-            <p className="text-xs text-stone-500">{COMPANY.phone} | {COMPANY.email}</p>
+            <img src="/logo-dark.png" alt="Sparkle" style={{ width: 160, height: 'auto', display: 'block', marginBottom: 8 }} />
+            <p style={{ fontSize: 11, color: '#666' }}>{COMPANY.address}</p>
+            <p style={{ fontSize: 11, color: '#666' }}>{COMPANY.phone} | {COMPANY.email}</p>
           </div>
-          <div className="text-right">
-            <h3 className="text-2xl font-bold text-stone-800">INVOICE</h3>
-            <p className="font-mono text-sm">{inv.number}</p>
-            <p className="text-stone-500">Date: {fmtDate(isoDatePart(inv.created_at))}</p>
-            {inv.due_date && <p className="text-stone-500">Due: {fmtDate(inv.due_date)}</p>}
-            <Badge color={statusColor(inv.status)}>{inv.status}</Badge>
+          <div style={{ textAlign: 'right' }}>
+            <h3 style={{ fontSize: 20, fontWeight: 700, color: '#1a2744', margin: 0 }}>INVOICE</h3>
+            <p style={{ fontFamily: 'monospace', fontSize: 13, color: '#555', margin: '4px 0' }}>{inv.number}</p>
+            <p style={{ fontSize: 12, color: '#666' }}>Date: {fmtDate(isoDatePart(inv.created_at))}</p>
+            {inv.due_date && <p style={{ fontSize: 12, color: '#666' }}>Due: {fmtDate(inv.due_date)}</p>}
+            <span style={{ display: 'inline-block', marginTop: 4, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: inv.status === 'Paid' ? '#f0fdf4' : inv.status === 'Overdue' ? '#fff1f2' : '#fffbeb', color: inv.status === 'Paid' ? '#16a34a' : inv.status === 'Overdue' ? '#e11d48' : '#d97706', border: `1px solid ${inv.status === 'Paid' ? '#bbf7d0' : inv.status === 'Overdue' ? '#fecdd3' : '#fde68a'}` }}>{inv.status}</span>
           </div>
         </div>
 
         {/* Bill To */}
-        <div className="rounded-lg bg-stone-50 p-4">
-          <p className="text-xs font-semibold uppercase text-stone-500">Bill To</p>
-          <p className="font-medium">{client?.name ?? 'N/A'}</p>
-          {client?.address && <p className="text-stone-600">{client.address}</p>}
-          {client?.phone && <p className="text-stone-600">{client.phone}</p>}
-          {client?.email && <p className="text-stone-600">{client.email}</p>}
+        <div style={{ background: '#f5f4f2', border: '1px solid #e8e6e2', borderRadius: 8, padding: 16, marginBottom: 20 }}>
+          <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#9a8f82', margin: '0 0 4px' }}>Bill To</p>
+          <p style={{ fontWeight: 600, color: '#1a1a1a', margin: 0 }}>{client?.name ?? 'N/A'}</p>
+          {client?.address && <p style={{ color: '#555', margin: '2px 0' }}>{client.address}</p>}
+          {client?.phone && <p style={{ color: '#555', margin: '2px 0' }}>{client.phone}</p>}
+          {client?.email && <p style={{ color: '#555', margin: '2px 0' }}>{client.email}</p>}
         </div>
 
-        {job?.re_line && <p><span className="font-semibold">RE:</span> {job.re_line}</p>}
+        {job?.re_line && <p style={{ marginBottom: 12 }}><span style={{ fontWeight: 600, color: '#1a2744' }}>RE:</span> {job.re_line}</p>}
 
         {/* Line Items */}
-        <table className="w-full border-collapse">
-          <thead><tr className="border-b-2 border-stone-300 text-left"><th className="py-2">Description</th><th className="py-2 text-right">Qty</th><th className="py-2 text-right">Unit</th><th className="py-2 text-right">Unit Price</th><th className="py-2 text-right">Amount</th></tr></thead>
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 12 }}>
+          <thead><tr style={{ borderBottom: '2px solid #d1d5db', textAlign: 'left' }}><th style={{ padding: '8px 4px' }}>Description</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Qty</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Unit</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Unit Price</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Amount</th></tr></thead>
           <tbody>
             {items.map((item, i) => (
-              <tr key={i} className={`border-b border-stone-100 ${item.is_change_order ? 'bg-yellow-50' : ''}`}>
-                <td className="py-2">{item.description}</td>
-                <td className="py-2 text-right">{item.qty}</td>
-                <td className="py-2 text-right">{item.unit}</td>
-                <td className="py-2 text-right">${item.unit_price.toFixed(2)}</td>
-                <td className="py-2 text-right">${(item.qty * item.unit_price).toFixed(2)}</td>
+              <tr key={i} style={{ borderBottom: '1px solid #ebebeb', background: item.is_change_order ? '#fffbeb' : 'transparent' }}>
+                <td style={{ padding: '8px 4px' }}>{item.description}</td>
+                <td style={{ padding: '8px 4px', textAlign: 'right' }}>{item.qty}</td>
+                <td style={{ padding: '8px 4px', textAlign: 'right' }}>{item.unit}</td>
+                <td style={{ padding: '8px 4px', textAlign: 'right' }}>${item.unit_price.toFixed(2)}</td>
+                <td style={{ padding: '8px 4px', textAlign: 'right' }}>${(item.qty * item.unit_price).toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
         </table>
 
         {/* Totals */}
-        <div className="ml-auto w-72 space-y-1 text-right">
-          <div className="flex justify-between"><span>Subtotal</span><span>${inv.subtotal.toFixed(2)}</span></div>
-          <div className="flex justify-between"><span>Tax (0%)</span><span>$0.00</span></div>
-          <div className="flex justify-between border-t border-stone-300 pt-1 text-base font-bold"><span>Total</span><span>${inv.total.toFixed(2)}</span></div>
-          {depositAmt > 0 && (
-            <div className="flex justify-between text-success-600"><span>Deposit Received</span><span>-${depositAmt.toFixed(2)}</span></div>
-          )}
-          {depositAmt > 0 && (
-            <div className="flex justify-between border-t border-stone-300 pt-1 text-lg font-bold text-navy-900"><span>Balance Due</span><span>${balanceDue.toFixed(2)}</span></div>
-          )}
+        <div style={{ marginLeft: 'auto', width: 280, textAlign: 'right', marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}><span>Subtotal</span><span>${inv.subtotal.toFixed(2)}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}><span>Tax (0%)</span><span>$0.00</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #1a2744', paddingTop: 4, marginTop: 4, fontSize: 15, fontWeight: 700, color: '#1a2744' }}><span>Total</span><span>${inv.total.toFixed(2)}</span></div>
+          {depositAmt > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', color: '#16a34a' }}><span>Deposit Received</span><span>-${depositAmt.toFixed(2)}</span></div>}
+          {depositAmt > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #1a2744', paddingTop: 4, marginTop: 4, fontSize: 17, fontWeight: 700, color: '#1a2744' }}><span>Balance Due</span><span>${balanceDue.toFixed(2)}</span></div>}
         </div>
 
-        {/* Payment Information — only what was agreed */}
-        <div className="rounded-lg bg-stone-50 p-4 space-y-1.5">
-          <h4 className="font-semibold mb-2">Payment Information</h4>
-          {method && <p>Payment Method: <strong>{method}</strong></p>}
-          {inv.payment_terms && <p>Payment Terms: <strong>{inv.payment_terms}</strong></p>}
-          {/* Show specific info only for the selected method */}
-          {method && (method.includes('Check') || method === 'Check') && (
-            <p className="text-xs text-stone-600">Check payable to: {COMPANY.check_payable}</p>
-          )}
-          {method && (method.includes('Zelle') || method === 'Zelle') && (
-            <p className="text-xs text-stone-600">Zelle: {COMPANY.zelle}</p>
-          )}
-          {method && (method.includes('ACH') || method === 'ACH / Bank Transfer') && (
-            <p className="text-xs text-stone-600">ACH / Bank Transfer — contact office for details</p>
-          )}
+        {/* Payment */}
+        <div style={{ background: '#f5f4f2', border: '1px solid #e8e6e2', borderRadius: 8, padding: 16, marginBottom: 16 }}>
+          <h4 style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 8 }}>Payment Information</h4>
+          {method && <p style={{ color: '#333' }}>Payment Method: <strong>{method}</strong></p>}
+          {inv.payment_terms && <p style={{ color: '#333' }}>Payment Terms: <strong>{inv.payment_terms}</strong></p>}
+          {method && method.includes('Check') && <p style={{ fontSize: 11, color: '#888', marginTop: 6 }}>Check payable to: {COMPANY.check_payable}</p>}
+          {method && method.includes('Zelle') && <p style={{ fontSize: 11, color: '#888' }}>Zelle: {COMPANY.zelle}</p>}
+          {method && method.includes('ACH') && <p style={{ fontSize: 11, color: '#888' }}>ACH / Bank Transfer — contact office for details</p>}
         </div>
 
-        {inv.notes && <div><h4 className="font-semibold mb-1">Notes</h4><p className="text-stone-600">{inv.notes}</p></div>}
+        {inv.notes && <div style={{ marginBottom: 16 }}><h4 style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 4 }}>Notes</h4><p style={{ color: '#555' }}>{inv.notes}</p></div>}
 
         {/* Signatures */}
-        <div className="grid grid-cols-2 gap-8 mt-8 pt-4 border-t border-stone-200">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, marginTop: 40, paddingTop: 20, borderTop: '1px solid #e0e0e0' }}>
           <div>
-            <p className="text-xs font-semibold uppercase text-stone-500 mb-8">Authorized By</p>
-            <div className="border-b border-stone-400 mb-1" />
-            <p className="text-sm">{COMPANY.signatory} — {COMPANY.legal_name}</p>
+            <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9a8f82', marginBottom: 40 }}>Authorized By</p>
+            <div style={{ borderTop: '1.5px solid #1a2744', marginBottom: 4 }} />
+            <p style={{ fontSize: 13, color: '#1a1a1a' }}>{COMPANY.signatory} — {COMPANY.legal_name}</p>
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase text-stone-500 mb-8">Received By</p>
-            <div className="border-b border-stone-400 mb-1" />
-            <p className="text-sm">Client Signature & Date</p>
+            <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9a8f82', marginBottom: 40 }}>Received By</p>
+            <div style={{ borderTop: '1.5px solid #1a2744', marginBottom: 4 }} />
+            <p style={{ fontSize: 13, color: '#1a1a1a' }}>Client Signature & Date</p>
           </div>
         </div>
 
-        <div className="mt-4 text-center text-[10px] text-stone-400 border-t border-stone-100 pt-2">
+        <div style={{ marginTop: 24, paddingTop: 12, borderTop: '1px solid #ebebeb', textAlign: 'center', fontSize: 10, color: '#aaa' }}>
           {COMPANY.legal_name} | {COMPANY.tagline} | {COMPANY.address} | {COMPANY.phone} | {COMPANY.email}
         </div>
       </div>

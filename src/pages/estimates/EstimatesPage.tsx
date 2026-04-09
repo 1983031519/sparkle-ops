@@ -417,63 +417,60 @@ function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
   return (
     <>
       <div className="mb-4 no-print"><Button onClick={handlePrint}><Printer className="h-4 w-4" /> Download PDF</Button></div>
-      <div className="print-area space-y-6 text-sm leading-relaxed">
+      <div className="print-area" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: 13, lineHeight: 1.65, color: '#333' }}>
         {/* Header */}
-        <div className="flex justify-between items-start">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: 16, borderBottom: '1px solid #e0e0e0', marginBottom: 20 }}>
           <div>
-            <img src="/logo-dark.png" alt="Sparkle Stone & Pavers" style={{ width: 160, height: 'auto', display: 'block', marginBottom: 8 }} />
-            <p className="text-xs text-stone-500">{COMPANY.address}</p>
-            <p className="text-xs text-stone-500">{COMPANY.phone} | {COMPANY.email}</p>
+            <img src="/logo-dark.png" alt="Sparkle" style={{ width: 160, height: 'auto', display: 'block', marginBottom: 8 }} />
+            <p style={{ fontSize: 11, color: '#666' }}>{COMPANY.address}</p>
+            <p style={{ fontSize: 11, color: '#666' }}>{COMPANY.phone} | {COMPANY.email}</p>
           </div>
-          <div className="text-right">
-            <h3 className="text-2xl font-bold text-stone-800">PROPOSAL</h3>
-            <p className="font-mono text-sm">{est.number}</p>
-            <p className="text-stone-500">Date: {fmtDate(isoDatePart(est.created_at))}</p>
-            {est.valid_until && <p className="text-stone-500">Valid Until: {fmtDate(est.valid_until)}</p>}
+          <div style={{ textAlign: 'right' }}>
+            <h3 style={{ fontSize: 20, fontWeight: 700, color: '#1a2744', margin: 0 }}>PROPOSAL</h3>
+            <p style={{ fontFamily: 'monospace', fontSize: 13, color: '#555', margin: '4px 0' }}>{est.number}</p>
+            <p style={{ fontSize: 12, color: '#666' }}>Date: {fmtDate(isoDatePart(est.created_at))}</p>
+            {est.valid_until && <p style={{ fontSize: 12, color: '#666' }}>Valid Until: {fmtDate(est.valid_until)}</p>}
           </div>
         </div>
 
         {/* Client info */}
-        <div className="grid grid-cols-2 gap-4 rounded-lg bg-stone-50 p-4">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, background: '#f5f4f2', border: '1px solid #e8e6e2', borderRadius: 8, padding: 16, marginBottom: 20 }}>
           <div>
-            <p className="text-xs font-semibold uppercase text-stone-500">Prepared For</p>
-            <p className="font-medium">{client?.name ?? 'N/A'}</p>
-            {est.attn && <p>Attn: {est.attn}</p>}
-            {client?.address && <p className="text-stone-600">{client.address}</p>}
-            {client?.phone && <p className="text-stone-600">{client.phone}</p>}
+            <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#9a8f82', margin: '0 0 4px' }}>Prepared For</p>
+            <p style={{ fontWeight: 600, color: '#1a1a1a', margin: 0 }}>{client?.name ?? 'N/A'}</p>
+            {est.attn && <p style={{ color: '#555', margin: '2px 0' }}>Attn: {est.attn}</p>}
+            {client?.address && <p style={{ color: '#555', margin: '2px 0' }}>{client.address}</p>}
+            {client?.phone && <p style={{ color: '#555', margin: '2px 0' }}>{client.phone}</p>}
           </div>
           <div>
-            {est.site_address && <><p className="text-xs font-semibold uppercase text-stone-500">Job Site</p><p>{est.site_address}</p></>}
-            {est.division && <p className="mt-1"><span className="text-xs font-semibold text-stone-500">Division:</span> {est.division}</p>}
+            {est.site_address && <><p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#9a8f82', margin: '0 0 4px' }}>Job Site</p><p style={{ margin: 0 }}>{est.site_address}</p></>}
+            {est.division && <p style={{ marginTop: 6, fontSize: 12 }}><span style={{ color: '#9a8f82', fontWeight: 600 }}>Division:</span> {est.division}</p>}
           </div>
         </div>
 
-        {est.re_line && <p><span className="font-semibold">RE:</span> {est.re_line}</p>}
+        {est.re_line && <p style={{ marginBottom: 12 }}><span style={{ fontWeight: 600, color: '#1a2744' }}>RE:</span> {est.re_line}</p>}
 
-        {/* Scope */}
         {est.scope_of_work && (
-          <div><h4 className="font-semibold mb-1">Scope of Work</h4><p className="whitespace-pre-wrap text-stone-700">{est.scope_of_work}</p></div>
+          <div style={{ marginBottom: 16 }}><h4 style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 4 }}>Scope of Work</h4><p style={{ color: '#444', whiteSpace: 'pre-wrap' }}>{est.scope_of_work}</p></div>
         )}
 
-        {/* Materials */}
         {Object.values(mats).some(v => v) && (
-          <div>
-            <h4 className="font-semibold mb-1">Materials Specified</h4>
-            <div className="grid grid-cols-3 gap-2 text-xs">
-              {mats.paver_type && <p><span className="text-stone-500">Type:</span> {mats.paver_type}</p>}
-              {mats.paver_size && <p><span className="text-stone-500">Size:</span> {mats.paver_size}</p>}
-              {mats.paver_color && <p><span className="text-stone-500">Color:</span> {mats.paver_color}</p>}
-              {mats.sand_type && <p><span className="text-stone-500">Sand:</span> {mats.sand_type}</p>}
-              {mats.sealant && <p><span className="text-stone-500">Sealant:</span> {mats.sealant}</p>}
-              {mats.other && <p><span className="text-stone-500">Other:</span> {mats.other}</p>}
+          <div style={{ marginBottom: 16 }}>
+            <h4 style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 6 }}>Materials Specified</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, fontSize: 12 }}>
+              {mats.paver_type && <p><span style={{ color: '#9a8f82' }}>Type:</span> {mats.paver_type}</p>}
+              {mats.paver_size && <p><span style={{ color: '#9a8f82' }}>Size:</span> {mats.paver_size}</p>}
+              {mats.paver_color && <p><span style={{ color: '#9a8f82' }}>Color:</span> {mats.paver_color}</p>}
+              {mats.sand_type && <p><span style={{ color: '#9a8f82' }}>Sand:</span> {mats.sand_type}</p>}
+              {mats.sealant && <p><span style={{ color: '#9a8f82' }}>Sealant:</span> {mats.sealant}</p>}
+              {mats.other && <p><span style={{ color: '#9a8f82' }}>Other:</span> {mats.other}</p>}
             </div>
           </div>
         )}
 
-        {/* Timeline */}
         {(est.start_date || est.end_date) && (
-          <div><h4 className="font-semibold mb-1">Timeline</h4>
-            <p className="text-stone-700">
+          <div style={{ marginBottom: 16 }}><h4 style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 4 }}>Timeline</h4>
+            <p style={{ color: '#444' }}>
               {est.start_date && <>Estimated Start: <strong>{fmtDate(est.start_date)}</strong></>}
               {est.start_date && est.end_date && ' — '}
               {est.end_date && <>Estimated Completion: <strong>{fmtDate(est.end_date)}</strong></>}
@@ -481,64 +478,61 @@ function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
           </div>
         )}
 
-        {/* Line Items Table */}
-        <table className="w-full border-collapse">
-          <thead><tr className="border-b-2 border-stone-300 text-left"><th className="py-2">Description</th><th className="py-2 text-right">Qty</th><th className="py-2 text-right">Unit</th><th className="py-2 text-right">Unit Price</th><th className="py-2 text-right">Amount</th></tr></thead>
+        {/* Line Items */}
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 12 }}>
+          <thead><tr style={{ borderBottom: '2px solid #d1d5db', textAlign: 'left' }}><th style={{ padding: '8px 4px' }}>Description</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Qty</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Unit</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Unit Price</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Amount</th></tr></thead>
           <tbody>
             {items.map((item, i) => (
-              <tr key={i} className="border-b border-stone-100">
-                <td className="py-2">{item.description}</td><td className="py-2 text-right">{item.qty}</td><td className="py-2 text-right">{item.unit}</td>
-                <td className="py-2 text-right">${item.unit_price.toFixed(2)}</td><td className="py-2 text-right">${(item.qty * item.unit_price).toFixed(2)}</td>
+              <tr key={i} style={{ borderBottom: '1px solid #ebebeb' }}>
+                <td style={{ padding: '8px 4px' }}>{item.description}</td><td style={{ padding: '8px 4px', textAlign: 'right' }}>{item.qty}</td><td style={{ padding: '8px 4px', textAlign: 'right' }}>{item.unit}</td>
+                <td style={{ padding: '8px 4px', textAlign: 'right' }}>${item.unit_price.toFixed(2)}</td><td style={{ padding: '8px 4px', textAlign: 'right' }}>${(item.qty * item.unit_price).toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        <div className="ml-auto w-64 space-y-1 text-right">
-          <div className="flex justify-between"><span>Subtotal</span><span>${est.subtotal.toFixed(2)}</span></div>
-          <div className="flex justify-between"><span>Tax (0%)</span><span>$0.00</span></div>
-          <div className="flex justify-between border-t border-stone-300 pt-1 text-base font-bold"><span>Total</span><span>${est.total.toFixed(2)}</span></div>
+        <div style={{ marginLeft: 'auto', width: 240, textAlign: 'right', marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}><span>Subtotal</span><span>${est.subtotal.toFixed(2)}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}><span>Tax (0%)</span><span>$0.00</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #1a2744', paddingTop: 4, marginTop: 4, fontSize: 15, fontWeight: 700, color: '#1a2744' }}><span>Total</span><span>${est.total.toFixed(2)}</span></div>
         </div>
 
         {/* Payment Terms */}
-        <div className="rounded-lg bg-stone-50 p-4">
-          <h4 className="font-semibold mb-2">Payment Terms</h4>
-          <p className="font-medium">{est.payment_terms || '50% deposit + 50% on completion'}</p>
-          <p className="mt-1">Deposit: <strong>${deposit.toFixed(2)}</strong> — Balance: <strong>${balance.toFixed(2)}</strong></p>
-          <p className="mt-2 text-xs text-stone-600">Accepted Payment Methods: {(est.accepted_payment_methods ?? ['Check', 'ACH', 'Zelle']).join(' \u00b7 ')}</p>
-          <p className="text-xs text-stone-500">Check payable to: {COMPANY.check_payable}</p>
-          <p className="text-xs text-stone-500">Zelle: {COMPANY.zelle}</p>
+        <div style={{ background: '#f5f4f2', border: '1px solid #e8e6e2', borderRadius: 8, padding: 16, marginBottom: 16 }}>
+          <h4 style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 8 }}>Payment Terms</h4>
+          <p style={{ fontWeight: 600, color: '#333' }}>{est.payment_terms || '50% deposit + 50% on completion'}</p>
+          <p style={{ color: '#333', marginTop: 4 }}>Deposit: <strong>${deposit.toFixed(2)}</strong> — Balance: <strong>${balance.toFixed(2)}</strong></p>
+          <p style={{ marginTop: 10, fontSize: 12, color: '#555' }}>Accepted Payment Methods: {(est.accepted_payment_methods ?? ['Check', 'ACH', 'Zelle']).join(' · ')}</p>
+          <p style={{ fontSize: 11, color: '#888' }}>Check payable to: {COMPANY.check_payable}</p>
+          <p style={{ fontSize: 11, color: '#888' }}>Zelle: {COMPANY.zelle}</p>
         </div>
 
-        {/* Warranty */}
-        {est.warranty && <div><h4 className="font-semibold mb-1">Warranty</h4><p className="text-stone-700">{est.warranty}</p></div>}
+        {est.warranty && <div style={{ marginBottom: 16 }}><h4 style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 4 }}>Warranty</h4><p style={{ color: '#555', lineHeight: 1.7 }}>{est.warranty}</p></div>}
 
-        {/* Terms */}
-        <div>
-          <h4 className="font-semibold mb-1">Terms & Conditions</h4>
-          <ol className="list-decimal list-inside space-y-1 text-xs text-stone-600">
-            {TERMS_AND_CONDITIONS.map((t, i) => <li key={i}>{t}</li>)}
+        <div style={{ marginBottom: 16 }}>
+          <h4 style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 6 }}>Terms & Conditions</h4>
+          <ol style={{ paddingLeft: 18, margin: 0 }}>
+            {TERMS_AND_CONDITIONS.map((t, i) => <li key={i} style={{ fontSize: 12, color: '#555', lineHeight: 1.7, marginBottom: 2 }}>{t}</li>)}
           </ol>
         </div>
 
-        {/* Notes */}
-        {est.notes && <div><h4 className="font-semibold mb-1">Notes</h4><p className="text-stone-600">{est.notes}</p></div>}
+        {est.notes && <div style={{ marginBottom: 16 }}><h4 style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 4 }}>Notes</h4><p style={{ color: '#555' }}>{est.notes}</p></div>}
 
         {/* Signatures */}
-        <div className="grid grid-cols-2 gap-8 mt-8 pt-4 border-t border-stone-200">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, marginTop: 40, paddingTop: 20, borderTop: '1px solid #e0e0e0' }}>
           <div>
-            <p className="text-xs font-semibold uppercase text-stone-500 mb-8">Authorized By</p>
-            <div className="border-b border-stone-400 mb-1" />
-            <p className="text-sm">{COMPANY.signatory} — {COMPANY.legal_name}</p>
+            <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9a8f82', marginBottom: 40 }}>Authorized By</p>
+            <div style={{ borderTop: '1.5px solid #1a2744', marginBottom: 4 }} />
+            <p style={{ fontSize: 13, color: '#1a1a1a' }}>{COMPANY.signatory} — {COMPANY.legal_name}</p>
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase text-stone-500 mb-8">Accepted By</p>
-            <div className="border-b border-stone-400 mb-1" />
-            <p className="text-sm">Client Printed Name, Signature & Date</p>
+            <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9a8f82', marginBottom: 40 }}>Accepted By</p>
+            <div style={{ borderTop: '1.5px solid #1a2744', marginBottom: 4 }} />
+            <p style={{ fontSize: 13, color: '#1a1a1a' }}>Client Printed Name, Signature & Date</p>
           </div>
         </div>
 
-        <div className="mt-4 text-center text-[10px] text-stone-400 border-t border-stone-100 pt-2">
+        <div style={{ marginTop: 24, paddingTop: 12, borderTop: '1px solid #ebebeb', textAlign: 'center', fontSize: 10, color: '#aaa' }}>
           {COMPANY.legal_name} | {COMPANY.tagline} | {COMPANY.address} | {COMPANY.phone} | {COMPANY.email}
         </div>
       </div>
