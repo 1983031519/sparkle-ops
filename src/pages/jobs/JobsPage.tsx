@@ -165,7 +165,7 @@ export default function JobsPage() {
     await supabase.from('invoices').insert({
       invoice_number: `${y}-${m}${d}-${String(invCount).padStart(3, '0')}`,
       client_id: job.client_id, job_id: job.id, estimate_id: job.estimate_id || null,
-      status: 'Draft', line_items: allLines, subtotal, tax_rate: 0, tax_amount: 0, total: subtotal,
+      status: 'Draft', line_items: allLines, subtotal, total: subtotal,
       notes: null, due_date: dueDate.toISOString().split('T')[0], paid_date: null,
     } as never)
     await fetchAll()

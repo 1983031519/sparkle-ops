@@ -12,7 +12,7 @@ import { INVOICE_STATUSES, COMPANY, paymentMethodsForClient, generateInvoiceNumb
 import type { Invoice, InvoiceStatus, InvoiceLineItem, Client, Job } from '@/lib/database.types'
 
 const emptyLine: InvoiceLineItem = { description: '', qty: 1, unit: 'ea', unit_price: 0 }
-const emptyForm = { client_id: '', job_id: '', status: 'Draft' as InvoiceStatus, line_items: [{ ...emptyLine }], tax_rate: 0, notes: '', due_date: '' }
+const emptyForm = { client_id: '', job_id: '', status: 'Draft' as InvoiceStatus, line_items: [{ ...emptyLine }], notes: '', due_date: '' }
 
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
@@ -49,10 +49,9 @@ export default function InvoicesPage() {
     e.invoice_number.toLowerCase().includes(search.toLowerCase())
   )
 
-  function calcTotals(items: InvoiceLineItem[], taxRate: number) {
+  function calcTotals(items: InvoiceLineItem[]) {
     const subtotal = items.reduce((s, i) => s + i.qty * i.unit_price, 0)
-    const tax_amount = subtotal * (taxRate / 100)
-    return { subtotal, tax_amount, total: subtotal + tax_amount }
+    return { subtotal, total: subtotal } // Tax always 0% for Sparkle
   }
 
   function openNew() { setEditing(null); setForm(emptyForm); setModalOpen(true) }
@@ -61,7 +60,7 @@ export default function InvoicesPage() {
     setForm({
       client_id: inv.client_id, job_id: inv.job_id ?? '', status: inv.status,
       line_items: (inv.line_items as InvoiceLineItem[]).length > 0 ? inv.line_items as InvoiceLineItem[] : [{ ...emptyLine }],
-      tax_rate: inv.tax_rate, notes: inv.notes ?? '', due_date: inv.due_date ?? '',
+      notes: inv.notes ?? '', due_date: inv.due_date ?? '',
     })
     setModalOpen(true)
   }
@@ -74,11 +73,11 @@ export default function InvoicesPage() {
   }
 
   async function handleSave() {
-    const { subtotal, tax_amount, total } = calcTotals(form.line_items, form.tax_rate)
+    const { subtotal, total } = calcTotals(form.line_items)
     const payload = {
       invoice_number: editing?.invoice_number ?? generateInvoiceNumber(invoices.length + 1),
       client_id: form.client_id, job_id: form.job_id || null, estimate_id: editing?.estimate_id ?? null,
-      status: form.status, line_items: form.line_items, subtotal, tax_rate: form.tax_rate, tax_amount, total,
+      status: form.status, line_items: form.line_items, subtotal, total,
       notes: form.notes || null, due_date: form.due_date || null,
       paid_date: form.status === 'Paid' ? new Date().toISOString().split('T')[0] : null,
     }
@@ -99,7 +98,7 @@ export default function InvoicesPage() {
     }
   }
 
-  const { subtotal, tax_amount, total } = calcTotals(form.line_items, form.tax_rate)
+  const { subtotal, total } = calcTotals(form.line_items)
 
   return (
     <div className="space-y-6 p-6">
@@ -165,7 +164,7 @@ export default function InvoicesPage() {
 
           <div className="rounded-lg bg-stone-50 p-4 space-y-1 text-right text-sm">
             <div className="flex justify-end gap-8"><span>Subtotal:</span><strong>${subtotal.toFixed(2)}</strong></div>
-            <div className="flex justify-end gap-8"><span>Tax ({form.tax_rate}%):</span><strong>${tax_amount.toFixed(2)}</strong></div>
+            <div className="flex justify-end gap-8"><span>Tax (0%):</span><strong>$0.00</strong></div>
             <div className="flex justify-end gap-8 text-base border-t border-stone-200 pt-1"><span>Total Due:</span><strong>${total.toFixed(2)}</strong></div>
           </div>
 
@@ -245,7 +244,7 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
 
         <div className="ml-auto w-64 space-y-1 text-right">
           <div className="flex justify-between"><span>Subtotal</span><span>${inv.subtotal.toFixed(2)}</span></div>
-          <div className="flex justify-between"><span>Tax ({inv.tax_rate}%)</span><span>${inv.tax_amount.toFixed(2)}</span></div>
+          <div className="flex justify-between"><span>Tax (0%)</span><span>$0.00</span></div>
           <div className="flex justify-between border-t border-stone-300 pt-1 text-base font-bold"><span>Total Due</span><span>${inv.total.toFixed(2)}</span></div>
         </div>
 

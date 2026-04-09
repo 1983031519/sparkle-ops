@@ -65,11 +65,10 @@ export interface Estimate {
   end_date: string | null
   line_items: EstimateLineItem[]
   subtotal: number
-  tax_rate: number
-  tax_amount: number
   total: number
+  deposit_amount: number
+  balance_amount: number
   warranty: string | null
-  payment_schedule: Record<string, unknown> | null
   notes: string | null
   valid_until: string | null
   created_at: string
@@ -94,8 +93,6 @@ export interface Invoice {
   status: InvoiceStatus
   line_items: InvoiceLineItem[]
   subtotal: number
-  tax_rate: number
-  tax_amount: number
   total: number
   notes: string | null
   due_date: string | null

@@ -24,7 +24,7 @@ const emptyMaterials: MaterialsSpecified = { paver_type: '', paver_size: '', pav
 interface EstForm {
   client_id: string; status: EstimateStatus; division: string; attn: string; site_address: string; re_line: string
   scope_of_work: string; materials: MaterialsSpecified; start_date: string; end_date: string
-  line_items: EstimateLineItem[]; tax_rate: number; warranty: string; notes: string; valid_until: string
+  line_items: EstimateLineItem[]; warranty: string; notes: string; valid_until: string
 }
 
 const plus30 = futureISO(30)
@@ -32,7 +32,7 @@ const plus30 = futureISO(30)
 const emptyForm: EstForm = {
   client_id: '', status: 'Draft', division: 'Pavers', attn: '', site_address: '', re_line: '',
   scope_of_work: '', materials: { ...emptyMaterials }, start_date: '', end_date: '',
-  line_items: [{ ...emptyLine }], tax_rate: 0, warranty: DEFAULT_WARRANTY, notes: '', valid_until: plus30,
+  line_items: [{ ...emptyLine }], warranty: DEFAULT_WARRANTY, notes: '', valid_until: plus30,
 }
 
 export default function EstimatesPage() {
@@ -73,10 +73,9 @@ export default function EstimatesPage() {
       e.estimate_number.toLowerCase().includes(search.toLowerCase())
   })
 
-  function calcTotals(items: EstimateLineItem[], taxRate: number) {
+  function calcTotals(items: EstimateLineItem[]) {
     const subtotal = items.reduce((s, i) => s + i.qty * i.unit_price, 0)
-    const tax_amount = subtotal * (taxRate / 100)
-    return { subtotal, tax_amount, total: subtotal + tax_amount }
+    return { subtotal, total: subtotal } // Tax always 0% for Sparkle
   }
 
   function openNew() {
@@ -94,7 +93,7 @@ export default function EstimatesPage() {
       scope_of_work: est.scope_of_work ?? '', materials: mats,
       start_date: est.start_date ?? '', end_date: est.end_date ?? '',
       line_items: (est.line_items as EstimateLineItem[]).length > 0 ? est.line_items as EstimateLineItem[] : [{ ...emptyLine }],
-      tax_rate: est.tax_rate, warranty: est.warranty ?? DEFAULT_WARRANTY,
+      warranty: est.warranty ?? DEFAULT_WARRANTY,
       notes: est.notes ?? '', valid_until: est.valid_until ?? '',
     })
     setModalOpen(true)
@@ -118,9 +117,10 @@ export default function EstimatesPage() {
 
     setSaving(true)
     try {
-      const { subtotal, tax_amount, total } = calcTotals(form.line_items, form.tax_rate)
-      const deposit = total * 0.5
-      const clientType = clientMap[form.client_id]?.type ?? 'Homeowner'
+      const subtotal = form.line_items.reduce((s, i) => s + i.qty * i.unit_price, 0)
+      const total = subtotal // Tax is always 0% for Sparkle
+      const deposit_amount = total * 0.5
+      const balance_amount = total - deposit_amount
 
       const payload = {
         estimate_number: editing?.estimate_number ?? generateEstimateNumber(estimates.length + 1),
@@ -136,14 +136,12 @@ export default function EstimatesPage() {
         end_date: form.end_date || null,
         line_items: form.line_items,
         subtotal,
-        tax_rate: form.tax_rate,
-        tax_amount,
         total,
+        deposit_amount,
+        balance_amount,
         warranty: form.warranty || null,
-        payment_schedule: { deposit, balance: total - deposit, methods: paymentMethodsForClient(clientType) },
         notes: form.notes || null,
         valid_until: form.valid_until || null,
-        job_id: editing?.job_id ?? null,
       }
 
       let error: { message: string } | null = null
@@ -209,7 +207,7 @@ export default function EstimatesPage() {
 
   function openPreview(est: Estimate) { setPreviewEst(est); setPreviewOpen(true) }
   function getClientForEst(est: Estimate) { return clientMap[est.client_id] }
-  const { subtotal, tax_amount, total } = calcTotals(form.line_items, form.tax_rate)
+  const { subtotal, total } = calcTotals(form.line_items)
   const deposit = total * 0.5
 
   return (
@@ -326,7 +324,7 @@ export default function EstimatesPage() {
           {/* Totals */}
           <div className="rounded-lg bg-stone-50 p-4 space-y-1 text-right text-sm">
             <div className="flex justify-end gap-8"><span>Subtotal:</span><strong>${subtotal.toFixed(2)}</strong></div>
-            <div className="flex justify-end gap-8"><span>Tax ({form.tax_rate}%):</span><strong>${tax_amount.toFixed(2)}</strong></div>
+            <div className="flex justify-end gap-8"><span>Tax (0%):</span><strong>$0.00</strong></div>
             <div className="flex justify-end gap-8 text-base border-t border-stone-200 pt-1 mt-1"><span>Total:</span><strong>${total.toFixed(2)}</strong></div>
             <div className="flex justify-end gap-8 text-xs text-stone-500"><span>Deposit (50%):</span><span>${deposit.toFixed(2)}</span></div>
             <div className="flex justify-end gap-8 text-xs text-stone-500"><span>Balance (50%):</span><span>${(total - deposit).toFixed(2)}</span></div>
@@ -356,8 +354,10 @@ export default function EstimatesPage() {
 /* ─── Printable Proposal Preview ─── */
 function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
   const mats = (est.materials_specified ?? {}) as MaterialsSpecified
-  const ps = (est.payment_schedule ?? {}) as { deposit?: number; balance?: number; methods?: string }
   const items = est.line_items as EstimateLineItem[]
+  const deposit = (est as Record<string, unknown>).deposit_amount as number | undefined ?? est.total * 0.5
+  const balance = (est as Record<string, unknown>).balance_amount as number | undefined ?? est.total * 0.5
+  const clientType = client?.type ?? 'Homeowner'
 
   return (
     <>
@@ -442,16 +442,16 @@ function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
 
         <div className="ml-auto w-64 space-y-1 text-right">
           <div className="flex justify-between"><span>Subtotal</span><span>${est.subtotal.toFixed(2)}</span></div>
-          <div className="flex justify-between"><span>Tax ({est.tax_rate}%)</span><span>${est.tax_amount.toFixed(2)}</span></div>
+          <div className="flex justify-between"><span>Tax (0%)</span><span>$0.00</span></div>
           <div className="flex justify-between border-t border-stone-300 pt-1 text-base font-bold"><span>Total</span><span>${est.total.toFixed(2)}</span></div>
         </div>
 
         {/* Payment Schedule */}
         <div className="rounded-lg bg-stone-50 p-4">
           <h4 className="font-semibold mb-2">Payment Schedule</h4>
-          <p>Deposit (50%): <strong>${(ps.deposit ?? est.total * 0.5).toFixed(2)}</strong> — due upon acceptance</p>
-          <p>Balance (50%): <strong>${(ps.balance ?? est.total * 0.5).toFixed(2)}</strong> — due upon completion</p>
-          <p className="mt-2 text-xs text-stone-500">Payment Methods: {ps.methods ?? paymentMethodsForClient(client?.type ?? 'Homeowner')}</p>
+          <p>Deposit (50%): <strong>${deposit.toFixed(2)}</strong> — due upon acceptance</p>
+          <p>Balance (50%): <strong>${balance.toFixed(2)}</strong> — due upon completion</p>
+          <p className="mt-2 text-xs text-stone-500">Payment Methods: {paymentMethodsForClient(clientType)}</p>
           <p className="text-xs text-stone-500">Check payable to: {COMPANY.check_payable}</p>
         </div>
 
