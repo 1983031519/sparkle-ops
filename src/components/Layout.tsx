@@ -145,7 +145,7 @@ export function Layout() {
     <div style={{ display: 'flex', height: '100vh' }}>
       <aside className="no-print" style={{ width: 240, display: 'flex', flexDirection: 'column', backgroundColor: NAVY, minHeight: '100vh' }}>
         <div style={{ backgroundColor: NAVY, padding: '20px 20px 16px', borderBottom: '1px solid rgba(200,169,110,0.2)' }}>
-          <img src="/logo-white.png" alt="Sparkle Stone & Pavers" style={{ width: 150, height: 'auto', maxHeight: 48, display: 'block', objectFit: 'contain' }} />
+          <img src="/logo-white.png" alt="Sparkle Stone & Pavers" style={{ width: 195, height: 'auto', maxHeight: 60, display: 'block', objectFit: 'contain' }} />
         </div>
         <nav style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           {allNav.map(({ to, icon: Icon, label }) => (

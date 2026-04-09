@@ -369,10 +369,21 @@ function ProjectPreview({ project: p, phases, client }: { project: Project; phas
   const mid = p.total_value * (p.mid_percent / 100)
   const fin = p.total_value * (p.final_percent / 100)
 
+  const sitePhotos = (p.photos as string[]) ?? []
+
+  async function handlePrint() {
+    // Wait for all images to load before printing
+    const images = document.querySelectorAll('.print-area img') as NodeListOf<HTMLImageElement>
+    await Promise.all([...images].map(img =>
+      img.complete ? Promise.resolve() : new Promise(r => { img.onload = r; img.onerror = r })
+    ))
+    window.print()
+  }
+
   return (
     <>
-      <div className="mb-4 no-print"><Button onClick={() => window.print()}><Printer size={14} strokeWidth={1.5} /> Print</Button></div>
-      <div className="space-y-6 text-sm leading-relaxed">
+      <div className="mb-4 no-print"><Button onClick={handlePrint}><Printer size={14} strokeWidth={1.5} /> Print</Button></div>
+      <div className="print-area space-y-6 text-sm leading-relaxed">
         {/* Header */}
         <div className="flex justify-between items-start">
           <div>
@@ -405,6 +416,18 @@ function ProjectPreview({ project: p, phases, client }: { project: Project; phas
         <h4 style={{ fontSize: 16, fontWeight: 700, color: '#0D1B3D' }}>{p.title}</h4>
         {p.description && <p className="text-stone-700 whitespace-pre-wrap">{p.description}</p>}
 
+        {/* Site overview photos */}
+        {sitePhotos.length > 0 && (
+          <div>
+            <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 8 }}>Site Photos</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {sitePhotos.map((url, i) => (
+                <img key={i} src={url} alt={`Site photo ${i + 1}`} style={{ width: '100%', borderRadius: 8, objectFit: 'cover', aspectRatio: '4/3' }} />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Phases */}
         {phases.map(ph => (
           <div key={ph.id} className="border-t-2 border-stone-200 pt-4 phase-section">
@@ -414,10 +437,13 @@ function ProjectPreview({ project: p, phases, client }: { project: Project; phas
             {ph.description && <p className="text-stone-700 whitespace-pre-wrap mb-2">{ph.description}</p>}
             {/* Phase photos */}
             {(ph.photos as string[])?.length > 0 && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, margin: '8px 0' }}>
-                {(ph.photos as string[]).map((url, pi) => (
-                  <img key={pi} src={url} alt="" style={{ width: '100%', borderRadius: 8, objectFit: 'cover', aspectRatio: '4/3' }} />
-                ))}
+              <div style={{ marginBottom: 8 }}>
+                <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#9CA3AF', marginBottom: 4 }}>Phase Photos</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  {(ph.photos as string[]).map((url, pi) => (
+                    <img key={pi} src={url} alt={`Phase ${ph.order_num} photo ${pi + 1}`} style={{ width: '100%', borderRadius: 8, objectFit: 'cover', aspectRatio: '4/3' }} />
+                  ))}
+                </div>
               </div>
             )}
             <div className="flex gap-6 text-xs text-stone-500">
@@ -429,7 +455,7 @@ function ProjectPreview({ project: p, phases, client }: { project: Project; phas
 
         {/* Financial */}
         <hr style={{ border: 'none', borderTop: '2px solid #D1D5DB', margin: '8px 0' }} />
-        <div className="pt-4 print-break-before">
+        <div className="financial-summary pt-4">
           <h5 style={{ fontSize: 14, fontWeight: 700, color: '#0D1B3D', marginBottom: 8 }}>Financial Summary</h5>
           <div className="ml-auto w-80 space-y-1 text-right">
             <div className="flex justify-between text-base font-bold"><span>Total Project Value</span><span>{fmtCurrency(p.total_value)}</span></div>

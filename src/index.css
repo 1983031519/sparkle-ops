@@ -58,8 +58,12 @@
 }
 
 @media print {
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area { position: absolute; top: 0; left: 0; width: 100%; }
   .no-print { display: none !important; }
   body { background: white; }
+  img { max-width: 100% !important; page-break-inside: avoid; }
   .phase-section { page-break-inside: avoid; }
-  .print-break-before { page-break-before: always; }
+  .financial-summary { page-break-before: always; }
 }
