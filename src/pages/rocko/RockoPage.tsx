@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Send, Trash2, Loader2 } from 'lucide-react'
 import { askAi } from '@/lib/ai'
 import { useRockoContext } from '@/hooks/useRockoContext'
@@ -11,6 +11,14 @@ interface Msg {
   time: string
 }
 
+const QUICK_ACTIONS = [
+  { emoji: '📊', label: 'Resumo do dia', message: 'Me dê um resumo completo do dia de hoje — jobs, invoices, o que preciso resolver.' },
+  { emoji: '💰', label: 'Invoices em aberto', message: 'Quais invoices estão em aberto? Liste com valores e quem deve.' },
+  { emoji: '📈', label: 'Margem do mês', message: 'Qual minha margem de lucro este mês? Compare com o mês passado.' },
+  { emoji: '🔥', label: 'Insights do mercado', message: 'Me dê insights sobre o mercado de pavers e stone na região de Sarasota/Bradenton agora. O que devo prestar atenção?' },
+  { emoji: '➕', label: 'Novo job / proposta', message: 'Quero criar um novo job ou proposta. Me ajude a pensar no escopo e preço.' },
+]
+
 function timestamp() {
   return format(new Date(), 'h:mm a', { locale: enUS })
 }
@@ -20,43 +28,26 @@ export default function RockoPage() {
   const [messages, setMessages] = useState<Msg[]>([])
   const [input, setInput] = useState('')
   const [thinking, setThinking] = useState(false)
-  const [briefingDone, setBriefingDone] = useState(false)
+  const [showQuickActions, setShowQuickActions] = useState(true)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Scroll to bottom on new messages
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, thinking])
 
-  // Auto-briefing on load
-  useEffect(() => {
-    if (!ready || briefingDone) return
-    setBriefingDone(true)
-    setThinking(true)
-
-    askAi(
-      [{ role: 'user', content: 'Me dê um resumo rápido do negócio para hoje. Inclua números importantes, alertas e o que preciso resolver. Seja direto, use bullet points.' }],
-      context,
-      { max_tokens: 600 }
-    ).then(text => {
-      setMessages([{ role: 'assistant', content: text, time: timestamp() }])
-    }).catch(() => {
-      setMessages([{ role: 'assistant', content: 'Oi Oscar! Estou online mas não consegui carregar os dados. Pode me perguntar qualquer coisa sobre o negócio.', time: timestamp() }])
-    }).finally(() => setThinking(false))
-  }, [ready, briefingDone, context])
-
-  async function handleSend() {
-    const text = input.trim()
-    if (!text || thinking) return
+  const sendMessage = useCallback(async (text: string) => {
+    if (!text.trim() || thinking) return
+    setShowQuickActions(false)
     setInput('')
 
-    const userMsg: Msg = { role: 'user', content: text, time: timestamp() }
+    const userMsg: Msg = { role: 'user', content: text.trim(), time: timestamp() }
     const newMessages = [...messages, userMsg]
     setMessages(newMessages)
     setThinking(true)
 
     try {
       const apiMessages = newMessages.map(m => ({ role: m.role, content: m.content }))
-      const response = await askAi(apiMessages, context, { max_tokens: 1000 })
+      // Pass context only when it's ready
+      const response = await askAi(apiMessages, ready ? context : undefined, { max_tokens: 1000 })
       setMessages(prev => [...prev, { role: 'assistant', content: response, time: timestamp() }])
     } catch (err) {
       setMessages(prev => [...prev, { role: 'assistant', content: `Erro: ${err instanceof Error ? err.message : 'Falha na requisição'}`, time: timestamp() }])
@@ -64,11 +55,11 @@ export default function RockoPage() {
       setThinking(false)
       inputRef.current?.focus()
     }
-  }
+  }, [messages, thinking, context, ready])
 
   function clearChat() {
     setMessages([])
-    setBriefingDone(false)
+    setShowQuickActions(true)
   }
 
   return (
@@ -81,27 +72,52 @@ export default function RockoPage() {
           </div>
           <div>
             <h1 style={{ fontSize: 16, fontWeight: 700, color: '#0D1B3D', margin: 0 }}>Rocko</h1>
-            <p style={{ fontSize: 12, color: '#9CA3AF', margin: 0 }}>Sparkle AI Assistant</p>
+            <p style={{ fontSize: 12, color: '#9CA3AF', margin: 0 }}>Sparkle AI Partner</p>
           </div>
         </div>
         {messages.length > 0 && (
           <button onClick={clearChat} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: '1px solid #E5E3DF', borderRadius: 8, padding: '6px 12px', fontSize: 12, color: '#6B7280', cursor: 'pointer' }}>
-            <Trash2 size={13} strokeWidth={1.5} /> Clear
+            <Trash2 size={13} strokeWidth={1.5} /> Limpar
           </button>
         )}
       </div>
 
       {/* Messages */}
       <div style={{ flex: 1, overflow: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {!ready && messages.length === 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <div style={{ textAlign: 'center', color: '#9CA3AF' }}>
-              <Loader2 size={24} strokeWidth={1.5} style={{ animation: 'spin 1s linear infinite', margin: '0 auto 8px' }} />
-              <p style={{ fontSize: 13 }}>Loading business data...</p>
+
+        {/* Greeting + Quick Actions */}
+        {showQuickActions && messages.length === 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 20 }}>
+            <div style={{ width: 56, height: 56, borderRadius: 16, background: '#0D1B3D', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ color: '#C8A96E', fontWeight: 800, fontSize: 26 }}>R</span>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ fontSize: 18, fontWeight: 700, color: '#0D1B3D', marginBottom: 4 }}>Oi Oscar! Rocko aqui.</p>
+              <p style={{ fontSize: 14, color: '#6B7280' }}>O que você precisa hoje?</p>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 480 }}>
+              {QUICK_ACTIONS.map(qa => (
+                <button
+                  key={qa.label}
+                  onClick={() => sendMessage(qa.message)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '10px 16px', borderRadius: 12,
+                    border: '1px solid #E5E3DF', background: 'white',
+                    fontSize: 13, fontWeight: 500, color: '#333',
+                    cursor: 'pointer', transition: 'all 150ms',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#C8A96E'; e.currentTarget.style.background = '#FAFAF7' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E3DF'; e.currentTarget.style.background = 'white' }}
+                >
+                  <span>{qa.emoji}</span> {qa.label}
+                </button>
+              ))}
             </div>
           </div>
         )}
 
+        {/* Chat messages */}
         {messages.map((msg, i) => (
           <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start', gap: 8 }}>
             {msg.role === 'assistant' && (
@@ -122,6 +138,7 @@ export default function RockoPage() {
           </div>
         ))}
 
+        {/* Thinking indicator */}
         {thinking && (
           <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
             <div style={{ width: 28, height: 28, borderRadius: 8, background: '#0D1B3D', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -142,17 +159,16 @@ export default function RockoPage() {
 
       {/* Input */}
       <div style={{ padding: '12px 24px 16px', borderTop: '1px solid #F3F4F6', flexShrink: 0, background: 'white' }}>
-        <form onSubmit={e => { e.preventDefault(); handleSend() }} style={{ display: 'flex', gap: 8 }}>
+        <form onSubmit={e => { e.preventDefault(); sendMessage(input) }} style={{ display: 'flex', gap: 8 }}>
           <input
             ref={inputRef}
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="Ask Rocko anything..."
+            placeholder="Pergunte qualquer coisa..."
             disabled={thinking}
             style={{
               flex: 1, height: 44, borderRadius: 12, border: '1px solid #E5E3DF',
-              padding: '0 16px', fontSize: 14, outline: 'none',
-              transition: 'border-color 150ms',
+              padding: '0 16px', fontSize: 14, outline: 'none', transition: 'border-color 150ms',
             }}
             onFocus={e => { e.currentTarget.style.borderColor = '#0D1B3D' }}
             onBlur={e => { e.currentTarget.style.borderColor = '#E5E3DF' }}
