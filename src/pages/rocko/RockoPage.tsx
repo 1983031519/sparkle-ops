@@ -34,7 +34,7 @@ export default function RockoPage() {
     setThinking(true)
 
     askAi(
-      [{ role: 'user', content: 'Give me a quick business briefing for today. Include key numbers, alerts, and anything I should act on. Be concise, use bullet points. Respond in Portuguese.' }],
+      [{ role: 'user', content: 'Me dê um resumo rápido do negócio para hoje. Inclua números importantes, alertas e o que preciso resolver. Seja direto, use bullet points.' }],
       context,
       { max_tokens: 600 }
     ).then(text => {

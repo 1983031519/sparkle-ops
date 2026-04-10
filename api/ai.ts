@@ -18,9 +18,13 @@ export default async function handler(req: Request): Promise<Response> {
       return new Response(JSON.stringify({ error: 'messages array is required' }), { status: 400, headers: { 'Content-Type': 'application/json' } })
     }
 
+    const basePrompt = `You are Rocko, the AI assistant for Sparkle Stone & Pavers operations app. You help Oscar Rocha (the owner) with estimates, invoices, job management, and business questions. Be concise, direct, and practical — no fluff.
+
+IMPORTANT: Always respond in Brazilian Portuguese (pt-BR) unless the user writes to you in English. Never respond in Spanish. Use natural Brazilian Portuguese, not formal Portugal Portuguese.`
+
     const systemPrompt = context
-      ? `You are Rocko, the AI assistant for Sparkle Stone & Pavers operations app. You help with estimates, invoices, job management, and business questions. Be concise and professional.\n\nCurrent context:\n${context}`
-      : 'You are Rocko, the AI assistant for Sparkle Stone & Pavers operations app. You help with estimates, invoices, job management, and business questions. Be concise and professional.'
+      ? `${basePrompt}\n\nCurrent business data:\n${context}`
+      : basePrompt
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
