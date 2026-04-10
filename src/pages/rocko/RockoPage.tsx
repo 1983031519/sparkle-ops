@@ -67,9 +67,7 @@ export default function RockoPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #F3F4F6', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 12, background: '#0D1B3D', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: '#C8A96E', fontWeight: 800, fontSize: 18 }}>R</span>
-          </div>
+          <img src="/rocko.png" alt="Rocko" style={{ width: 40, height: 40, borderRadius: 12, objectFit: 'contain' }} />
           <div>
             <h1 style={{ fontSize: 16, fontWeight: 700, color: '#0D1B3D', margin: 0 }}>Rocko</h1>
             <p style={{ fontSize: 12, color: '#9CA3AF', margin: 0 }}>Sparkle AI Partner</p>
@@ -88,9 +86,7 @@ export default function RockoPage() {
         {/* Greeting + Quick Actions */}
         {showQuickActions && messages.length === 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 20 }}>
-            <div style={{ width: 56, height: 56, borderRadius: 16, background: '#0D1B3D', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ color: '#C8A96E', fontWeight: 800, fontSize: 26 }}>R</span>
-            </div>
+            <img src="/rocko.png" alt="Rocko" style={{ width: 80, height: 80, objectFit: 'contain' }} />
             <div style={{ textAlign: 'center' }}>
               <p style={{ fontSize: 18, fontWeight: 700, color: '#0D1B3D', marginBottom: 4 }}>Oi Oscar! Rocko aqui.</p>
               <p style={{ fontSize: 14, color: '#6B7280' }}>O que você precisa hoje?</p>
@@ -121,9 +117,7 @@ export default function RockoPage() {
         {messages.map((msg, i) => (
           <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start', gap: 8 }}>
             {msg.role === 'assistant' && (
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: '#0D1B3D', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
-                <span style={{ color: '#C8A96E', fontWeight: 800, fontSize: 13 }}>R</span>
-              </div>
+              <img src="/rocko.png" alt="Rocko" style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'contain', flexShrink: 0, marginTop: 2 }} />
             )}
             <div style={{
               maxWidth: '75%', padding: '12px 16px', borderRadius: 16,
@@ -141,9 +135,7 @@ export default function RockoPage() {
         {/* Thinking indicator */}
         {thinking && (
           <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-            <div style={{ width: 28, height: 28, borderRadius: 8, background: '#0D1B3D', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ color: '#C8A96E', fontWeight: 800, fontSize: 13 }}>R</span>
-            </div>
+            <img src="/rocko.png" alt="Rocko" style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'contain', flexShrink: 0 }} />
             <div style={{ background: '#F5F4F2', borderRadius: '16px 16px 16px 4px', padding: '12px 16px' }}>
               <div style={{ display: 'flex', gap: 4 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF', animation: 'pulse 1.2s infinite', animationDelay: '0s' }} />

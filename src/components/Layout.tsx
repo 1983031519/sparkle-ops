@@ -16,7 +16,7 @@ const allNav = [
   { to: '/vendors', icon: UsersRound, label: 'Vendors & Team', module: 'vendors' },
   { to: '/inventory', icon: Package, label: 'Inventory', module: 'inventory' },
   { to: '/reports', icon: BarChart3, label: 'Reports', module: 'reports' },
-  { to: '/rocko', icon: Sparkles, label: 'Rocko AI', module: 'rocko' },
+  { to: '/rocko', icon: Sparkles, label: 'Rocko AI', module: 'rocko', img: '/rocko.png' },
   { to: '/users', icon: Shield, label: 'Users', module: 'users' },
 ]
 
@@ -75,7 +75,7 @@ export function Layout() {
           display: 'flex', height: 60, background: 'white',
           borderTop: '1px solid #F3F4F6',
         }}>
-          {bottomNav.map(({ to, icon: Icon, label }) => (
+          {bottomNav.map(({ to, icon: Icon, label, img }: typeof allNav[number] & { img?: string }) => (
             <NavLink
               key={to}
               to={to}
@@ -87,7 +87,7 @@ export function Layout() {
                 transition: 'color 150ms',
               })}
             >
-              <Icon size={20} strokeWidth={1.5} />
+              {img ? <img src={img} alt="" style={{ width: 20, height: 20, objectFit: 'contain' }} /> : <Icon size={20} strokeWidth={1.5} />}
               {label}
             </NavLink>
           ))}
@@ -116,7 +116,7 @@ export function Layout() {
               </div>
               {/* Drawer nav */}
               <nav style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {visibleNav.map(({ to, icon: Icon, label }) => (
+                {visibleNav.map(({ to, icon: Icon, label, img }: typeof allNav[number] & { img?: string }) => (
                   <NavLink
                     key={to} to={to} end={to === '/'}
                     style={({ isActive }) => ({
@@ -129,7 +129,7 @@ export function Layout() {
                       boxShadow: isActive ? 'inset 3px 0 0 #C8A96E' : 'none',
                     })}
                   >
-                    <Icon size={18} strokeWidth={1.5} />
+                    {img ? <img src={img} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} /> : <Icon size={18} strokeWidth={1.5} />}
                     {label}
                   </NavLink>
                 ))}
@@ -156,7 +156,7 @@ export function Layout() {
           <img src="/logo-white.png" alt="Sparkle Stone & Pavers" style={{ width: 195, height: 'auto', maxHeight: 60, display: 'block', objectFit: 'contain' }} />
         </div>
         <nav style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {visibleNav.map(({ to, icon: Icon, label }) => (
+          {visibleNav.map(({ to, icon: Icon, label, img }: typeof allNav[number] & { img?: string }) => (
             <NavLink
               key={to} to={to} end={to === '/'}
               className={({ isActive }) => isActive ? 'nav-item nav-active' : 'nav-item nav-inactive'}
@@ -172,7 +172,7 @@ export function Layout() {
               onMouseEnter={e => { const el = e.currentTarget; if (!el.classList.contains('nav-active')) { el.style.color = 'white'; el.style.backgroundColor = 'rgba(255,255,255,0.06)' } }}
               onMouseLeave={e => { const el = e.currentTarget; if (!el.classList.contains('nav-active')) { el.style.color = 'rgba(255,255,255,0.65)'; el.style.backgroundColor = 'transparent' } }}
             >
-              <Icon size={18} strokeWidth={1.5} />
+              {img ? <img src={img} alt="" style={{ width: 20, height: 20, objectFit: 'contain' }} /> : <Icon size={18} strokeWidth={1.5} />}
               {label}
             </NavLink>
           ))}
