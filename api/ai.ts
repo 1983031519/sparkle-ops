@@ -66,7 +66,7 @@ export default async function handler(req: Request): Promise<Response> {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: model || 'claude-sonnet-4-6-20250514',
+        model: model || 'claude-sonnet-4-5-20250514',
         max_tokens: max_tokens || 1024,
         system: systemPrompt,
         messages,
@@ -75,6 +75,7 @@ export default async function handler(req: Request): Promise<Response> {
 
     if (!response.ok) {
       const errorBody = await response.text()
+      console.error(`[AI] Anthropic ${response.status}:`, errorBody)
       return new Response(JSON.stringify({ error: `Anthropic API error: ${response.status}`, details: errorBody }), { status: response.status, headers: { 'Content-Type': 'application/json' } })
     }
 

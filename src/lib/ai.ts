@@ -30,7 +30,8 @@ export async function askAi(
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Request failed' }))
-    throw new Error(err.error || `API error ${res.status}`)
+    const detail = err.details ? ` — ${typeof err.details === 'string' ? err.details : JSON.stringify(err.details)}` : ''
+    throw new Error(`${err.error || `API error ${res.status}`}${detail}`)
   }
 
   const data: AiResponse = await res.json()
