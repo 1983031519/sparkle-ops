@@ -1,42 +1,21 @@
-import type { IncomingMessage, ServerResponse } from 'http'
+export const config = { runtime: 'edge' }
 
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
-
-function parseBody(req: IncomingMessage): Promise<Record<string, unknown>> {
-  return new Promise((resolve, reject) => {
-    let body = ''
-    req.on('data', (chunk: Buffer) => { body += chunk.toString() })
-    req.on('end', () => { try { resolve(JSON.parse(body)) } catch { reject(new Error('Invalid JSON')) } })
-    req.on('error', reject)
-  })
-}
-
-export default async function handler(req: IncomingMessage, res: ServerResponse) {
-  res.setHeader('Content-Type', 'application/json')
-
+export default async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') {
-    res.statusCode = 405
-    res.end(JSON.stringify({ error: 'Method not allowed' }))
-    return
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: { 'Content-Type': 'application/json' } })
   }
 
+  const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
   if (!ANTHROPIC_API_KEY) {
-    res.statusCode = 500
-    res.end(JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured on server' }))
-    return
+    return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' }), { status: 500, headers: { 'Content-Type': 'application/json' } })
   }
 
   try {
-    const body = await parseBody(req)
-    const messages = body.messages as { role: string; content: string }[]
-    const context = body.context as string | undefined
-    const model = (body.model as string) || 'claude-sonnet-4-20250514'
-    const max_tokens = (body.max_tokens as number) || 1024
+    const body = await req.json()
+    const { messages, context, model, max_tokens } = body
 
     if (!messages || !Array.isArray(messages)) {
-      res.statusCode = 400
-      res.end(JSON.stringify({ error: 'messages array is required' }))
-      return
+      return new Response(JSON.stringify({ error: 'messages array is required' }), { status: 400, headers: { 'Content-Type': 'application/json' } })
     }
 
     const systemPrompt = context
@@ -50,21 +29,22 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         'x-api-key': ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
       },
-      body: JSON.stringify({ model, max_tokens, system: systemPrompt, messages }),
+      body: JSON.stringify({
+        model: model || 'claude-sonnet-4-20250514',
+        max_tokens: max_tokens || 1024,
+        system: systemPrompt,
+        messages,
+      }),
     })
 
     if (!response.ok) {
       const errorBody = await response.text()
-      res.statusCode = response.status
-      res.end(JSON.stringify({ error: `Anthropic API error: ${response.status}`, details: errorBody }))
-      return
+      return new Response(JSON.stringify({ error: `Anthropic API error: ${response.status}`, details: errorBody }), { status: response.status, headers: { 'Content-Type': 'application/json' } })
     }
 
     const data = await response.json()
-    res.statusCode = 200
-    res.end(JSON.stringify(data))
+    return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } })
   } catch (err) {
-    res.statusCode = 500
-    res.end(JSON.stringify({ error: 'Internal server error', message: err instanceof Error ? err.message : 'Unknown' }))
+    return new Response(JSON.stringify({ error: 'Internal server error', message: err instanceof Error ? err.message : 'Unknown' }), { status: 500, headers: { 'Content-Type': 'application/json' } })
   }
 }
