@@ -312,27 +312,48 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
   const depositAmt = inv.deposit_received ?? 0
   const balanceDue = inv.balance_due ?? inv.total
 
+  const PDF_OPTS = {
+    margin: [0.4, 0.5, 0.4, 0.5] as [number, number, number, number],
+    image: { type: 'jpeg' as const, quality: 0.92 },
+    html2canvas: { scale: 2, useCORS: true, logging: false },
+    jsPDF: { unit: 'in' as const, format: 'letter' as const, orientation: 'portrait' as const },
+  }
+
   async function handlePrint() {
     const el = document.querySelector('.print-area') as HTMLElement | null
     if (!el) return
     const html2pdf = (await import('html2pdf.js')).default
-    html2pdf().set({
-      margin: [0.4, 0.5, 0.4, 0.5],
-      filename: `Invoice — ${inv.number}.pdf`,
-      image: { type: 'jpeg', quality: 0.92 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
-      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-    }).from(el).save()
+    html2pdf().set({ ...PDF_OPTS, filename: `Invoice — ${inv.number}.pdf` }).from(el).save()
   }
 
   const [sendOpen, setSendOpen] = useState(false)
+  const [pdfBase64, setPdfBase64] = useState<string | null>(null)
+  const [generatingPdf, setGeneratingPdf] = useState(false)
+
+  async function handleSendClick() {
+    const el = document.querySelector('.print-area') as HTMLElement | null
+    setGeneratingPdf(true)
+    try {
+      if (el) {
+        const html2pdf = (await import('html2pdf.js')).default
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const dataUri: string = await (html2pdf() as any).set(PDF_OPTS).from(el).outputPdf('datauristring')
+        setPdfBase64(dataUri.split(',')[1])
+      }
+    } catch {
+      setPdfBase64(null)
+    } finally {
+      setGeneratingPdf(false)
+      setSendOpen(true)
+    }
+  }
 
   return (
     <>
       <div className="mb-4 no-print flex items-center gap-2">
         <Button onClick={handlePrint}><Printer className="h-4 w-4" /> Download PDF</Button>
-        <Button variant="gold" type="button" onClick={() => setSendOpen(true)}>
-          <Mail className="h-4 w-4" /> Send to Client
+        <Button variant="gold" type="button" onClick={handleSendClick} disabled={generatingPdf}>
+          <Mail className="h-4 w-4" /> {generatingPdf ? 'Preparing...' : 'Send to Client'}
         </Button>
       </div>
       <SendDocumentModal
@@ -341,6 +362,7 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
         type="invoice"
         documentId={inv.id}
         clientEmail={client?.email}
+        pdfBase64={pdfBase64 ?? undefined}
         documentData={{
           number: inv.number,
           date: fmtDate(isoDatePart(inv.created_at)),

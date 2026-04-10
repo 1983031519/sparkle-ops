@@ -420,30 +420,55 @@ function ProjectPreview({ project: p, phases, client }: { project: Project; phas
     return () => { cancelled = true }
   }, [sitePhotosRaw, phases])
 
+  const PDF_OPTS = {
+    margin: [0.4, 0.5, 0.4, 0.5] as [number, number, number, number],
+    image: { type: 'jpeg' as const, quality: 0.92 },
+    html2canvas: { scale: 2, useCORS: true, logging: false },
+    jsPDF: { unit: 'in' as const, format: 'letter' as const, orientation: 'portrait' as const },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] as string[], avoid: '.phase-section' },
+  }
+
+  const hasPhotos = sitePhotosRaw.length > 0 || phases.some(ph => ((ph.photos as string[]) ?? []).length > 0)
+
   async function handlePrint() {
     const el = document.querySelector('.print-area') as HTMLElement | null
     if (!el) return
     const html2pdf = (await import('html2pdf.js')).default
-    html2pdf().set({
-      margin: [0.4, 0.5, 0.4, 0.5],
-      filename: `Project Proposal — ${p.number}.pdf`,
-      image: { type: 'jpeg', quality: 0.92 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
-      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'], avoid: '.phase-section' },
-    }).from(el).save()
+    html2pdf().set({ ...PDF_OPTS, filename: `Project Proposal — ${p.number}.pdf` }).from(el).save()
   }
 
   const [sendOpen, setSendOpen] = useState(false)
+  const [pdfBase64, setPdfBase64] = useState<string | null>(null)
+  const [generatingPdf, setGeneratingPdf] = useState(false)
+
+  async function handleSendClick() {
+    // Wait for images if there are any — same guard as Download button
+    if (hasPhotos && !imagesReady) { setSendOpen(true); return }
+    const el = document.querySelector('.print-area') as HTMLElement | null
+    setGeneratingPdf(true)
+    try {
+      if (el) {
+        const html2pdf = (await import('html2pdf.js')).default
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const dataUri: string = await (html2pdf() as any).set(PDF_OPTS).from(el).outputPdf('datauristring')
+        setPdfBase64(dataUri.split(',')[1])
+      }
+    } catch {
+      setPdfBase64(null)
+    } finally {
+      setGeneratingPdf(false)
+      setSendOpen(true)
+    }
+  }
 
   return (
     <>
       <div className="mb-4 no-print flex items-center gap-3">
-        <Button onClick={handlePrint} disabled={!imagesReady && (sitePhotosRaw.length > 0 || phases.some(ph => ((ph.photos as string[]) ?? []).length > 0))}>
-          <Printer size={14} strokeWidth={1.5} /> {imagesReady ? 'Download PDF' : 'Preparing images...'}
+        <Button onClick={handlePrint} disabled={hasPhotos && !imagesReady}>
+          <Printer size={14} strokeWidth={1.5} /> {hasPhotos && !imagesReady ? 'Preparing images...' : 'Download PDF'}
         </Button>
-        <Button variant="gold" type="button" onClick={() => setSendOpen(true)}>
-          <Mail size={14} strokeWidth={1.5} /> Send to Client
+        <Button variant="gold" type="button" onClick={handleSendClick} disabled={generatingPdf || (hasPhotos && !imagesReady)}>
+          <Mail size={14} strokeWidth={1.5} /> {generatingPdf ? 'Preparing...' : 'Send to Client'}
         </Button>
       </div>
       <SendDocumentModal
@@ -452,6 +477,7 @@ function ProjectPreview({ project: p, phases, client }: { project: Project; phas
         type="project"
         documentId={p.id}
         clientEmail={client?.email}
+        pdfBase64={pdfBase64 ?? undefined}
         documentData={{
           number: p.number,
           date: fmtDate(isoDatePart(p.created_at)),

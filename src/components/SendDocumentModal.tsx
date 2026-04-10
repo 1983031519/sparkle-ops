@@ -19,6 +19,7 @@ interface Props {
   type: SendDocumentType
   documentId: string    // uuid of the invoice/estimate/project row
   clientEmail: string | null | undefined
+  pdfBase64?: string    // base64-encoded PDF to attach (optional — email sends without if missing)
   documentData: {
     number: string
     date: string        // pre-formatted, e.g. "Apr 10, 2026"
@@ -27,7 +28,7 @@ interface Props {
   }
 }
 
-export function SendDocumentModal({ open, onClose, type, documentId, clientEmail, documentData }: Props) {
+export function SendDocumentModal({ open, onClose, type, documentId, clientEmail, pdfBase64, documentData }: Props) {
   const [fromEmail, setFromEmail] = useState<FromEmail>('oscar@sparklestonepavers.com')
   const [sending, setSending] = useState(false)
   const toast = useToast()
@@ -74,6 +75,7 @@ export function SendDocumentModal({ open, onClose, type, documentId, clientEmail
           documentData,
           fromEmail,
           viewUrl,
+          pdfBase64,
         }),
       })
       clearTimeout(timeout)

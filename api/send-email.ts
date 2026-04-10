@@ -17,6 +17,7 @@ interface SendEmailBody {
   documentData: DocumentData
   fromEmail: 'oscar@sparklestonepavers.com' | 'info@sparklestonepavers.com'
   viewUrl?: string
+  pdfBase64?: string
 }
 
 const ALLOWED_FROMS = new Set([
@@ -158,7 +159,7 @@ export default async function handler(req: Request): Promise<Response> {
     return jsonResponse(400, { error: 'Invalid JSON body' })
   }
 
-  const { to, subject, type, documentData, fromEmail, viewUrl } = body
+  const { to, subject, type, documentData, fromEmail, viewUrl, pdfBase64 } = body
 
   if (!to || typeof to !== 'string') {
     return jsonResponse(400, { error: 'Missing "to" email address' })
@@ -195,6 +196,12 @@ export default async function handler(req: Request): Promise<Response> {
         reply_to: 'oscar@sparklestonepavers.com',
         subject: finalSubject,
         html: buildHtml(type, documentData, viewUrl),
+        ...(pdfBase64 ? {
+          attachments: [{
+            filename: `Sparkle_${TYPE_LABEL[type].replace(' ', '_')}_${documentData.number}.pdf`,
+            content: pdfBase64,
+          }],
+        } : {}),
       }),
     })
 
