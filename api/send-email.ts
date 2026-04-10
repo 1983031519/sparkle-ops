@@ -172,13 +172,20 @@ export default async function handler(req: Request): Promise<Response> {
 
   try {
     const resend = new Resend(apiKey)
-    const { data, error } = await resend.emails.send({
+
+    const sendPromise = resend.emails.send({
       from: `Sparkle Stone & Pavers <${fromEmail}>`,
       to: [to],
       replyTo: 'oscar@sparklestonepavers.com',
       subject: finalSubject,
       html: buildHtml(type, documentData),
     })
+
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Resend API timeout after 10s')), 10000)
+    )
+
+    const { data, error } = await Promise.race([sendPromise, timeoutPromise])
 
     if (error) {
       console.error('[send-email] Resend error (full):', JSON.stringify(error))
@@ -187,10 +194,10 @@ export default async function handler(req: Request): Promise<Response> {
 
     return jsonResponse(200, { ok: true, id: data?.id ?? null })
   } catch (err) {
-    console.error('[send-email] Unexpected error:', err)
+    console.error('[send-email] Unexpected error:', err instanceof Error ? err.message : err)
     return jsonResponse(500, {
       error: 'Internal server error',
-      message: err instanceof Error ? err.message : 'Unknown',
+      details: err instanceof Error ? err.message : 'Unknown',
     })
   }
 }
