@@ -1,6 +1,5 @@
-import { Resend } from 'resend'
-
-// Node (default) serverless runtime so the Resend SDK and process.env work normally.
+// Edge runtime — same as api/ai.ts. No Node SDK needed; uses fetch directly.
+export const config = { runtime: 'edge' }
 
 type DocumentType = 'invoice' | 'estimate' | 'project'
 
@@ -138,7 +137,7 @@ export default async function handler(req: Request): Promise<Response> {
     return jsonResponse(405, { error: 'Method not allowed' })
   }
 
-  const apiKey = process.env.RESEND_API_KEY
+  const apiKey = (process.env as Record<string, string | undefined>).RESEND_API_KEY
   if (!apiKey) {
     return jsonResponse(500, { error: 'RESEND_API_KEY not configured' })
   }
@@ -171,33 +170,44 @@ export default async function handler(req: Request): Promise<Response> {
     : `Your ${label} from Sparkle Stone & Pavers${documentData.number ? ` — ${documentData.number}` : ''}`
 
   try {
-    const resend = new Resend(apiKey)
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 8000)
 
-    const sendPromise = resend.emails.send({
-      from: `Sparkle Stone & Pavers <${fromEmail}>`,
-      to: [to],
-      replyTo: 'oscar@sparklestonepavers.com',
-      subject: finalSubject,
-      html: buildHtml(type, documentData),
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: `Sparkle Stone & Pavers <${fromEmail}>`,
+        to: [to],
+        reply_to: 'oscar@sparklestonepavers.com',
+        subject: finalSubject,
+        html: buildHtml(type, documentData),
+      }),
     })
 
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Resend API timeout after 8s')), 8000)
-    )
+    clearTimeout(timeout)
 
-    const { data, error } = await Promise.race([sendPromise, timeoutPromise])
+    const data = await res.json() as { id?: string; name?: string; message?: string; statusCode?: number }
 
-    if (error) {
-      console.error('[send-email] Resend error (full):', JSON.stringify(error))
-      return jsonResponse(502, { error: 'Failed to send email', details: error.message ?? JSON.stringify(error) })
+    if (!res.ok) {
+      console.error('[send-email] Resend error:', JSON.stringify(data))
+      return jsonResponse(502, {
+        error: 'Failed to send email',
+        details: data.message ?? data.name ?? `HTTP ${res.status}`,
+      })
     }
 
-    return jsonResponse(200, { ok: true, id: data?.id ?? null })
+    return jsonResponse(200, { ok: true, id: data.id ?? null })
   } catch (err) {
-    console.error('[send-email] Unexpected error:', err instanceof Error ? err.message : err)
-    return jsonResponse(500, {
-      error: 'Internal server error',
-      details: err instanceof Error ? err.message : 'Unknown',
-    })
+    const msg = err instanceof Error ? err.message : 'Unknown'
+    console.error('[send-email] Unexpected error:', msg)
+    if (err instanceof Error && err.name === 'AbortError') {
+      return jsonResponse(504, { error: 'Resend API timed out' })
+    }
+    return jsonResponse(500, { error: 'Internal server error', details: msg })
   }
 }
