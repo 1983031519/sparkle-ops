@@ -14,6 +14,7 @@ import VendorsPage from '@/pages/vendors/VendorsPage'
 import InventoryPage from '@/pages/inventory/InventoryPage'
 import ReportsPage from '@/pages/reports/ReportsPage'
 import UsersPage from '@/pages/users/UsersPage'
+import RockoPage from '@/pages/rocko/RockoPage'
 
 function ProtectedRoutes() {
   const { user, loading } = useAuth()
@@ -48,6 +49,7 @@ export default function App() {
             <Route path="/inventory" element={<ModuleGuard module="inventory"><InventoryPage /></ModuleGuard>} />
             <Route path="/reports" element={<ModuleGuard module="reports"><ReportsPage /></ModuleGuard>} />
             <Route path="/users" element={<ModuleGuard module="users"><UsersPage /></ModuleGuard>} />
+            <Route path="/rocko" element={<ModuleGuard module="rocko"><RockoPage /></ModuleGuard>} />
           </Route>
         </Routes>
       </BrowserRouter>

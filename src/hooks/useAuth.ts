@@ -90,7 +90,7 @@ export function useAuth() {
     if (!profile) return true
     if (isAdmin) return true
     if (isManager) return module !== 'users'
-    if (isOffice) return module !== 'users' && module !== 'reports'
+    if (isOffice) return module !== 'users' && module !== 'reports' && module !== 'rocko'
     return module === 'jobs' || module === 'dashboard'
   }
 
