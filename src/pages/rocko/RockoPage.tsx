@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Send, Trash2, Loader2 } from 'lucide-react'
+import { Send, Trash2 } from 'lucide-react'
 import { askAi } from '@/lib/ai'
 import { useRockoContext } from '@/hooks/useRockoContext'
 import { format } from 'date-fns'
