@@ -182,7 +182,7 @@ export default async function handler(req: Request): Promise<Response> {
     })
 
     const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Resend API timeout after 10s')), 10000)
+      setTimeout(() => reject(new Error('Resend API timeout after 8s')), 8000)
     )
 
     const { data, error } = await Promise.race([sendPromise, timeoutPromise])
