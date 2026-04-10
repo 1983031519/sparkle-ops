@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Users, Briefcase, FileText, FolderOpen, Receipt, UsersRound, Package, BarChart3, Shield, Sparkles, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Users, Briefcase, FileText, FolderOpen, Receipt, UsersRound, Package, BarChart3, Shield, Bot, LogOut, Menu, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { GlobalSearch } from '@/components/GlobalSearch'
 
@@ -16,7 +16,7 @@ const allNav = [
   { to: '/vendors', icon: UsersRound, label: 'Vendors & Team', module: 'vendors' },
   { to: '/inventory', icon: Package, label: 'Inventory', module: 'inventory' },
   { to: '/reports', icon: BarChart3, label: 'Reports', module: 'reports' },
-  { to: '/rocko', icon: Sparkles, label: 'Rocko AI', module: 'rocko', img: '/rocko.png' },
+  { to: '/rocko', icon: Bot, label: 'Rocko AI', module: 'rocko' },
   { to: '/users', icon: Shield, label: 'Users', module: 'users' },
 ]
 
