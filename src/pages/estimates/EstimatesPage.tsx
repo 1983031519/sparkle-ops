@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Search, Printer, ArrowRight } from 'lucide-react'
+import { Plus, Search, Printer, ArrowRight, Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input, Select, Textarea } from '@/components/ui/Input'
@@ -10,6 +10,7 @@ import { Badge, statusColor } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { FlowIndicator } from '@/components/FlowIndicator'
 import { InlineClientCreate } from '@/components/InlineClientCreate'
+import { SendDocumentModal } from '@/components/SendDocumentModal'
 import {
   ESTIMATE_STATUSES, JOB_DIVISIONS, COMPANY, DEFAULT_WARRANTY, TERMS_AND_CONDITIONS,
   generateEstimateNumber,
@@ -414,9 +415,28 @@ function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
     }).from(el).save()
   }
 
+  const [sendOpen, setSendOpen] = useState(false)
+
   return (
     <>
-      <div className="mb-4 no-print"><Button onClick={handlePrint}><Printer className="h-4 w-4" /> Download PDF</Button></div>
+      <div className="mb-4 no-print flex items-center gap-2">
+        <Button onClick={handlePrint}><Printer className="h-4 w-4" /> Download PDF</Button>
+        <Button variant="gold" type="button" onClick={() => setSendOpen(true)}>
+          <Mail className="h-4 w-4" /> Send to Client
+        </Button>
+      </div>
+      <SendDocumentModal
+        open={sendOpen}
+        onClose={() => setSendOpen(false)}
+        type="estimate"
+        clientEmail={client?.email}
+        documentData={{
+          number: est.number,
+          date: fmtDate(isoDatePart(est.created_at)),
+          total: est.total,
+          clientName: client?.name ?? '',
+        }}
+      />
       <div className="print-area" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: 13, lineHeight: 1.65, color: '#333' }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: 16, borderBottom: '1px solid #e0e0e0', marginBottom: 20 }}>

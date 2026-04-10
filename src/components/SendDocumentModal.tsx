@@ -1,0 +1,130 @@
+import { useState, useEffect } from 'react'
+import { Mail } from 'lucide-react'
+import { Modal } from '@/components/ui/Modal'
+import { Button } from '@/components/ui/Button'
+import { useToast } from '@/components/ui/Toast'
+
+export type SendDocumentType = 'invoice' | 'estimate' | 'project'
+
+const FROM_OPTIONS = [
+  'oscar@sparklestonepavers.com',
+  'info@sparklestonepavers.com',
+] as const
+type FromEmail = typeof FROM_OPTIONS[number]
+
+interface Props {
+  open: boolean
+  onClose: () => void
+  type: SendDocumentType
+  clientEmail: string | null | undefined
+  documentData: {
+    number: string
+    date: string        // pre-formatted, e.g. "Apr 10, 2026"
+    total: number
+    clientName: string
+  }
+}
+
+export function SendDocumentModal({ open, onClose, type, clientEmail, documentData }: Props) {
+  const [fromEmail, setFromEmail] = useState<FromEmail>('oscar@sparklestonepavers.com')
+  const [sending, setSending] = useState(false)
+  const toast = useToast()
+
+  // Reset default selection every time the modal opens
+  useEffect(() => {
+    if (open) {
+      setFromEmail('oscar@sparklestonepavers.com')
+      setSending(false)
+    }
+  }, [open])
+
+  async function handleSend() {
+    if (!clientEmail) {
+      toast.error('No client email on file.')
+      return
+    }
+    setSending(true)
+    try {
+      const res = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: clientEmail,
+          type,
+          documentData,
+          fromEmail,
+        }),
+      })
+      if (!res.ok) {
+        let detail = ''
+        try {
+          const j = await res.json()
+          detail = j?.details || j?.error || ''
+        } catch { /* ignore */ }
+        toast.error(detail ? `Failed to send email — ${detail}` : 'Failed to send email')
+        return
+      }
+      toast.success(`Email sent to ${clientEmail}`)
+      onClose()
+    } catch (err) {
+      toast.error(`Failed to send email${err instanceof Error ? ` — ${err.message}` : ''}`)
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const label = type === 'invoice' ? 'Invoice' : type === 'estimate' ? 'Estimate' : 'Project Proposal'
+  const hasEmail = !!clientEmail
+
+  return (
+    <Modal open={open} onClose={onClose} title={`Send ${label}`}>
+      <div className="space-y-5">
+        {/* Send to */}
+        <div>
+          <p className="text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500 mb-1.5">Send to</p>
+          {hasEmail ? (
+            <p className="text-[14px] text-navy-900 break-all">{clientEmail}</p>
+          ) : (
+            <p className="text-[13px] text-red-600">No email on file for this client. Add one to the client record first.</p>
+          )}
+        </div>
+
+        {/* From */}
+        <div>
+          <p className="text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500 mb-1.5">From</p>
+          <div className="space-y-1.5">
+            {FROM_OPTIONS.map(addr => (
+              <label key={addr} className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="radio"
+                  name="send-from"
+                  value={addr}
+                  checked={fromEmail === addr}
+                  onChange={() => setFromEmail(addr)}
+                  className="accent-navy-900"
+                />
+                <span className="text-[13px] text-stone-700">{addr}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Summary */}
+        <div className="rounded-lg bg-stone-50 border border-stone-200 p-3 text-[12px] text-stone-600 space-y-1">
+          <div className="flex justify-between"><span>{label} #</span><span className="font-mono text-navy-900">{documentData.number}</span></div>
+          <div className="flex justify-between"><span>Client</span><span className="text-navy-900">{documentData.clientName || '—'}</span></div>
+          <div className="flex justify-between"><span>Total</span><span className="font-semibold text-navy-900">${documentData.total.toFixed(2)}</span></div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex justify-end gap-2 border-t border-stone-200 pt-4">
+          <Button variant="secondary" type="button" onClick={onClose} disabled={sending}>Cancel</Button>
+          <Button type="button" onClick={handleSend} disabled={sending || !hasEmail}>
+            <Mail className="h-4 w-4" />
+            {sending ? 'Sending...' : 'Send'}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  )
+}

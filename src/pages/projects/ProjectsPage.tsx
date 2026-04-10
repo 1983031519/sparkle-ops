@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Search, Printer, ArrowRight, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
+import { Plus, Search, Printer, ArrowRight, Trash2, ChevronUp, ChevronDown, Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input, Select, Textarea } from '@/components/ui/Input'
@@ -10,6 +10,7 @@ import { Badge, statusColor } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { InlineClientCreate } from '@/components/InlineClientCreate'
 import { ProjectPhotoUpload } from '@/components/ProjectPhotoUpload'
+import { SendDocumentModal } from '@/components/SendDocumentModal'
 import { useToast } from '@/components/ui/Toast'
 import {
   COMPANY, DEFAULT_WARRANTY, TERMS_AND_CONDITIONS, JOB_DIVISIONS,
@@ -429,13 +430,30 @@ function ProjectPreview({ project: p, phases, client }: { project: Project; phas
     }).from(el).save()
   }
 
+  const [sendOpen, setSendOpen] = useState(false)
+
   return (
     <>
       <div className="mb-4 no-print flex items-center gap-3">
         <Button onClick={handlePrint} disabled={!imagesReady && (sitePhotosRaw.length > 0 || phases.some(ph => ((ph.photos as string[]) ?? []).length > 0))}>
           <Printer size={14} strokeWidth={1.5} /> {imagesReady ? 'Download PDF' : 'Preparing images...'}
         </Button>
+        <Button variant="gold" type="button" onClick={() => setSendOpen(true)}>
+          <Mail size={14} strokeWidth={1.5} /> Send to Client
+        </Button>
       </div>
+      <SendDocumentModal
+        open={sendOpen}
+        onClose={() => setSendOpen(false)}
+        type="project"
+        clientEmail={client?.email}
+        documentData={{
+          number: p.number,
+          date: fmtDate(isoDatePart(p.created_at)),
+          total: p.total_value,
+          clientName: client?.name ?? p.client_name ?? '',
+        }}
+      />
       <div className="print-area" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: 13, lineHeight: 1.65, color: '#333' }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: 16, borderBottom: '1px solid #e0e0e0', marginBottom: 20 }}>
