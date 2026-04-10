@@ -58,7 +58,7 @@ export default async function handler(req: Request): Promise<Response> {
       ? `${SYSTEM_PROMPT}\n\nCurrent business data:\n${context}`
       : SYSTEM_PROMPT
 
-    const useModel = model || 'claude-sonnet-4-5-20250514'
+    const useModel = model || 'claude-sonnet-4-6'
 
     const requestBody = {
       model: useModel,
