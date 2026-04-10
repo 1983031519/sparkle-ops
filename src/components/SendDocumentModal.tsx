@@ -44,10 +44,13 @@ export function SendDocumentModal({ open, onClose, type, clientEmail, documentDa
       return
     }
     setSending(true)
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 15000)
     try {
       const res = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           to: clientEmail,
           type,
@@ -55,6 +58,7 @@ export function SendDocumentModal({ open, onClose, type, clientEmail, documentDa
           fromEmail,
         }),
       })
+      clearTimeout(timeout)
       if (!res.ok) {
         let detail = ''
         try {
@@ -67,7 +71,12 @@ export function SendDocumentModal({ open, onClose, type, clientEmail, documentDa
       toast.success(`Email sent to ${clientEmail}`)
       onClose()
     } catch (err) {
-      toast.error(`Failed to send email${err instanceof Error ? ` — ${err.message}` : ''}`)
+      clearTimeout(timeout)
+      if (err instanceof Error && err.name === 'AbortError') {
+        toast.error('Request timed out — check your connection')
+      } else {
+        toast.error(`Failed to send email${err instanceof Error ? ` — ${err.message}` : ''}`)
+      }
     } finally {
       setSending(false)
     }

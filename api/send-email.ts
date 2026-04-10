@@ -181,8 +181,8 @@ export default async function handler(req: Request): Promise<Response> {
     })
 
     if (error) {
-      console.error('[send-email] Resend error:', error)
-      return jsonResponse(502, { error: 'Failed to send email', details: error.message ?? String(error) })
+      console.error('[send-email] Resend error (full):', JSON.stringify(error))
+      return jsonResponse(502, { error: 'Failed to send email', details: error.message ?? JSON.stringify(error) })
     }
 
     return jsonResponse(200, { ok: true, id: data?.id ?? null })
