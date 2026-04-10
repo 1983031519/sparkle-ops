@@ -46,6 +46,7 @@ const emptyForm: PForm = {
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [clients, setClients] = useState<Client[]>([])
+  const [viewedDocIds, setViewedDocIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
@@ -61,12 +62,14 @@ export default function ProjectsPage() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
-    const [pRes, cRes] = await Promise.all([
+    const [pRes, cRes, vRes] = await Promise.all([
       supabase.from('projects').select('*').order('created_at', { ascending: false }),
       supabase.from('clients').select('*').order('name'),
+      supabase.from('document_links').select('document_id').eq('document_type', 'project').not('viewed_at', 'is', null),
     ])
     setProjects((pRes.data ?? []) as Project[])
     setClients((cRes.data ?? []) as Client[])
+    setViewedDocIds(new Set((vRes.data ?? []).map((r: { document_id: string }) => r.document_id)))
     setLoading(false)
   }, [])
 
@@ -223,6 +226,7 @@ export default function ProjectsPage() {
             { key: 'division', header: 'Div', render: p => <Badge color={p.division === 'Stone' ? 'blue' : 'orange'}>{p.division ?? '-'}</Badge> },
             { key: 'status', header: 'Status', render: p => <Badge color={statusColor(p.status)}>{p.status}</Badge> },
             { key: 'total', header: 'Value', render: p => fmtCurrency(p.total_value) },
+            { key: 'viewed', header: '', render: p => viewedDocIds.has(p.id) ? <span style={{ fontSize: 10, fontWeight: 600, color: '#16a34a', background: '#f0fdf4', padding: '2px 7px', borderRadius: 10, border: '1px solid #bbf7d0', whiteSpace: 'nowrap' }}>Viewed</span> : null },
             { key: 'actions', header: '', render: p => (
               <div className="flex gap-2" onClick={ev => ev.stopPropagation()}>
                 {p.status === 'Approved' && <Button variant="gold" size="sm" onClick={() => convertToJob(p)}><ArrowRight size={14} strokeWidth={1.5} /> Job</Button>}
@@ -446,6 +450,7 @@ function ProjectPreview({ project: p, phases, client }: { project: Project; phas
         open={sendOpen}
         onClose={() => setSendOpen(false)}
         type="project"
+        documentId={p.id}
         clientEmail={client?.email}
         documentData={{
           number: p.number,

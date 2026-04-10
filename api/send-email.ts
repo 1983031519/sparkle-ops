@@ -16,6 +16,7 @@ interface SendEmailBody {
   type: DocumentType
   documentData: DocumentData
   fromEmail: 'oscar@sparklestonepavers.com' | 'info@sparklestonepavers.com'
+  viewUrl?: string
 }
 
 const ALLOWED_FROMS = new Set([
@@ -42,12 +43,13 @@ function escapeHtml(s: string): string {
     .replace(/'/g, '&#39;')
 }
 
-function buildHtml(type: DocumentType, d: DocumentData): string {
+function buildHtml(type: DocumentType, d: DocumentData, viewUrl?: string): string {
   const label = TYPE_LABEL[type]
   const clientName = escapeHtml(d.clientName || 'Valued Client')
   const number = escapeHtml(d.number || '')
   const date = escapeHtml(d.date || '')
   const total = escapeHtml(fmtMoney(d.total))
+  const safeViewUrl = viewUrl ? escapeHtml(viewUrl) : ''
 
   return `<!doctype html>
 <html lang="en">
@@ -100,6 +102,13 @@ function buildHtml(type: DocumentType, d: DocumentData): string {
                 </tr>
               </table>
 
+              ${safeViewUrl ? `
+              <div style="text-align:center;margin:28px 0 8px;">
+                <a href="${safeViewUrl}" style="display:inline-block;background:#1a2744;color:#c8a96e;padding:13px 32px;border-radius:6px;text-decoration:none;font-weight:700;font-size:14px;letter-spacing:0.3px;">View Your ${label} →</a>
+              </div>
+              <p style="text-align:center;font-size:11px;color:#9a8f82;margin:0 0 20px;">This link expires in 7 days.</p>
+              ` : ''}
+
               <p style="margin:28px 0 0;font-size:13px;line-height:1.6;color:#555;">
                 For questions, reply to this email or call
                 <a href="tel:+19413875133" style="color:#1a2744;font-weight:600;text-decoration:none;">(941) 387-5133</a>.
@@ -149,7 +158,7 @@ export default async function handler(req: Request): Promise<Response> {
     return jsonResponse(400, { error: 'Invalid JSON body' })
   }
 
-  const { to, subject, type, documentData, fromEmail } = body
+  const { to, subject, type, documentData, fromEmail, viewUrl } = body
 
   if (!to || typeof to !== 'string') {
     return jsonResponse(400, { error: 'Missing "to" email address' })
@@ -185,7 +194,7 @@ export default async function handler(req: Request): Promise<Response> {
         to: [to],
         reply_to: 'oscar@sparklestonepavers.com',
         subject: finalSubject,
-        html: buildHtml(type, documentData),
+        html: buildHtml(type, documentData, viewUrl),
       }),
     })
 

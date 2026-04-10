@@ -43,6 +43,7 @@ export default function EstimatesPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [jobs, setJobs] = useState<Job[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [viewedDocIds, setViewedDocIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
@@ -55,16 +56,18 @@ export default function EstimatesPage() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
-    const [eRes, cRes, jRes, iRes] = await Promise.all([
+    const [eRes, cRes, jRes, iRes, vRes] = await Promise.all([
       supabase.from('estimates').select('*').order('created_at', { ascending: false }),
       supabase.from('clients').select('*').order('name'),
       supabase.from('jobs').select('*'),
       supabase.from('invoices').select('*'),
+      supabase.from('document_links').select('document_id').eq('document_type', 'estimate').not('viewed_at', 'is', null),
     ])
     setEstimates((eRes.data ?? []) as Estimate[])
     setClients((cRes.data ?? []) as Client[])
     setJobs((jRes.data ?? []) as Job[])
     setInvoices((iRes.data ?? []) as Invoice[])
+    setViewedDocIds(new Set((vRes.data ?? []).map((r: { document_id: string }) => r.document_id)))
     setLoading(false)
   }, [])
 
@@ -256,6 +259,7 @@ export default function EstimatesPage() {
                   { label: 'Invoice', status: hasInvoice ? 'done' : 'pending' },
                 ]} />
               }},
+              { key: 'viewed', header: '', render: e => viewedDocIds.has(e.id) ? <span style={{ fontSize: 10, fontWeight: 600, color: '#16a34a', background: '#f0fdf4', padding: '2px 7px', borderRadius: 10, border: '1px solid #bbf7d0', whiteSpace: 'nowrap' }}>Viewed</span> : null },
               { key: 'actions', header: '', render: e => (
                 <div className="flex gap-2" onClick={ev => ev.stopPropagation()}>
                   {e.status === 'Approved' && !jobByEstimate[e.id] && (
@@ -429,6 +433,7 @@ function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
         open={sendOpen}
         onClose={() => setSendOpen(false)}
         type="estimate"
+        documentId={est.id}
         clientEmail={client?.email}
         documentData={{
           number: est.number,

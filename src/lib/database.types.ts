@@ -254,6 +254,16 @@ export interface ProjectPhase {
   created_at: string
 }
 
+export interface DocumentLink {
+  id: string
+  token: string
+  document_type: 'invoice' | 'estimate' | 'project'
+  document_id: string
+  expires_at: string
+  viewed_at: string | null
+  created_at: string
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -268,6 +278,7 @@ export interface Database {
       projects: { Row: Project; Insert: Omit<Project, 'id' | 'created_at'>; Update: Partial<Omit<Project, 'id' | 'created_at'>> }
       project_phases: { Row: ProjectPhase; Insert: Omit<ProjectPhase, 'id' | 'created_at'>; Update: Partial<Omit<ProjectPhase, 'id' | 'created_at'>> }
       profiles: { Row: Profile; Insert: Omit<Profile, 'created_at' | 'updated_at'>; Update: Partial<Omit<Profile, 'id' | 'created_at'>> }
+      document_links: { Row: DocumentLink; Insert: Pick<DocumentLink, 'document_type' | 'document_id'>; Update: Partial<Pick<DocumentLink, 'viewed_at'>> }
     }
   }
 }

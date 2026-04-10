@@ -3,6 +3,7 @@ import { Mail } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useToast } from '@/components/ui/Toast'
+import { supabase } from '@/lib/supabase'
 
 export type SendDocumentType = 'invoice' | 'estimate' | 'project'
 
@@ -16,6 +17,7 @@ interface Props {
   open: boolean
   onClose: () => void
   type: SendDocumentType
+  documentId: string    // uuid of the invoice/estimate/project row
   clientEmail: string | null | undefined
   documentData: {
     number: string
@@ -25,7 +27,7 @@ interface Props {
   }
 }
 
-export function SendDocumentModal({ open, onClose, type, clientEmail, documentData }: Props) {
+export function SendDocumentModal({ open, onClose, type, documentId, clientEmail, documentData }: Props) {
   const [fromEmail, setFromEmail] = useState<FromEmail>('oscar@sparklestonepavers.com')
   const [sending, setSending] = useState(false)
   const toast = useToast()
@@ -44,6 +46,21 @@ export function SendDocumentModal({ open, onClose, type, clientEmail, documentDa
       return
     }
     setSending(true)
+
+    // Generate a public view link (best-effort — email still sends if this fails)
+    let viewUrl: string | undefined
+    try {
+      const { data: linkRaw } = await supabase
+        .from('document_links')
+        .insert({ document_type: type, document_id: documentId } as never)
+        .select('token')
+        .single()
+      const linkData = linkRaw as { token: string } | null
+      if (linkData?.token) {
+        viewUrl = `https://sparkle-ops.vercel.app/view/${linkData.token}`
+      }
+    } catch { /* ignore */ }
+
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 15000)
     try {
@@ -56,6 +73,7 @@ export function SendDocumentModal({ open, onClose, type, clientEmail, documentDa
           type,
           documentData,
           fromEmail,
+          viewUrl,
         }),
       })
       clearTimeout(timeout)

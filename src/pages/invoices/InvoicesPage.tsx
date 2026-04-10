@@ -44,6 +44,7 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [clients, setClients] = useState<Client[]>([])
   const [jobs, setJobs] = useState<Job[]>([])
+  const [viewedDocIds, setViewedDocIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
@@ -56,14 +57,16 @@ export default function InvoicesPage() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
-    const [iRes, cRes, jRes] = await Promise.all([
+    const [iRes, cRes, jRes, vRes] = await Promise.all([
       supabase.from('invoices').select('*').order('created_at', { ascending: false }),
       supabase.from('clients').select('*').order('name'),
       supabase.from('jobs').select('*'),
+      supabase.from('document_links').select('document_id').eq('document_type', 'invoice').not('viewed_at', 'is', null),
     ])
     setInvoices((iRes.data ?? []) as Invoice[])
     setClients((cRes.data ?? []) as Client[])
     setJobs((jRes.data ?? []) as Job[])
+    setViewedDocIds(new Set((vRes.data ?? []).map((r: { document_id: string }) => r.document_id)))
     setLoading(false)
   }, [])
 
@@ -182,6 +185,7 @@ export default function InvoicesPage() {
                 return bal > 0 && i.status !== 'Paid' ? <span className="font-semibold text-danger-600">{fmtCurrency(bal)}</span> : <span className="text-stone-400">-</span>
               }},
               { key: 'due', header: 'Due Date', render: i => fmtDateShort(i.due_date) },
+              { key: 'viewed', header: '', render: i => viewedDocIds.has(i.id) ? <span style={{ fontSize: 10, fontWeight: 600, color: '#16a34a', background: '#f0fdf4', padding: '2px 7px', borderRadius: 10, border: '1px solid #bbf7d0', whiteSpace: 'nowrap' }}>Viewed</span> : null },
               { key: 'actions', header: '', render: i => (
                 <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                   {i.status !== 'Paid' && <Button variant="ghost" size="sm" onClick={() => markPaid(i)} title="Mark Paid"><CheckCircle className="h-4 w-4 text-green-600" /></Button>}
@@ -335,6 +339,7 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
         open={sendOpen}
         onClose={() => setSendOpen(false)}
         type="invoice"
+        documentId={inv.id}
         clientEmail={client?.email}
         documentData={{
           number: inv.number,
