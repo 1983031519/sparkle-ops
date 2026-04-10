@@ -18,6 +18,7 @@ interface SendEmailBody {
   fromEmail: 'oscar@sparklestonepavers.com' | 'info@sparklestonepavers.com'
   viewUrl?: string
   pdfBase64?: string
+  personalMessage?: string
 }
 
 const ALLOWED_FROMS = new Set([
@@ -44,13 +45,13 @@ function escapeHtml(s: string): string {
     .replace(/'/g, '&#39;')
 }
 
-function buildHtml(type: DocumentType, d: DocumentData, viewUrl?: string): string {
+function buildHtml(type: DocumentType, d: DocumentData, personalMessage?: string): string {
   const label = TYPE_LABEL[type]
   const clientName = escapeHtml(d.clientName || 'Valued Client')
   const number = escapeHtml(d.number || '')
   const date = escapeHtml(d.date || '')
   const total = escapeHtml(fmtMoney(d.total))
-  const safeViewUrl = viewUrl ? escapeHtml(viewUrl) : ''
+  const safeMessage = personalMessage ? escapeHtml(personalMessage.trim()) : ''
 
   return `<!doctype html>
 <html lang="en">
@@ -74,9 +75,14 @@ function buildHtml(type: DocumentType, d: DocumentData, viewUrl?: string): strin
           <tr>
             <td style="padding:32px;">
               <p style="margin:0 0 12px;font-size:15px;color:#1a2744;">Hello ${clientName},</p>
+
+              ${safeMessage ? `
+              <p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:#555;font-style:italic;border-left:3px solid #c8a96e;padding-left:12px;">${safeMessage}</p>
+              ` : `
               <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:#444;">
                 Please find your <strong>${label}</strong> details below.
               </p>
+              `}
 
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f4f2;border:1px solid #e8e6e2;border-radius:8px;">
                 <tr>
@@ -102,13 +108,6 @@ function buildHtml(type: DocumentType, d: DocumentData, viewUrl?: string): strin
                   </td>
                 </tr>
               </table>
-
-              ${safeViewUrl ? `
-              <div style="text-align:center;margin:28px 0 8px;">
-                <a href="${safeViewUrl}" style="display:inline-block;background:#1a2744;color:#c8a96e;padding:13px 32px;border-radius:6px;text-decoration:none;font-weight:700;font-size:14px;letter-spacing:0.3px;">View Your ${label} →</a>
-              </div>
-              <p style="text-align:center;font-size:11px;color:#9a8f82;margin:0 0 20px;">This link expires in 7 days.</p>
-              ` : ''}
 
               <p style="margin:28px 0 0;font-size:13px;line-height:1.6;color:#555;">
                 For questions, reply to this email or call
@@ -159,7 +158,7 @@ export default async function handler(req: Request): Promise<Response> {
     return jsonResponse(400, { error: 'Invalid JSON body' })
   }
 
-  const { to, subject, type, documentData, fromEmail, viewUrl, pdfBase64 } = body
+  const { to, subject, type, documentData, fromEmail, pdfBase64, personalMessage } = body
 
   if (!to || typeof to !== 'string') {
     return jsonResponse(400, { error: 'Missing "to" email address' })
@@ -195,7 +194,7 @@ export default async function handler(req: Request): Promise<Response> {
         to: [to],
         reply_to: 'oscar@sparklestonepavers.com',
         subject: finalSubject,
-        html: buildHtml(type, documentData, viewUrl),
+        html: buildHtml(type, documentData, personalMessage),
         ...(pdfBase64 ? {
           attachments: [{
             filename: `Sparkle_${TYPE_LABEL[type].replace(' ', '_')}_${documentData.number}.pdf`,

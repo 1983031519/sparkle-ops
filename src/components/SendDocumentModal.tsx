@@ -30,6 +30,7 @@ interface Props {
 
 export function SendDocumentModal({ open, onClose, type, documentId, clientEmail, pdfBase64, documentData }: Props) {
   const [fromEmail, setFromEmail] = useState<FromEmail>('oscar@sparklestonepavers.com')
+  const [personalMessage, setPersonalMessage] = useState('')
   const [sending, setSending] = useState(false)
   const toast = useToast()
 
@@ -37,6 +38,7 @@ export function SendDocumentModal({ open, onClose, type, documentId, clientEmail
   useEffect(() => {
     if (open) {
       setFromEmail('oscar@sparklestonepavers.com')
+      setPersonalMessage('')
       setSending(false)
     }
   }, [open])
@@ -76,6 +78,7 @@ export function SendDocumentModal({ open, onClose, type, documentId, clientEmail
           fromEmail,
           viewUrl,
           pdfBase64,
+          personalMessage: personalMessage.trim() || undefined,
         }),
       })
       clearTimeout(timeout)
@@ -136,6 +139,18 @@ export function SendDocumentModal({ open, onClose, type, documentId, clientEmail
               </label>
             ))}
           </div>
+        </div>
+
+        {/* Personal message */}
+        <div>
+          <p className="text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500 mb-1.5">Message</p>
+          <textarea
+            rows={4}
+            value={personalMessage}
+            onChange={e => setPersonalMessage(e.target.value)}
+            placeholder="Add a personal message to your client..."
+            className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-[13px] text-stone-700 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-navy-900/20 focus:border-navy-900 resize-y"
+          />
         </div>
 
         {/* Summary */}
