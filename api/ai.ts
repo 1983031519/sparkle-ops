@@ -58,6 +58,15 @@ export default async function handler(req: Request): Promise<Response> {
       ? `${SYSTEM_PROMPT}\n\nCurrent business data:\n${context}`
       : SYSTEM_PROMPT
 
+    const useModel = model || 'claude-sonnet-4-5-20250514'
+
+    const requestBody = {
+      model: useModel,
+      max_tokens: max_tokens || 1024,
+      system: systemPrompt,
+      messages,
+    }
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -65,18 +74,18 @@ export default async function handler(req: Request): Promise<Response> {
         'x-api-key': ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
       },
-      body: JSON.stringify({
-        model: model || 'claude-sonnet-4-5-20250514',
-        max_tokens: max_tokens || 1024,
-        system: systemPrompt,
-        messages,
-      }),
+      body: JSON.stringify(requestBody),
     })
 
     if (!response.ok) {
       const errorBody = await response.text()
-      console.error(`[AI] Anthropic ${response.status}:`, errorBody)
-      return new Response(JSON.stringify({ error: `Anthropic API error: ${response.status}`, details: errorBody }), { status: response.status, headers: { 'Content-Type': 'application/json' } })
+      console.error(`[AI] Anthropic ${response.status} (model: ${useModel}):`, errorBody)
+      return new Response(JSON.stringify({
+        error: `Anthropic API error: ${response.status}`,
+        model_used: useModel,
+        key_prefix: ANTHROPIC_API_KEY.slice(0, 12) + '...',
+        details: errorBody,
+      }), { status: response.status, headers: { 'Content-Type': 'application/json' } })
     }
 
     const data = await response.json()
