@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Plus, Search, Printer, CheckCircle, Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
@@ -11,6 +11,7 @@ import { Modal } from '@/components/ui/Modal'
 import { SendDocumentModal } from '@/components/SendDocumentModal'
 import { INVOICE_STATUSES, COMPANY, generateInvoiceNumber, fmtDateShort, fmtDate, fmtCurrency, isoDatePart } from '@/lib/constants'
 import { useToast } from '@/components/ui/Toast'
+import { useDebounce } from '@/hooks/useDebounce'
 import type { Invoice, InvoiceStatus, InvoiceLineItem, Client, Job } from '@/lib/database.types'
 
 const emptyLine: InvoiceLineItem = { description: '', qty: 1, unit: 'ea', unit_price: 0 }
@@ -59,8 +60,8 @@ export default function InvoicesPage() {
     setLoading(true)
     const [iRes, cRes, jRes, vRes] = await Promise.all([
       supabase.from('invoices').select('*').order('created_at', { ascending: false }),
-      supabase.from('clients').select('*').order('name'),
-      supabase.from('jobs').select('*'),
+      supabase.from('clients').select('id, name, email, phone, address, city, state').order('name'),
+      supabase.from('jobs').select('id, title, client_id, estimate_id, re_line'),
       supabase.from('document_links').select('document_id').eq('document_type', 'invoice').not('viewed_at', 'is', null),
     ])
     setInvoices((iRes.data ?? []) as Invoice[])
@@ -72,13 +73,15 @@ export default function InvoicesPage() {
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
-  const clientMap = Object.fromEntries(clients.map(c => [c.id, c]))
-  const jobMap = Object.fromEntries(jobs.map(j => [j.id, j]))
+  const debouncedSearch = useDebounce(search, 250)
 
-  const filtered = invoices.filter(e =>
-    (clientMap[e.client_id]?.name ?? '').toLowerCase().includes(search.toLowerCase()) ||
-    e.number.toLowerCase().includes(search.toLowerCase())
-  )
+  const clientMap = useMemo(() => Object.fromEntries(clients.map(c => [c.id, c])), [clients])
+  const jobMap    = useMemo(() => Object.fromEntries(jobs.map(j => [j.id, j])), [jobs])
+
+  const filtered = useMemo(() => invoices.filter(e =>
+    (clientMap[e.client_id]?.name ?? '').toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+    e.number.toLowerCase().includes(debouncedSearch.toLowerCase())
+  ), [invoices, clientMap, debouncedSearch])
 
   function calcTotals(items: InvoiceLineItem[]) {
     const subtotal = items.reduce((s, i) => s + i.qty * i.unit_price, 0)
@@ -129,11 +132,16 @@ export default function InvoicesPage() {
         deposit_received: depositRcv,
         balance_due: total - depositRcv,
       }
-      let error: { message: string } | null = null
-      if (editing) { const res = await supabase.from('invoices').update(payload as never).eq('id', editing.id); error = res.error }
-      else { const res = await supabase.from('invoices').insert(payload as never); error = res.error }
-      if (error) { toast.error(`Failed to save invoice: ${error.message}`); return }
-      await fetchAll(); setModalOpen(false)
+      if (editing) {
+        const { data: updated, error } = await supabase.from('invoices').update(payload as never).eq('id', editing.id).select().single()
+        if (error) { toast.error(`Failed to save invoice: ${error.message}`); return }
+        setInvoices(prev => prev.map(i => i.id === editing.id ? updated as Invoice : i))
+      } else {
+        const { data: created, error } = await supabase.from('invoices').insert(payload as never).select().single()
+        if (error) { toast.error(`Failed to save invoice: ${error.message}`); return }
+        setInvoices(prev => [created as Invoice, ...prev])
+      }
+      setModalOpen(false)
       toast.success(editing ? 'Invoice updated.' : 'Invoice saved.')
     } catch (err) {
       toast.error(`Failed to save invoice: ${err instanceof Error ? err.message : 'Unknown error'}`)
@@ -143,7 +151,7 @@ export default function InvoicesPage() {
   async function markPaid(inv: Invoice) {
     const { error } = await supabase.from('invoices').update({ status: 'Paid' } as never).eq('id', inv.id)
     if (error) { toast.error(`Failed to mark paid: ${error.message}`); return }
-    await fetchAll()
+    setInvoices(prev => prev.map(i => i.id === inv.id ? { ...i, status: 'Paid' } : i))
     toast.success('Invoice marked as paid.')
   }
 
@@ -151,7 +159,8 @@ export default function InvoicesPage() {
     if (!editing || !confirm('Delete this invoice?')) return
     const { error } = await supabase.from('invoices').delete().eq('id', editing.id)
     if (error) { toast.error(`Failed to delete: ${error.message}`); return }
-    await fetchAll(); setModalOpen(false)
+    setInvoices(prev => prev.filter(i => i.id !== editing.id))
+    setModalOpen(false)
     toast.success('Invoice deleted.')
   }
 

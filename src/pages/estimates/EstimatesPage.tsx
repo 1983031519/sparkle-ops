@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Plus, Search, Printer, ArrowRight, Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
@@ -18,6 +18,7 @@ import {
 import type { Estimate, EstimateStatus, EstimateLineItem, Client, Job, Invoice, MaterialsSpecified } from '@/lib/database.types'
 import { fmtDate, fmtCurrency, futureISO, isoDatePart } from '@/lib/constants'
 import { useToast } from '@/components/ui/Toast'
+import { useDebounce } from '@/hooks/useDebounce'
 
 const emptyLine: EstimateLineItem = { description: '', qty: 1, unit: 'ea', unit_price: 0 }
 const emptyMaterials: MaterialsSpecified = { paver_type: '', paver_size: '', paver_color: '', sand_type: '', sealant: '', other: '' }
@@ -58,9 +59,9 @@ export default function EstimatesPage() {
     setLoading(true)
     const [eRes, cRes, jRes, iRes, vRes] = await Promise.all([
       supabase.from('estimates').select('*').order('created_at', { ascending: false }),
-      supabase.from('clients').select('*').order('name'),
-      supabase.from('jobs').select('*'),
-      supabase.from('invoices').select('*'),
+      supabase.from('clients').select('id, name, email, phone, address, city, state, contact_name').order('name'),
+      supabase.from('jobs').select('id, title, estimate_id, client_id'),
+      supabase.from('invoices').select('id, job_id, status'),
       supabase.from('document_links').select('document_id').eq('document_type', 'estimate').not('viewed_at', 'is', null),
     ])
     setEstimates((eRes.data ?? []) as Estimate[])
@@ -73,15 +74,17 @@ export default function EstimatesPage() {
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
-  const clientMap = Object.fromEntries(clients.map(c => [c.id, c]))
-  const jobByEstimate = Object.fromEntries(jobs.filter(j => j.estimate_id).map(j => [j.estimate_id!, j]))
-  const invByJob = Object.fromEntries(invoices.filter(i => i.job_id).map(i => [i.job_id!, i]))
+  const debouncedSearch = useDebounce(search, 250)
 
-  const filtered = estimates.filter(e => {
+  const clientMap     = useMemo(() => Object.fromEntries(clients.map(c => [c.id, c])), [clients])
+  const jobByEstimate = useMemo(() => Object.fromEntries(jobs.filter(j => j.estimate_id).map(j => [j.estimate_id!, j])), [jobs])
+  const invByJob      = useMemo(() => Object.fromEntries(invoices.filter(i => i.job_id).map(i => [i.job_id!, i])), [invoices])
+
+  const filtered = useMemo(() => estimates.filter(e => {
     const cl = clientMap[e.client_id]
-    return (cl?.name ?? '').toLowerCase().includes(search.toLowerCase()) ||
-      e.number.toLowerCase().includes(search.toLowerCase())
-  })
+    return (cl?.name ?? '').toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      e.number.toLowerCase().includes(debouncedSearch.toLowerCase())
+  }), [estimates, clientMap, debouncedSearch])
 
   function calcTotals(items: EstimateLineItem[]) {
     const subtotal = items.reduce((s, i) => s + i.qty * i.unit_price, 0)
@@ -160,23 +163,15 @@ export default function EstimatesPage() {
         accepted_payment_methods: form.accepted_payment_methods,
       }
 
-      let error: { message: string } | null = null
-
       if (editing) {
-        const res = await supabase.from('estimates').update(payload as never).eq('id', editing.id)
-        error = res.error
+        const { data: updated, error } = await supabase.from('estimates').update(payload as never).eq('id', editing.id).select().single()
+        if (error) { toast.error(`Failed to save estimate: ${error.message}`); return }
+        setEstimates(prev => prev.map(e => e.id === editing.id ? updated as Estimate : e))
       } else {
-        const res = await supabase.from('estimates').insert(payload as never)
-        error = res.error
+        const { data: created, error } = await supabase.from('estimates').insert(payload as never).select().single()
+        if (error) { toast.error(`Failed to save estimate: ${error.message}`); return }
+        setEstimates(prev => [created as Estimate, ...prev])
       }
-
-      if (error) {
-        console.error('Supabase estimate save error:', error)
-        toast.error(`Failed to save estimate: ${error.message}`)
-        return
-      }
-
-      await fetchAll()
       setModalOpen(false)
       toast.success(editing ? 'Estimate updated successfully.' : 'Estimate saved successfully.')
     } catch (err) {
@@ -195,7 +190,7 @@ export default function EstimatesPage() {
       toast.error(`Failed to delete: ${error.message}`)
       return
     }
-    await fetchAll()
+    setEstimates(prev => prev.filter(e => e.id !== editing.id))
     setModalOpen(false)
     toast.success('Estimate deleted.')
   }
@@ -217,7 +212,7 @@ export default function EstimatesPage() {
       return
     }
     await supabase.from('estimates').update({ status: 'Approved' } as never).eq('id', est.id)
-    await fetchAll()
+    setEstimates(prev => prev.map(e => e.id === est.id ? { ...e, status: 'Approved' as EstimateStatus } : e))
     toast.success('Job created from estimate.')
   }
 

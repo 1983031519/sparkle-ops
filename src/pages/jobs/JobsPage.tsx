@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Plus, Search, ArrowRight, CheckSquare, Square, Trash2, PlusCircle, ImageIcon } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
@@ -13,6 +13,7 @@ import { PhotoUpload } from '@/components/PhotoUpload'
 import { JobCosting } from '@/components/JobCosting'
 import { JOB_DIVISIONS, JOB_STATUSES, CHANGE_ORDER_STATUSES, CHANGE_ORDER_REASONS, fmtDateShort, fmtCurrency } from '@/lib/constants'
 import { useToast } from '@/components/ui/Toast'
+import { useDebounce } from '@/hooks/useDebounce'
 import type { Job, JobDivision, JobStatus, Client, ChangeOrder, ChangeOrderStatus, ChecklistItem, Estimate, Invoice, Supplier } from '@/lib/database.types'
 
 const emptyForm = {
@@ -47,16 +48,15 @@ export default function JobsPage() {
     setLoading(true)
     const [jRes, cRes, eRes, iRes, tRes] = await Promise.all([
       supabase.from('jobs').select('*').order('created_at', { ascending: false }),
-      supabase.from('clients').select('*').order('name'),
-      supabase.from('estimates').select('*'),
-      supabase.from('invoices').select('*'),
-      supabase.from('suppliers').select('*').eq('status', 'Active').order('name'),
+      supabase.from('clients').select('id, name').order('name'),
+      supabase.from('estimates').select('id, number, client_id, status, division, total'),
+      supabase.from('invoices').select('id, job_id, status, total'),
+      supabase.from('suppliers').select('id, name, roles').eq('status', 'Active').order('name'),
     ])
     setJobs((jRes.data ?? []) as Job[])
     setClients((cRes.data ?? []) as Client[])
     setEstimates((eRes.data ?? []) as Estimate[])
     setInvoices((iRes.data ?? []) as Invoice[])
-    // Filter to employees and subcontractors
     const allVendors = (tRes.data ?? []) as Supplier[]
     setTeamMembers(allVendors.filter(v => {
       const roles = (v.roles as string[]) ?? []
@@ -67,15 +67,17 @@ export default function JobsPage() {
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
-  const clientMap = Object.fromEntries(clients.map(c => [c.id, c.name]))
-  const estMap = Object.fromEntries(estimates.map(e => [e.id, e]))
-  const invByJob = Object.fromEntries(invoices.filter(i => i.job_id).map(i => [i.job_id!, i]))
+  const debouncedSearch = useDebounce(search, 250)
 
-  const filtered = jobs.filter(j =>
-    j.title.toLowerCase().includes(search.toLowerCase()) ||
-    j.division.toLowerCase().includes(search.toLowerCase()) ||
-    j.status.toLowerCase().includes(search.toLowerCase())
-  )
+  const clientMap = useMemo(() => Object.fromEntries(clients.map(c => [c.id, c.name])), [clients])
+  const estMap    = useMemo(() => Object.fromEntries(estimates.map(e => [e.id, e])), [estimates])
+  const invByJob  = useMemo(() => Object.fromEntries(invoices.filter(i => i.job_id).map(i => [i.job_id!, i])), [invoices])
+
+  const filtered = useMemo(() => jobs.filter(j =>
+    j.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+    j.division.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+    j.status.toLowerCase().includes(debouncedSearch.toLowerCase())
+  ), [jobs, debouncedSearch])
 
   function openNew() { setEditing(null); setForm(emptyForm); setChecklist([]); setChangeOrders([]); setPhotos([]); setModalOpen(true) }
 
@@ -116,7 +118,13 @@ export default function JobsPage() {
         error = res.error
       }
       if (error) { toast.error(`Failed to save job: ${error.message}`); return }
-      await fetchAll()
+      if (editing) {
+        const { data: updated } = await supabase.from('jobs').select('*').eq('id', editing.id).single()
+        if (updated) setJobs(prev => prev.map(j => j.id === editing.id ? updated as Job : j))
+      } else {
+        const { data: created } = await supabase.from('jobs').select('*').order('created_at', { ascending: false }).limit(1).single()
+        if (created) setJobs(prev => [created as Job, ...prev])
+      }
       setModalOpen(false)
       toast.success(editing ? 'Job updated.' : 'Job saved.')
     } catch (err) {
@@ -128,7 +136,8 @@ export default function JobsPage() {
     if (!editing || !confirm('Delete this job?')) return
     const { error } = await supabase.from('jobs').delete().eq('id', editing.id)
     if (error) { toast.error(`Failed to delete: ${error.message}`); return }
-    await fetchAll(); setModalOpen(false)
+    setJobs(prev => prev.filter(j => j.id !== editing.id))
+    setModalOpen(false)
     toast.success('Job deleted.')
   }
 

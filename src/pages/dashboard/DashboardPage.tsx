@@ -35,8 +35,8 @@ export default function DashboardPage() {
   async function loadDashboard() {
     const [clientRes, jobRes, invRes, stockRes, clientsRes, estRes, vendorRes, projRes] = await Promise.all([
       supabase.from('clients').select('id', { count: 'exact', head: true }),
-      supabase.from('jobs').select('*').order('created_at', { ascending: false }),
-      supabase.from('invoices').select('*').order('created_at', { ascending: false }),
+      supabase.from('jobs').select('id, client_id, title, status, start_date, division, created_at').order('created_at', { ascending: false }),
+      supabase.from('invoices').select('id, client_id, status, total, balance_due, number, created_at').order('created_at', { ascending: false }),
       supabase.from('inventory').select('name, quantity, low_stock_threshold'),
       supabase.from('clients').select('id, name'),
       supabase.from('estimates').select('status'),

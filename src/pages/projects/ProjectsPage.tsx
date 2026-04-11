@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Plus, Search, Printer, ArrowRight, Trash2, ChevronUp, ChevronDown, Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
@@ -12,6 +12,7 @@ import { InlineClientCreate } from '@/components/InlineClientCreate'
 import { ProjectPhotoUpload } from '@/components/ProjectPhotoUpload'
 import { SendDocumentModal } from '@/components/SendDocumentModal'
 import { useToast } from '@/components/ui/Toast'
+import { useDebounce } from '@/hooks/useDebounce'
 import {
   COMPANY, DEFAULT_WARRANTY, TERMS_AND_CONDITIONS, JOB_DIVISIONS,
   generateProjectNumber, fmtCurrency, fmtDate, futureISO, isoDatePart,
@@ -64,7 +65,7 @@ export default function ProjectsPage() {
     setLoading(true)
     const [pRes, cRes, vRes] = await Promise.all([
       supabase.from('projects').select('*').order('created_at', { ascending: false }),
-      supabase.from('clients').select('*').order('name'),
+      supabase.from('clients').select('id, name, email, phone, address').order('name'),
       supabase.from('document_links').select('document_id').eq('document_type', 'project').not('viewed_at', 'is', null),
     ])
     setProjects((pRes.data ?? []) as Project[])
@@ -75,12 +76,14 @@ export default function ProjectsPage() {
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
-  const clientMap = Object.fromEntries(clients.map(c => [c.id, c]))
-  const filtered = projects.filter(p => {
-    const matchSearch = p.title.toLowerCase().includes(search.toLowerCase()) || p.number.toLowerCase().includes(search.toLowerCase()) || (p.client_name ?? '').toLowerCase().includes(search.toLowerCase())
+  const debouncedSearch = useDebounce(search, 250)
+
+  const clientMap = useMemo(() => Object.fromEntries(clients.map(c => [c.id, c])), [clients])
+  const filtered  = useMemo(() => projects.filter(p => {
+    const matchSearch = p.title.toLowerCase().includes(debouncedSearch.toLowerCase()) || p.number.toLowerCase().includes(debouncedSearch.toLowerCase()) || (p.client_name ?? '').toLowerCase().includes(debouncedSearch.toLowerCase())
     const matchStatus = statusFilter === 'All' || p.status === statusFilter
     return matchSearch && matchStatus
-  })
+  }), [projects, debouncedSearch, statusFilter])
 
   function openNew() {
     setEditing(null); setForm({ ...emptyForm, valid_until: futureISO(30) }); setPhases([emptyPhase(1)]); setModalOpen(true)
@@ -140,13 +143,16 @@ export default function ProjectsPage() {
 
       let projectId: string
       if (editing) {
-        await supabase.from('projects').update(payload as never).eq('id', editing.id)
+        const { data: updated, error } = await supabase.from('projects').update(payload as never).eq('id', editing.id).select().single()
+        if (error) { toast.error(`Failed: ${error.message}`); return }
         projectId = editing.id
+        setProjects(prev => prev.map(p => p.id === editing.id ? updated as Project : p))
         await supabase.from('project_phases').delete().eq('project_id', projectId)
       } else {
         const { data, error } = await supabase.from('projects').insert(payload as never).select().single()
         if (error) { toast.error(`Failed: ${error.message}`); return }
         projectId = (data as Project).id
+        setProjects(prev => [data as Project, ...prev])
       }
 
       const validPhases = phases.filter(p => p.title.trim())
@@ -161,7 +167,7 @@ export default function ProjectsPage() {
         )
         if (error) toast.error(`Phases: ${error.message}`)
       }
-      await fetchAll(); setModalOpen(false)
+      setModalOpen(false)
       toast.success(editing ? 'Project updated.' : 'Project saved.')
     } catch (err) {
       toast.error(`Failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
@@ -172,7 +178,9 @@ export default function ProjectsPage() {
     if (!editing || !confirm('Delete this project and all phases?')) return
     const { error } = await supabase.from('projects').delete().eq('id', editing.id)
     if (error) { toast.error(error.message); return }
-    await fetchAll(); setModalOpen(false); toast.success('Project deleted.')
+    setProjects(prev => prev.filter(p => p.id !== editing.id))
+    setModalOpen(false)
+    toast.success('Project deleted.')
   }
 
   async function convertToJob(proj: Project) {
@@ -186,7 +194,8 @@ export default function ProjectsPage() {
     } as never)
     if (error) { toast.error(error.message); return }
     await supabase.from('projects').update({ status: 'Approved' } as never).eq('id', proj.id)
-    await fetchAll(); toast.success('Job created from project.')
+    setProjects(prev => prev.map(p => p.id === proj.id ? { ...p, status: 'Approved' } : p))
+    toast.success('Job created from project.')
   }
 
   async function openPreview(proj: Project) {
