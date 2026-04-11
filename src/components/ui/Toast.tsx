@@ -55,8 +55,9 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
 
   return (
     <div
-      className={`flex items-center gap-3 rounded-[12px] border px-4 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur-sm transition-all duration-250 ${
-        visible ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0'
+      style={{ transition: 'all 200ms cubic-bezier(0.16, 1, 0.3, 1)' }}
+      className={`flex items-center gap-3 rounded-[12px] border px-4 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur-sm ${
+        visible ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'
       } ${
         toast.type === 'success'
           ? 'border-success-600/20 bg-success-50 text-success-600'

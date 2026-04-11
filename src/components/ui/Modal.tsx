@@ -35,7 +35,7 @@ export function Modal({ open, onClose, title, children, wide }: Props) {
         onClick={onClose}
         style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
+          background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(8px)',
           zIndex: 9998,
         }}
       />
@@ -46,11 +46,11 @@ export function Modal({ open, onClose, title, children, wide }: Props) {
           transform: 'translate(-50%, -50%)',
           width: '100%', maxWidth: wide ? 896 : 512,
           maxHeight: '95vh',
-          background: 'white', borderRadius: 20,
-          boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+          background: 'white', borderRadius: 14,
+          boxShadow: 'var(--shadow-elevated)',
           zIndex: 9999,
           display: 'flex', flexDirection: 'column',
-          animation: 'modalIn 200ms ease-out',
+          animation: 'modalIn 200ms cubic-bezier(0.16, 1, 0.3, 1)',
           margin: '0 16px',
         }}
         onClick={e => e.stopPropagation()}
@@ -59,7 +59,7 @@ export function Modal({ open, onClose, title, children, wide }: Props) {
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '16px 24px', borderBottom: '1px solid rgba(0,0,0,0.06)',
-          borderRadius: '20px 20px 0 0', flexShrink: 0,
+          borderRadius: '14px 14px 0 0', flexShrink: 0,
         }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0D1B3D', letterSpacing: -0.3 }}>{title}</h2>
           <button

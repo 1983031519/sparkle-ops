@@ -1,14 +1,14 @@
 import { clsx } from 'clsx'
 
 const colors: Record<string, string> = {
-  green: 'bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]',
-  blue: 'bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]',
-  yellow: 'bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]',
-  red: 'bg-[#FFF1F2] text-[#E11D48] border border-[#FECDD3]',
-  gray: 'bg-[#F3F4F6] text-[#6B7280] border border-[#E5E7EB]',
-  purple: 'bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]',
-  orange: 'bg-orange-50 text-orange-700 border border-orange-200',
-  gold: 'bg-gold-100 text-gold-500 border border-gold-200',
+  green: 'bg-[#F0FDF4] text-[#15803D]',
+  blue: 'bg-[#EFF6FF] text-[#1D4ED8]',
+  yellow: 'bg-[#FFFBEB] text-[#B45309]',
+  red: 'bg-[#FFF1F2] text-[#BE123C]',
+  gray: 'bg-[#F3F4F6] text-[#6B7280]',
+  purple: 'bg-[#F5F3FF] text-[#6D28D9]',
+  orange: 'bg-orange-50 text-orange-700',
+  gold: 'bg-gold-100 text-gold-500',
 }
 
 interface Props {
