@@ -83,10 +83,10 @@ export default function InventoryPage() {
       </div>
 
       <Card>
-        <div className="border-b border-stone-100 px-4 py-3">
+        <div className="border-b border-[#E5E7EB] px-4 py-3">
           <div className="relative max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-            <input className="w-full rounded-lg border border-stone-300 py-2 pl-10 pr-3 text-sm placeholder:text-stone-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" placeholder="Search inventory..." value={search} onChange={e => setSearch(e.target.value)} />
+            <input className="w-full rounded-lg border border-stone-300 py-2 pl-10 pr-3 text-sm placeholder:text-stone-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-1 focus:ring-[#4F6CF7]/20" placeholder="Search inventory..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
         {loading ? <p className="p-6 text-sm text-stone-500">Loading...</p> : (

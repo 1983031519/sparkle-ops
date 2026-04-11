@@ -136,14 +136,14 @@ export default function ViewDocumentPage() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ background: '#f5f4f2', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div style={{ background: '#F8F9FC', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       {/* Top nav bar */}
-      <div style={{ background: '#1a2744', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ background: '#111827', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <span style={{ color: '#c8a96e', fontWeight: 700, fontSize: 16, letterSpacing: 0.3 }}>Sparkle Stone & Pavers</span>
-          <span style={{ color: '#8fa0b8', fontSize: 11, marginLeft: 12 }}>{COMPANY.tagline}</span>
+          <span style={{ color: '#4F6CF7', fontWeight: 700, fontSize: 16, letterSpacing: 0.3 }}>Sparkle Stone & Pavers</span>
+          <span style={{ color: '#9CA3AF', fontSize: 11, marginLeft: 12 }}>{COMPANY.tagline}</span>
         </div>
-        <a href={`tel:${COMPANY.phone}`} style={{ color: '#c8a96e', fontSize: 13, textDecoration: 'none', fontWeight: 600 }}>{COMPANY.phone}</a>
+        <a href={`tel:${COMPANY.phone}`} style={{ color: '#4F6CF7', fontSize: 13, textDecoration: 'none', fontWeight: 600 }}>{COMPANY.phone}</a>
       </div>
 
       {/* Content */}
@@ -157,9 +157,9 @@ function Shell({ children }: { children: React.ReactNode }) {
 function MessageCard({ title, message }: { title: string; message: string }) {
   return (
     <div style={{ background: '#fff', borderRadius: 12, padding: '48px 32px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-      <p style={{ fontSize: 20, fontWeight: 700, color: '#1a2744', marginBottom: 12 }}>{title}</p>
+      <p style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 12 }}>{title}</p>
       <p style={{ fontSize: 14, color: '#666', lineHeight: 1.7, maxWidth: 400, margin: '0 auto' }}>{message}</p>
-      <a href="mailto:info@sparklestonepavers.com" style={{ display: 'inline-block', marginTop: 24, color: '#c8a96e', fontWeight: 600, fontSize: 13 }}>info@sparklestonepavers.com</a>
+      <a href="mailto:info@sparklestonepavers.com" style={{ display: 'inline-block', marginTop: 24, color: '#4F6CF7', fontWeight: 600, fontSize: 13 }}>info@sparklestonepavers.com</a>
     </div>
   )
 }
@@ -172,13 +172,13 @@ function DocHeader({ title, number, dateLabel, dateValue, extra }: {
   return (
     <div style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', marginBottom: 16 }}>
       {/* navy strip */}
-      <div style={{ background: '#1a2744', padding: '18px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+      <div style={{ background: '#111827', padding: '18px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <p style={{ color: '#c8a96e', fontWeight: 700, fontSize: 20, margin: 0, letterSpacing: 0.5 }}>{title}</p>
-          <p style={{ color: '#8fa0b8', fontSize: 12, margin: '4px 0 0', fontFamily: 'monospace' }}>{number}</p>
+          <p style={{ color: '#4F6CF7', fontWeight: 700, fontSize: 20, margin: 0, letterSpacing: 0.5 }}>{title}</p>
+          <p style={{ color: '#9CA3AF', fontSize: 12, margin: '4px 0 0', fontFamily: 'monospace' }}>{number}</p>
         </div>
         <div style={{ textAlign: 'right' }}>
-          {dateLabel && <p style={{ color: '#c8a96e', fontSize: 12, margin: 0 }}>{dateLabel}: {dateValue}</p>}
+          {dateLabel && <p style={{ color: '#4F6CF7', fontSize: 12, margin: 0 }}>{dateLabel}: {dateValue}</p>}
           {extra}
         </div>
       </div>
@@ -229,7 +229,7 @@ function InvoiceView({ inv, client }: { inv: Invoice; client?: Client }) {
         dateValue={fmtDate(isoDatePart(inv.created_at))}
         extra={
           <div>
-            {inv.due_date && <p style={{ color: '#8fa0b8', fontSize: 11, margin: '2px 0 0' }}>Due: {fmtDate(inv.due_date)}</p>}
+            {inv.due_date && <p style={{ color: '#9CA3AF', fontSize: 11, margin: '2px 0 0' }}>Due: {fmtDate(inv.due_date)}</p>}
             <span style={{ display: 'inline-block', marginTop: 4, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: inv.status === 'Paid' ? '#f0fdf4' : inv.status === 'Overdue' ? '#fff1f2' : '#fffbeb', color: inv.status === 'Paid' ? '#16a34a' : inv.status === 'Overdue' ? '#e11d48' : '#d97706', border: `1px solid ${inv.status === 'Paid' ? '#bbf7d0' : inv.status === 'Overdue' ? '#fecdd3' : '#fde68a'}` }}>{inv.status}</span>
           </div>
         }
@@ -242,7 +242,7 @@ function InvoiceView({ inv, client }: { inv: Invoice; client?: Client }) {
         {client?.address && <p style={{ color: '#555', margin: '2px 0' }}>{client.address}</p>}
         {client?.phone && <p style={{ color: '#555', margin: '2px 0' }}>{client.phone}</p>}
         {client?.email && <p style={{ color: '#555', margin: '2px 0' }}>{client.email}</p>}
-        {inv.re_line && <p style={{ marginTop: 8 }}><span style={{ fontWeight: 600, color: '#1a2744' }}>RE:</span> {inv.re_line}</p>}
+        {inv.re_line && <p style={{ marginTop: 8 }}><span style={{ fontWeight: 600, color: '#111827' }}>RE:</span> {inv.re_line}</p>}
       </Card>
 
       {/* Line Items */}
@@ -276,15 +276,15 @@ function InvoiceView({ inv, client }: { inv: Invoice; client?: Client }) {
         <div style={{ marginLeft: 'auto', width: 260, textAlign: 'right', marginTop: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}><span>Subtotal</span><span>${inv.subtotal.toFixed(2)}</span></div>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}><span>Tax (0%)</span><span>$0.00</span></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #1a2744', paddingTop: 4, marginTop: 4, fontSize: 15, fontWeight: 700, color: '#1a2744' }}><span>Total</span><span>${inv.total.toFixed(2)}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #111827', paddingTop: 4, marginTop: 4, fontSize: 15, fontWeight: 700, color: '#111827' }}><span>Total</span><span>${inv.total.toFixed(2)}</span></div>
           {depositAmt > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', color: '#16a34a' }}><span>Deposit Received</span><span>−${depositAmt.toFixed(2)}</span></div>}
-          {depositAmt > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #1a2744', paddingTop: 4, marginTop: 4, fontSize: 17, fontWeight: 700, color: '#1a2744' }}><span>Balance Due</span><span>${balanceDue.toFixed(2)}</span></div>}
+          {depositAmt > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #111827', paddingTop: 4, marginTop: 4, fontSize: 17, fontWeight: 700, color: '#111827' }}><span>Balance Due</span><span>${balanceDue.toFixed(2)}</span></div>}
         </div>
       </Card>
 
       {/* Payment */}
       <Card>
-        <p style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 8 }}>Payment Information</p>
+        <p style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 8 }}>Payment Information</p>
         {method && <p style={{ color: '#333' }}>Payment Method: <strong>{method}</strong></p>}
         {inv.payment_terms && <p style={{ color: '#333' }}>Terms: <strong>{inv.payment_terms}</strong></p>}
         {method?.includes('Check') && <p style={{ fontSize: 11, color: '#888', marginTop: 6 }}>Check payable to: {COMPANY.check_payable}</p>}
@@ -292,7 +292,7 @@ function InvoiceView({ inv, client }: { inv: Invoice; client?: Client }) {
         {method?.includes('ACH') && <p style={{ fontSize: 11, color: '#888' }}>ACH / Bank Transfer — contact us for details</p>}
       </Card>
 
-      {inv.notes && <Card><p style={{ fontWeight: 600, color: '#1a2744', marginBottom: 4 }}>Notes</p><p style={{ color: '#555' }}>{inv.notes}</p></Card>}
+      {inv.notes && <Card><p style={{ fontWeight: 600, color: '#111827', marginBottom: 4 }}>Notes</p><p style={{ color: '#555' }}>{inv.notes}</p></Card>}
 
       <SignatureLines />
       <DocFooter />
@@ -315,7 +315,7 @@ function EstimateView({ est, client }: { est: Estimate; client?: Client }) {
         number={est.number}
         dateLabel="Date"
         dateValue={fmtDate(isoDatePart(est.created_at))}
-        extra={est.valid_until ? <p style={{ color: '#8fa0b8', fontSize: 11, margin: '4px 0 0' }}>Valid Until: {fmtDate(est.valid_until)}</p> : undefined}
+        extra={est.valid_until ? <p style={{ color: '#9CA3AF', fontSize: 11, margin: '4px 0 0' }}>Valid Until: {fmtDate(est.valid_until)}</p> : undefined}
       />
 
       {/* Prepared For / Job Site */}
@@ -338,19 +338,19 @@ function EstimateView({ est, client }: { est: Estimate; client?: Client }) {
             {est.division && <p style={{ marginTop: 6, fontSize: 12 }}><span style={{ color: '#9a8f82', fontWeight: 600 }}>Division:</span> {est.division}</p>}
           </div>
         </div>
-        {est.re_line && <p style={{ marginTop: 12 }}><span style={{ fontWeight: 600, color: '#1a2744' }}>RE:</span> {est.re_line}</p>}
+        {est.re_line && <p style={{ marginTop: 12 }}><span style={{ fontWeight: 600, color: '#111827' }}>RE:</span> {est.re_line}</p>}
       </Card>
 
       {est.scope_of_work && (
         <Card>
-          <p style={{ fontWeight: 600, color: '#1a2744', marginBottom: 4 }}>Scope of Work</p>
+          <p style={{ fontWeight: 600, color: '#111827', marginBottom: 4 }}>Scope of Work</p>
           <p style={{ color: '#444', whiteSpace: 'pre-wrap' }}>{est.scope_of_work}</p>
         </Card>
       )}
 
       {Object.values(mats).some(v => v) && (
         <Card>
-          <p style={{ fontWeight: 600, color: '#1a2744', marginBottom: 8 }}>Materials Specified</p>
+          <p style={{ fontWeight: 600, color: '#111827', marginBottom: 8 }}>Materials Specified</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 4, fontSize: 12 }}>
             {mats.paver_type && <p><span style={{ color: '#9a8f82' }}>Type:</span> {mats.paver_type}</p>}
             {mats.paver_size && <p><span style={{ color: '#9a8f82' }}>Size:</span> {mats.paver_size}</p>}
@@ -364,7 +364,7 @@ function EstimateView({ est, client }: { est: Estimate; client?: Client }) {
 
       {(est.start_date || est.end_date) && (
         <Card>
-          <p style={{ fontWeight: 600, color: '#1a2744', marginBottom: 4 }}>Timeline</p>
+          <p style={{ fontWeight: 600, color: '#111827', marginBottom: 4 }}>Timeline</p>
           <p style={{ color: '#444' }}>
             {est.start_date && <>Estimated Start: <strong>{fmtDate(est.start_date)}</strong></>}
             {est.start_date && est.end_date && ' — '}
@@ -402,13 +402,13 @@ function EstimateView({ est, client }: { est: Estimate; client?: Client }) {
         <div style={{ marginLeft: 'auto', width: 240, textAlign: 'right', marginTop: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}><span>Subtotal</span><span>${est.subtotal.toFixed(2)}</span></div>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}><span>Tax (0%)</span><span>$0.00</span></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #1a2744', paddingTop: 4, marginTop: 4, fontSize: 15, fontWeight: 700, color: '#1a2744' }}><span>Total</span><span>${est.total.toFixed(2)}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #111827', paddingTop: 4, marginTop: 4, fontSize: 15, fontWeight: 700, color: '#111827' }}><span>Total</span><span>${est.total.toFixed(2)}</span></div>
         </div>
       </Card>
 
       {/* Payment */}
       <Card>
-        <p style={{ fontWeight: 600, color: '#1a2744', marginBottom: 8 }}>Payment Terms</p>
+        <p style={{ fontWeight: 600, color: '#111827', marginBottom: 8 }}>Payment Terms</p>
         <p style={{ fontWeight: 600, color: '#333' }}>{est.payment_terms || '50% deposit + 50% on completion'}</p>
         <p style={{ color: '#333', marginTop: 4 }}>Deposit: <strong>${deposit.toFixed(2)}</strong> — Balance: <strong>${balance.toFixed(2)}</strong></p>
         <p style={{ marginTop: 10, fontSize: 12, color: '#555' }}>Accepted Payment Methods: {(est.accepted_payment_methods ?? ['Check', 'ACH', 'Zelle']).join(' · ')}</p>
@@ -416,16 +416,16 @@ function EstimateView({ est, client }: { est: Estimate; client?: Client }) {
         <p style={{ fontSize: 11, color: '#888' }}>Zelle: {COMPANY.zelle}</p>
       </Card>
 
-      {est.warranty && <Card><p style={{ fontWeight: 600, color: '#1a2744', marginBottom: 4 }}>Warranty</p><p style={{ color: '#555', lineHeight: 1.7 }}>{est.warranty}</p></Card>}
+      {est.warranty && <Card><p style={{ fontWeight: 600, color: '#111827', marginBottom: 4 }}>Warranty</p><p style={{ color: '#555', lineHeight: 1.7 }}>{est.warranty}</p></Card>}
 
       <Card>
-        <p style={{ fontWeight: 600, color: '#1a2744', marginBottom: 6 }}>Terms & Conditions</p>
+        <p style={{ fontWeight: 600, color: '#111827', marginBottom: 6 }}>Terms & Conditions</p>
         <ol style={{ paddingLeft: 18, margin: 0 }}>
           {TERMS_AND_CONDITIONS.map((t, i) => <li key={i} style={{ fontSize: 12, color: '#555', lineHeight: 1.7, marginBottom: 2 }}>{t}</li>)}
         </ol>
       </Card>
 
-      {est.notes && <Card><p style={{ fontWeight: 600, color: '#1a2744', marginBottom: 4 }}>Notes</p><p style={{ color: '#555' }}>{est.notes}</p></Card>}
+      {est.notes && <Card><p style={{ fontWeight: 600, color: '#111827', marginBottom: 4 }}>Notes</p><p style={{ color: '#555' }}>{est.notes}</p></Card>}
 
       <SignatureLines acceptedBy="Accepted By" />
       <DocFooter />
@@ -448,7 +448,7 @@ function ProjectView({ project: p, phases, client }: { project: Project; phases:
         number={p.number}
         dateLabel="Date"
         dateValue={fmtDate(p.date ?? isoDatePart(p.created_at))}
-        extra={p.valid_until ? <p style={{ color: '#8fa0b8', fontSize: 11, margin: '4px 0 0' }}>Valid Until: {fmtDate(p.valid_until)}</p> : undefined}
+        extra={p.valid_until ? <p style={{ color: '#9CA3AF', fontSize: 11, margin: '4px 0 0' }}>Valid Until: {fmtDate(p.valid_until)}</p> : undefined}
       />
 
       {/* Client + Site */}
@@ -474,7 +474,7 @@ function ProjectView({ project: p, phases, client }: { project: Project; phases:
 
       {/* Title + Description */}
       <Card>
-        <h4 style={{ fontSize: 16, fontWeight: 700, color: '#1a2744', margin: '0 0 8px' }}>{p.title}</h4>
+        <h4 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: '0 0 8px' }}>{p.title}</h4>
         {p.description && <p style={{ color: '#444', whiteSpace: 'pre-wrap', margin: 0 }}>{p.description}</p>}
       </Card>
 
@@ -493,7 +493,7 @@ function ProjectView({ project: p, phases, client }: { project: Project; phases:
       {/* Phases */}
       {phases.map(ph => (
         <Card key={ph.id}>
-          <h5 style={{ fontSize: 14, fontWeight: 700, color: '#1a2744', margin: '0 0 8px' }}>PHASE {ph.order_num} — {ph.title}</h5>
+          <h5 style={{ fontSize: 14, fontWeight: 700, color: '#111827', margin: '0 0 8px' }}>PHASE {ph.order_num} — {ph.title}</h5>
           {ph.description && <p style={{ color: '#444', whiteSpace: 'pre-wrap', marginBottom: 8 }}>{ph.description}</p>}
           {((ph.photos as string[]) ?? []).length > 0 && (
             <div style={{ marginBottom: 8 }}>
@@ -514,8 +514,8 @@ function ProjectView({ project: p, phases, client }: { project: Project; phases:
 
       {/* Financial */}
       <Card>
-        <p style={{ fontSize: 14, fontWeight: 700, color: '#1a2744', marginBottom: 12 }}>Financial Summary</p>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#1a2744', color: 'white', padding: '10px 16px', borderRadius: 6, fontWeight: 700, fontSize: 15, marginBottom: 12 }}>
+        <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 12 }}>Financial Summary</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#111827', color: 'white', padding: '10px 16px', borderRadius: 6, fontWeight: 700, fontSize: 15, marginBottom: 12 }}>
           <span>Total Project Value</span><span>{fmtCurrency(p.total_value)}</span>
         </div>
         <div style={{ background: '#f5f4f2', border: '1px solid #e8e6e2', borderRadius: 8, padding: 16 }}>
@@ -529,16 +529,16 @@ function ProjectView({ project: p, phases, client }: { project: Project; phases:
         </div>
       </Card>
 
-      {p.warranty && <Card><p style={{ fontWeight: 600, color: '#1a2744', marginBottom: 4 }}>Warranty</p><p style={{ color: '#555', lineHeight: 1.7 }}>{p.warranty}</p></Card>}
+      {p.warranty && <Card><p style={{ fontWeight: 600, color: '#111827', marginBottom: 4 }}>Warranty</p><p style={{ color: '#555', lineHeight: 1.7 }}>{p.warranty}</p></Card>}
 
       <Card>
-        <p style={{ fontWeight: 600, color: '#1a2744', marginBottom: 6 }}>Terms & Conditions</p>
+        <p style={{ fontWeight: 600, color: '#111827', marginBottom: 6 }}>Terms & Conditions</p>
         <ol style={{ paddingLeft: 18, margin: 0 }}>
           {TERMS_AND_CONDITIONS.map((t, i) => <li key={i} style={{ fontSize: 12, color: '#555', lineHeight: 1.7, marginBottom: 2 }}>{t}</li>)}
         </ol>
       </Card>
 
-      {p.notes && <Card><p style={{ fontWeight: 600, color: '#1a2744', marginBottom: 4 }}>Notes</p><p style={{ color: '#555' }}>{p.notes}</p></Card>}
+      {p.notes && <Card><p style={{ fontWeight: 600, color: '#111827', marginBottom: 4 }}>Notes</p><p style={{ color: '#555' }}>{p.notes}</p></Card>}
 
       <SignatureLines acceptedBy="Accepted By" />
       <DocFooter />
@@ -554,12 +554,12 @@ function SignatureLines({ acceptedBy = 'Received By' }: { acceptedBy?: string })
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, paddingTop: 8 }}>
         <div>
           <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9a8f82', marginBottom: 40 }}>Authorized By</p>
-          <div style={{ borderTop: '1.5px solid #1a2744', marginBottom: 4 }} />
+          <div style={{ borderTop: '1.5px solid #111827', marginBottom: 4 }} />
           <p style={{ fontSize: 12, color: '#1a1a1a' }}>{COMPANY.signatory} — {COMPANY.legal_name}</p>
         </div>
         <div>
           <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9a8f82', marginBottom: 40 }}>{acceptedBy}</p>
-          <div style={{ borderTop: '1.5px solid #1a2744', marginBottom: 4 }} />
+          <div style={{ borderTop: '1.5px solid #111827', marginBottom: 4 }} />
           <p style={{ fontSize: 12, color: '#1a1a1a' }}>Client Printed Name, Signature & Date</p>
         </div>
       </div>

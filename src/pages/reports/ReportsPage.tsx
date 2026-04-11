@@ -150,7 +150,7 @@ export default function ReportsPage() {
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium text-stone-600">Period:</label>
           <select
-            className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm focus:border-[#4F6CF7] focus:outline-none focus:ring-1 focus:ring-[#4F6CF7]/20"
             value={range}
             onChange={e => setRange(e.target.value)}
           >
@@ -166,19 +166,19 @@ export default function ReportsPage() {
         const pctMargin = rev > 0 ? (profit / rev) * 100 : 0
         return (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
-            <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid rgba(0,0,0,0.06)' }}>
+            <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid #E5E7EB' }}>
               <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Revenue</p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: '#0D1B3D' }}>{fmtCurrency(rev)}</p>
+              <p style={{ fontSize: 24, fontWeight: 700, color: '#111827' }}>{fmtCurrency(rev)}</p>
             </div>
-            <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid rgba(0,0,0,0.06)' }}>
+            <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid #E5E7EB' }}>
               <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Total Costs</p>
               <p style={{ fontSize: 24, fontWeight: 700, color: '#333' }}>{fmtCurrency(totalCosts)}</p>
             </div>
-            <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid rgba(0,0,0,0.06)' }}>
+            <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid #E5E7EB' }}>
               <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Gross Profit</p>
               <p style={{ fontSize: 24, fontWeight: 700, color: profit >= 0 ? '#16A34A' : '#DC2626' }}>{fmtCurrency(profit)}</p>
             </div>
-            <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid rgba(0,0,0,0.06)' }}>
+            <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid #E5E7EB' }}>
               <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Margin</p>
               <p style={{ fontSize: 24, fontWeight: 700, color: profit >= 0 ? '#16A34A' : '#DC2626' }}>{pctMargin.toFixed(1)}%</p>
             </div>

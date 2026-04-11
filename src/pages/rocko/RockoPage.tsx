@@ -69,12 +69,12 @@ export default function RockoPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <img src="/rocko.png" alt="Rocko" style={{ width: 40, height: 40, borderRadius: 12, objectFit: 'contain' }} />
           <div>
-            <h1 style={{ fontSize: 16, fontWeight: 700, color: '#0D1B3D', margin: 0 }}>Rocko</h1>
+            <h1 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: 0 }}>Rocko</h1>
             <p style={{ fontSize: 12, color: '#9CA3AF', margin: 0 }}>Sparkle AI Partner</p>
           </div>
         </div>
         {messages.length > 0 && (
-          <button onClick={clearChat} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: '1px solid #E5E3DF', borderRadius: 8, padding: '6px 12px', fontSize: 12, color: '#6B7280', cursor: 'pointer' }}>
+          <button onClick={clearChat} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: '1px solid #E5E7EB', borderRadius: 8, padding: '6px 12px', fontSize: 12, color: '#6B7280', cursor: 'pointer' }}>
             <Trash2 size={13} strokeWidth={1.5} /> Limpar
           </button>
         )}
@@ -88,7 +88,7 @@ export default function RockoPage() {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 20 }}>
             <img src="/rocko.png" alt="Rocko" style={{ width: 80, height: 80, objectFit: 'contain' }} />
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: 18, fontWeight: 700, color: '#0D1B3D', marginBottom: 4 }}>Oi Oscar! Rocko aqui.</p>
+              <p style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 4 }}>Oi Oscar! Rocko aqui.</p>
               <p style={{ fontSize: 14, color: '#6B7280' }}>O que você precisa hoje?</p>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 480 }}>
@@ -99,12 +99,12 @@ export default function RockoPage() {
                   style={{
                     display: 'flex', alignItems: 'center', gap: 6,
                     padding: '10px 16px', borderRadius: 12,
-                    border: '1px solid #E5E3DF', background: 'white',
+                    border: '1px solid #E5E7EB', background: 'white',
                     fontSize: 13, fontWeight: 500, color: '#333',
                     cursor: 'pointer', transition: 'all 150ms',
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#C8A96E'; e.currentTarget.style.background = '#FAFAF7' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E3DF'; e.currentTarget.style.background = 'white' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#4F6CF7'; e.currentTarget.style.background = '#F8F9FC' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E7EB'; e.currentTarget.style.background = 'white' }}
                 >
                   <span>{qa.emoji}</span> {qa.label}
                 </button>
@@ -121,7 +121,7 @@ export default function RockoPage() {
             )}
             <div style={{
               maxWidth: '75%', padding: '12px 16px', borderRadius: 16,
-              background: msg.role === 'user' ? '#0D1B3D' : '#F5F4F2',
+              background: msg.role === 'user' ? '#4F6CF7' : '#F3F4F6',
               color: msg.role === 'user' ? 'white' : '#333',
               borderBottomRightRadius: msg.role === 'user' ? 4 : 16,
               borderBottomLeftRadius: msg.role === 'assistant' ? 4 : 16,
@@ -136,7 +136,7 @@ export default function RockoPage() {
         {thinking && (
           <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
             <img src="/rocko.png" alt="Rocko" style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'contain', flexShrink: 0 }} />
-            <div style={{ background: '#F5F4F2', borderRadius: '16px 16px 16px 4px', padding: '12px 16px' }}>
+            <div style={{ background: '#F3F4F6', borderRadius: '16px 16px 16px 4px', padding: '12px 16px' }}>
               <div style={{ display: 'flex', gap: 4 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF', animation: 'pulse 1.2s infinite', animationDelay: '0s' }} />
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF', animation: 'pulse 1.2s infinite', animationDelay: '0.2s' }} />
@@ -159,18 +159,18 @@ export default function RockoPage() {
             placeholder="Pergunte qualquer coisa..."
             disabled={thinking}
             style={{
-              flex: 1, height: 44, borderRadius: 12, border: '1px solid #E5E3DF',
+              flex: 1, height: 44, borderRadius: 12, border: '1px solid #E5E7EB',
               padding: '0 16px', fontSize: 14, outline: 'none', transition: 'border-color 150ms',
             }}
-            onFocus={e => { e.currentTarget.style.borderColor = '#0D1B3D' }}
-            onBlur={e => { e.currentTarget.style.borderColor = '#E5E3DF' }}
+            onFocus={e => { e.currentTarget.style.borderColor = '#4F6CF7' }}
+            onBlur={e => { e.currentTarget.style.borderColor = '#E5E7EB' }}
           />
           <button
             type="submit"
             disabled={thinking || !input.trim()}
             style={{
               width: 44, height: 44, borderRadius: 12, border: 'none',
-              background: input.trim() ? '#0D1B3D' : '#E5E3DF',
+              background: input.trim() ? '#4F6CF7' : '#E5E7EB',
               color: input.trim() ? 'white' : '#9CA3AF',
               cursor: input.trim() ? 'pointer' : 'default',
               display: 'flex', alignItems: 'center', justifyContent: 'center',

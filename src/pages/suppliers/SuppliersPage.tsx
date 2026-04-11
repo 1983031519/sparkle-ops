@@ -70,15 +70,15 @@ export default function SuppliersPage() {
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-[18px] font-bold text-navy-900">Suppliers / Vendors</h1>
+        <h1 className="text-[18px] font-bold text-[#111827]">Suppliers / Vendors</h1>
         <Button onClick={openNew}><Plus className="h-4 w-4" /> Add Supplier</Button>
       </div>
 
       <Card>
-        <div className="border-b border-stone-100 px-4 py-3">
+        <div className="border-b border-[#E5E7EB] px-4 py-3">
           <div className="relative max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-            <input className="w-full rounded-[10px] border border-stone-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-stone-400 focus:border-navy-900 focus:outline-none focus:ring-[3px] focus:ring-navy-900/[0.08]" placeholder="Search suppliers..." value={search} onChange={e => setSearch(e.target.value)} />
+            <input className="w-full rounded-[10px] border border-stone-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-stone-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search suppliers..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
         {loading ? <p className="p-6 text-sm text-stone-500">Loading...</p> : (

@@ -232,7 +232,7 @@ export default function EstimatesPage() {
         <div className="border-b border-stone-100 px-4 py-3">
           <div className="relative max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-            <input className="w-full rounded-lg border border-stone-300 py-2 pl-10 pr-3 text-sm placeholder:text-stone-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" placeholder="Search estimates..." value={search} onChange={e => setSearch(e.target.value)} />
+            <input className="w-full rounded-lg border border-stone-300 py-2 pl-10 pr-3 text-sm placeholder:text-stone-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-1 focus:ring-[#4F6CF7]/20" placeholder="Search estimates..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
         {loading ? <p className="p-6 text-sm text-stone-500">Loading...</p> : (
@@ -359,7 +359,7 @@ export default function EstimatesPage() {
                   <label key={m} className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={form.accepted_payment_methods.includes(m)} onChange={e => {
                       setForm(f => ({ ...f, accepted_payment_methods: e.target.checked ? [...f.accepted_payment_methods, m] : f.accepted_payment_methods.filter(x => x !== m) }))
-                    }} className="accent-navy-900 rounded" />
+                    }} className="accent-blue-600 rounded" />
                     <span className="text-[13px]">{m}{m === 'Check' ? ` (payable to ${COMPANY.check_payable})` : m === 'Zelle' ? ` (${COMPANY.zelle})` : ''}</span>
                   </label>
                 ))}
@@ -468,7 +468,7 @@ function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
             <p style={{ fontSize: 11, color: '#666' }}>{COMPANY.phone} | {COMPANY.email}</p>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <h3 style={{ fontSize: 20, fontWeight: 700, color: '#1a2744', margin: 0 }}>PROPOSAL</h3>
+            <h3 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: 0 }}>PROPOSAL</h3>
             <p style={{ fontFamily: 'monospace', fontSize: 13, color: '#555', margin: '4px 0' }}>{est.number}</p>
             <p style={{ fontSize: 12, color: '#666' }}>Date: {fmtDate(isoDatePart(est.created_at))}</p>
             {est.valid_until && <p style={{ fontSize: 12, color: '#666' }}>Valid Until: {fmtDate(est.valid_until)}</p>}
@@ -490,15 +490,15 @@ function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
           </div>
         </div>
 
-        {est.re_line && <p style={{ marginBottom: 12 }}><span style={{ fontWeight: 600, color: '#1a2744' }}>RE:</span> {est.re_line}</p>}
+        {est.re_line && <p style={{ marginBottom: 12 }}><span style={{ fontWeight: 600, color: '#111827' }}>RE:</span> {est.re_line}</p>}
 
         {est.scope_of_work && (
-          <div style={{ marginBottom: 16 }}><h4 style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 4 }}>Scope of Work</h4><p style={{ color: '#444', whiteSpace: 'pre-wrap' }}>{est.scope_of_work}</p></div>
+          <div style={{ marginBottom: 16 }}><h4 style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Scope of Work</h4><p style={{ color: '#444', whiteSpace: 'pre-wrap' }}>{est.scope_of_work}</p></div>
         )}
 
         {Object.values(mats).some(v => v) && (
           <div style={{ marginBottom: 16 }}>
-            <h4 style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 6 }}>Materials Specified</h4>
+            <h4 style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 6 }}>Materials Specified</h4>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, fontSize: 12 }}>
               {mats.paver_type && <p><span style={{ color: '#9a8f82' }}>Type:</span> {mats.paver_type}</p>}
               {mats.paver_size && <p><span style={{ color: '#9a8f82' }}>Size:</span> {mats.paver_size}</p>}
@@ -511,7 +511,7 @@ function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
         )}
 
         {(est.start_date || est.end_date) && (
-          <div style={{ marginBottom: 16 }}><h4 style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 4 }}>Timeline</h4>
+          <div style={{ marginBottom: 16 }}><h4 style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Timeline</h4>
             <p style={{ color: '#444' }}>
               {est.start_date && <>Estimated Start: <strong>{fmtDate(est.start_date)}</strong></>}
               {est.start_date && est.end_date && ' — '}
@@ -536,12 +536,12 @@ function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
         <div style={{ marginLeft: 'auto', width: 240, textAlign: 'right', marginBottom: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}><span>Subtotal</span><span>${est.subtotal.toFixed(2)}</span></div>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}><span>Tax (0%)</span><span>$0.00</span></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #1a2744', paddingTop: 4, marginTop: 4, fontSize: 15, fontWeight: 700, color: '#1a2744' }}><span>Total</span><span>${est.total.toFixed(2)}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #111827', paddingTop: 4, marginTop: 4, fontSize: 15, fontWeight: 700, color: '#111827' }}><span>Total</span><span>${est.total.toFixed(2)}</span></div>
         </div>
 
         {/* Payment Terms */}
         <div style={{ background: '#f5f4f2', border: '1px solid #e8e6e2', borderRadius: 8, padding: 16, marginBottom: 16 }}>
-          <h4 style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 8 }}>Payment Terms</h4>
+          <h4 style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 8 }}>Payment Terms</h4>
           <p style={{ fontWeight: 600, color: '#333' }}>{est.payment_terms || '50% deposit + 50% on completion'}</p>
           <p style={{ color: '#333', marginTop: 4 }}>Deposit: <strong>${deposit.toFixed(2)}</strong> — Balance: <strong>${balance.toFixed(2)}</strong></p>
           <p style={{ marginTop: 10, fontSize: 12, color: '#555' }}>Accepted Payment Methods: {(est.accepted_payment_methods ?? ['Check', 'ACH', 'Zelle']).join(' · ')}</p>
@@ -549,27 +549,27 @@ function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
           <p style={{ fontSize: 11, color: '#888' }}>Zelle: {COMPANY.zelle}</p>
         </div>
 
-        {est.warranty && <div style={{ marginBottom: 16 }}><h4 style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 4 }}>Warranty</h4><p style={{ color: '#555', lineHeight: 1.7 }}>{est.warranty}</p></div>}
+        {est.warranty && <div style={{ marginBottom: 16 }}><h4 style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Warranty</h4><p style={{ color: '#555', lineHeight: 1.7 }}>{est.warranty}</p></div>}
 
         <div style={{ marginBottom: 16 }}>
-          <h4 style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 6 }}>Terms & Conditions</h4>
+          <h4 style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 6 }}>Terms & Conditions</h4>
           <ol style={{ paddingLeft: 18, margin: 0 }}>
             {TERMS_AND_CONDITIONS.map((t, i) => <li key={i} style={{ fontSize: 12, color: '#555', lineHeight: 1.7, marginBottom: 2 }}>{t}</li>)}
           </ol>
         </div>
 
-        {est.notes && <div style={{ marginBottom: 16 }}><h4 style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 4 }}>Notes</h4><p style={{ color: '#555' }}>{est.notes}</p></div>}
+        {est.notes && <div style={{ marginBottom: 16 }}><h4 style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Notes</h4><p style={{ color: '#555' }}>{est.notes}</p></div>}
 
         {/* Signatures */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, marginTop: 40, paddingTop: 20, borderTop: '1px solid #e0e0e0' }}>
           <div>
             <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9a8f82', marginBottom: 40 }}>Authorized By</p>
-            <div style={{ borderTop: '1.5px solid #1a2744', marginBottom: 4 }} />
+            <div style={{ borderTop: '1.5px solid #111827', marginBottom: 4 }} />
             <p style={{ fontSize: 13, color: '#1a1a1a' }}>{COMPANY.signatory} — {COMPANY.legal_name}</p>
           </div>
           <div>
             <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9a8f82', marginBottom: 40 }}>Accepted By</p>
-            <div style={{ borderTop: '1.5px solid #1a2744', marginBottom: 4 }} />
+            <div style={{ borderTop: '1.5px solid #111827', marginBottom: 4 }} />
             <p style={{ fontSize: 13, color: '#1a1a1a' }}>Client Printed Name, Signature & Date</p>
           </div>
         </div>

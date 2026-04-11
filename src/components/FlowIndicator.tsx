@@ -10,15 +10,15 @@ export function FlowIndicator({ steps }: { steps: Step[] }) {
     <div className="flex items-center gap-1 text-[11px]">
       {visible.map((step, i) => (
         <span key={step.label} className="flex items-center gap-0.5">
-          {i > 0 && <span className="mx-0.5 text-stone-300">&rarr;</span>}
-          <span className={`inline-flex items-center gap-1 rounded-[20px] px-2 py-[3px] font-semibold tracking-[0.2px] border ${
-            step.status === 'done' ? 'bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0]' :
-            step.status === 'active' ? 'bg-navy-900/[0.06] text-navy-900 border-navy-900/10' :
-            'bg-[#F3F4F6] text-[#9CA3AF] border-[#E5E7EB]'
+          {i > 0 && <span className="mx-0.5 text-[#D1D5DB]">&rarr;</span>}
+          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-[3px] font-semibold border ${
+            step.status === 'done'    ? 'bg-[#D1FAE5] text-[#065F46] border-[#A7F3D0]' :
+            step.status === 'active' ? 'bg-[#EEF1FE] text-[#4F6CF7] border-[#4F6CF7]/20' :
+                                       'bg-[#F3F4F6] text-[#9CA3AF] border-[#E5E7EB]'
           }`}>
-            {step.status === 'done' ? <CheckCircle size={12} strokeWidth={1.5} /> :
-             step.status === 'active' ? <Circle size={12} strokeWidth={1.5} /> :
-             <Clock size={12} strokeWidth={1.5} />}
+            {step.status === 'done'    ? <CheckCircle size={12} strokeWidth={1.5} /> :
+             step.status === 'active'  ? <Circle size={12} strokeWidth={1.5} /> :
+                                         <Clock size={12} strokeWidth={1.5} />}
             {step.label}
           </span>
         </span>

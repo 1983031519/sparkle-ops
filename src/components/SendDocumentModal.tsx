@@ -115,7 +115,7 @@ export function SendDocumentModal({ open, onClose, type, documentId, clientEmail
         <div>
           <p className="text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500 mb-1.5">Send to</p>
           {hasEmail ? (
-            <p className="text-[14px] text-navy-900 break-all">{clientEmail}</p>
+            <p className="text-[14px] text-[#111827] break-all">{clientEmail}</p>
           ) : (
             <p className="text-[13px] text-red-600">No email on file for this client. Add one to the client record first.</p>
           )}
@@ -133,7 +133,7 @@ export function SendDocumentModal({ open, onClose, type, documentId, clientEmail
                   value={addr}
                   checked={fromEmail === addr}
                   onChange={() => setFromEmail(addr)}
-                  className="accent-navy-900"
+                  className="accent-blue-600"
                 />
                 <span className="text-[13px] text-stone-700">{addr}</span>
               </label>
@@ -149,15 +149,15 @@ export function SendDocumentModal({ open, onClose, type, documentId, clientEmail
             value={personalMessage}
             onChange={e => setPersonalMessage(e.target.value)}
             placeholder="Add a personal message to your client..."
-            className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-[13px] text-stone-700 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-navy-900/20 focus:border-navy-900 resize-y"
+            className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-[13px] text-stone-700 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#4F6CF7]/20 focus:border-[#4F6CF7] resize-y"
           />
         </div>
 
         {/* Summary */}
         <div className="rounded-lg bg-stone-50 border border-stone-200 p-3 text-[12px] text-stone-600 space-y-1">
-          <div className="flex justify-between"><span>{label} #</span><span className="font-mono text-navy-900">{documentData.number}</span></div>
-          <div className="flex justify-between"><span>Client</span><span className="text-navy-900">{documentData.clientName || '—'}</span></div>
-          <div className="flex justify-between"><span>Total</span><span className="font-semibold text-navy-900">${documentData.total.toFixed(2)}</span></div>
+          <div className="flex justify-between"><span>{label} #</span><span className="font-mono text-[#111827]">{documentData.number}</span></div>
+          <div className="flex justify-between"><span>Client</span><span className="text-[#111827]">{documentData.clientName || '—'}</span></div>
+          <div className="flex justify-between"><span>Total</span><span className="font-semibold text-[#111827]">${documentData.total.toFixed(2)}</span></div>
         </div>
 
         {/* Actions */}

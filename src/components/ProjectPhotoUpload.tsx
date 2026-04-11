@@ -113,9 +113,9 @@ export function ProjectPhotoUpload({ folder, photos, onPhotosChange, persistTo, 
       {photos.length === 0 ? (
         <div
           onClick={() => fileRef.current?.click()}
-          style={{ border: '2px dashed #E5E3DF', borderRadius: 10, padding: '16px 0', textAlign: 'center', cursor: 'pointer', color: '#9CA3AF', fontSize: 12, transition: 'border-color 150ms' }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = '#C8A96E' }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E3DF' }}
+          style={{ border: '2px dashed #E5E7EB', borderRadius: 10, padding: '16px 0', textAlign: 'center', cursor: 'pointer', color: '#9CA3AF', fontSize: 12, transition: 'border-color 150ms' }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = '#4F6CF7' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E7EB' }}
         >
           Click to upload photos
         </div>

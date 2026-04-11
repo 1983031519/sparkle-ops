@@ -211,7 +211,7 @@ export default function ProjectsPage() {
   return (
     <div className="space-y-6 p-4 sm:p-6">
       <div className="flex items-center justify-between">
-        <h1 style={{ fontSize: 18, fontWeight: 700, color: '#0D1B3D', letterSpacing: -0.5 }}>Projects</h1>
+        <h1 style={{ fontSize: 18, fontWeight: 700, color: '#111827', letterSpacing: -0.5 }}>Projects</h1>
         <Button onClick={openNew}><Plus size={16} strokeWidth={1.5} /> New Project</Button>
       </div>
 
@@ -219,11 +219,11 @@ export default function ProjectsPage() {
         <div className="border-b border-stone-100 px-4 py-3 flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-            <input className="w-full rounded-[10px] border border-stone-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-stone-400 focus:border-navy-900 focus:outline-none" placeholder="Search projects..." value={search} onChange={e => setSearch(e.target.value)} />
+            <input className="w-full rounded-[10px] border border-stone-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-stone-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search projects..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <div className="flex gap-1 flex-wrap">
             {['All', ...STATUSES].map(s => (
-              <button key={s} onClick={() => setStatusFilter(s)} className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${statusFilter === s ? 'bg-navy-900 text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}>{s}</button>
+              <button key={s} onClick={() => setStatusFilter(s)} className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${statusFilter === s ? 'bg-[#4F6CF7] text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}>{s}</button>
             ))}
           </div>
         </div>
@@ -286,7 +286,7 @@ export default function ProjectsPage() {
               {phases.map((ph, i) => (
                 <div key={i} className="rounded-[12px] border border-stone-200 bg-stone-50/50 p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#0D1B3D' }}>Phase {ph.order_num}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#111827' }}>Phase {ph.order_num}</span>
                     <div className="flex gap-1">
                       <button type="button" onClick={() => movePhase(i, -1)} disabled={i === 0} className="p-1 text-stone-400 hover:text-stone-600 disabled:opacity-30"><ChevronUp size={14} /></button>
                       <button type="button" onClick={() => movePhase(i, 1)} disabled={i === phases.length - 1} className="p-1 text-stone-400 hover:text-stone-600 disabled:opacity-30"><ChevronDown size={14} /></button>
@@ -299,7 +299,7 @@ export default function ProjectsPage() {
                     <Input label="Timeline" id={`ph-time-${i}`} value={ph.timeline} onChange={e => updatePhase(i, 'timeline', e.target.value)} placeholder="e.g. 3-5 business days" />
                     <div>
                       <label className="flex items-center gap-2 mb-1.5">
-                        <input type="checkbox" checked={ph.show_value} onChange={e => updatePhase(i, 'show_value', e.target.checked)} className="accent-navy-900 rounded" />
+                        <input type="checkbox" checked={ph.show_value} onChange={e => updatePhase(i, 'show_value', e.target.checked)} className="accent-blue-600 rounded" />
                         <span style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280' }}>Show Value</span>
                       </label>
                       {ph.show_value && <Input id={`ph-val-${i}`} type="number" step="0.01" value={ph.value} onChange={e => updatePhase(i, 'value', e.target.value)} placeholder="$0.00" />}
@@ -347,7 +347,7 @@ export default function ProjectsPage() {
               <div className="flex flex-wrap gap-4">
                 {['Check', 'ACH', 'Zelle', 'Cash'].map(m => (
                   <label key={m} className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={form.accepted_payment_methods.includes(m)} onChange={e => setForm(f => ({ ...f, accepted_payment_methods: e.target.checked ? [...f.accepted_payment_methods, m] : f.accepted_payment_methods.filter(x => x !== m) }))} className="accent-navy-900 rounded" />
+                    <input type="checkbox" checked={form.accepted_payment_methods.includes(m)} onChange={e => setForm(f => ({ ...f, accepted_payment_methods: e.target.checked ? [...f.accepted_payment_methods, m] : f.accepted_payment_methods.filter(x => x !== m) }))} className="accent-blue-600 rounded" />
                     <span className="text-[13px]">{m}</span>
                   </label>
                 ))}
@@ -503,7 +503,7 @@ function ProjectPreview({ project: p, phases, client }: { project: Project; phas
             <p style={{ fontSize: 11, color: '#666' }}>{COMPANY.phone} | {COMPANY.email}</p>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <h3 style={{ fontSize: 20, fontWeight: 700, color: '#1a2744', margin: 0 }}>PROJECT PROPOSAL</h3>
+            <h3 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: 0 }}>PROJECT PROPOSAL</h3>
             <p style={{ fontFamily: 'monospace', fontSize: 13, color: '#555', margin: '4px 0' }}>{p.number}</p>
             <p style={{ fontSize: 12, color: '#666' }}>Date: {fmtDate(p.date ?? isoDatePart(p.created_at))}</p>
             {p.valid_until && <p style={{ fontSize: 12, color: '#666' }}>Valid Until: {fmtDate(p.valid_until)}</p>}
@@ -524,7 +524,7 @@ function ProjectPreview({ project: p, phases, client }: { project: Project; phas
           </div>
         </div>
 
-        <h4 style={{ fontSize: 16, fontWeight: 700, color: '#1a2744', margin: '0 0 8px' }}>{p.title}</h4>
+        <h4 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: '0 0 8px' }}>{p.title}</h4>
         {p.description && <p style={{ color: '#444', whiteSpace: 'pre-wrap', marginBottom: 16 }}>{p.description}</p>}
 
         {/* Site photos */}
@@ -540,7 +540,7 @@ function ProjectPreview({ project: p, phases, client }: { project: Project; phas
         {/* Phases */}
         {phases.map(ph => (
           <div key={ph.id} className="phase-section" style={{ borderTop: '1px solid #ebebeb', paddingTop: 16, marginTop: 8 }}>
-            <h5 style={{ fontSize: 14, fontWeight: 700, color: '#1a2744', marginBottom: 8 }}>PHASE {ph.order_num} — {ph.title}</h5>
+            <h5 style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 8 }}>PHASE {ph.order_num} — {ph.title}</h5>
             {ph.description && <p style={{ color: '#444', whiteSpace: 'pre-wrap', marginBottom: 8 }}>{ph.description}</p>}
             {(phasePhotos[ph.id] ?? (ph.photos as string[]))?.length > 0 && (
               <div style={{ marginBottom: 8 }}>
@@ -559,8 +559,8 @@ function ProjectPreview({ project: p, phases, client }: { project: Project; phas
 
         {/* Financial */}
         <div className="financial-summary" style={{ borderTop: '1px solid #e0e0e0', paddingTop: 20, marginTop: 16 }}>
-          <h5 style={{ fontSize: 14, fontWeight: 700, color: '#1a2744', marginBottom: 12 }}>Financial Summary</h5>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#1a2744', color: 'white', padding: '10px 16px', borderRadius: 4, fontWeight: 700, fontSize: 15, marginBottom: 12 }}>
+          <h5 style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 12 }}>Financial Summary</h5>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#111827', color: 'white', padding: '10px 16px', borderRadius: 4, fontWeight: 700, fontSize: 15, marginBottom: 12 }}>
             <span>Total Project Value</span><span>{fmtCurrency(p.total_value)}</span>
           </div>
           <div style={{ background: '#f5f4f2', border: '1px solid #e8e6e2', borderRadius: 8, padding: 16 }}>
@@ -575,28 +575,28 @@ function ProjectPreview({ project: p, phases, client }: { project: Project; phas
         </div>
 
         {/* Warranty */}
-        {p.warranty && <div style={{ marginTop: 20 }}><h5 style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 4 }}>Warranty</h5><p style={{ color: '#555', lineHeight: 1.7 }}>{p.warranty}</p></div>}
+        {p.warranty && <div style={{ marginTop: 20 }}><h5 style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Warranty</h5><p style={{ color: '#555', lineHeight: 1.7 }}>{p.warranty}</p></div>}
 
         {/* Terms */}
         <div style={{ marginTop: 16 }}>
-          <h5 style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 6 }}>Terms & Conditions</h5>
+          <h5 style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 6 }}>Terms & Conditions</h5>
           <ol style={{ paddingLeft: 18, margin: 0 }}>
             {TERMS_AND_CONDITIONS.map((t, i) => <li key={i} style={{ fontSize: 12, color: '#555', lineHeight: 1.7, marginBottom: 2 }}>{t}</li>)}
           </ol>
         </div>
 
-        {p.notes && <div style={{ marginTop: 16 }}><h5 style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 4 }}>Notes</h5><p style={{ color: '#555' }}>{p.notes}</p></div>}
+        {p.notes && <div style={{ marginTop: 16 }}><h5 style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Notes</h5><p style={{ color: '#555' }}>{p.notes}</p></div>}
 
         {/* Signatures */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, marginTop: 40, paddingTop: 20, borderTop: '1px solid #e0e0e0' }}>
           <div>
             <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9a8f82', marginBottom: 40 }}>Authorized By</p>
-            <div style={{ borderTop: '1.5px solid #1a2744', marginBottom: 4 }} />
+            <div style={{ borderTop: '1.5px solid #111827', marginBottom: 4 }} />
             <p style={{ fontSize: 13, color: '#1a1a1a' }}>{COMPANY.signatory} — {COMPANY.legal_name}</p>
           </div>
           <div>
             <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9a8f82', marginBottom: 40 }}>Accepted By</p>
-            <div style={{ borderTop: '1.5px solid #1a2744', marginBottom: 4 }} />
+            <div style={{ borderTop: '1.5px solid #111827', marginBottom: 4 }} />
             <p style={{ fontSize: 13, color: '#1a1a1a' }}>Client Printed Name, Signature & Date</p>
           </div>
         </div>

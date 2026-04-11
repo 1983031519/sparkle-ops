@@ -95,14 +95,14 @@ export function JobCosting({ jobId, jobRevenue }: Props) {
 
   if (loading) return <p style={{ fontSize: 13, color: '#9CA3AF', padding: 12 }}>Loading costs...</p>
 
-  const inputStyle: React.CSSProperties = { height: 32, borderRadius: 6, border: '1px solid #E5E3DF', padding: '0 8px', fontSize: 13, outline: 'none', width: '100%' }
+  const inputStyle: React.CSSProperties = { height: 32, borderRadius: 6, border: '1px solid #E5E7EB', padding: '0 8px', fontSize: 13, outline: 'none', width: '100%' }
   const labelStyle: React.CSSProperties = { fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9CA3AF', marginBottom: 2 }
 
   return (
-    <div style={{ border: '1px solid #E5E3DF', borderRadius: 12, padding: 16 }}>
+    <div style={{ border: '1px solid #E5E7EB', borderRadius: 12, padding: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-        <DollarSign size={16} strokeWidth={1.5} color="#0D1B3D" />
-        <span style={{ fontSize: 13, fontWeight: 700, color: '#0D1B3D' }}>Job Costing</span>
+        <DollarSign size={16} strokeWidth={1.5} color="#4F6CF7" />
+        <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>Job Costing</span>
         <span style={{ fontSize: 11, color: '#9CA3AF', fontStyle: 'italic' }}>Internal only</span>
       </div>
 
@@ -158,13 +158,13 @@ export function JobCosting({ jobId, jobRevenue }: Props) {
       </div>
 
       {/* SUMMARY */}
-      <div style={{ borderTop: '1px solid #E5E3DF', paddingTop: 12, marginTop: 8 }}>
+      <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: 12, marginTop: 8 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 13 }}>
           <div>
             <p style={{ color: '#6B7280' }}>Materials: <strong style={{ color: '#333' }}>{fmtCurrency(totalMaterials)}</strong></p>
             <p style={{ color: '#6B7280' }}>Labor: <strong style={{ color: '#333' }}>{fmtCurrency(totalLabor)}</strong></p>
             <p style={{ color: '#6B7280' }}>Other: <strong style={{ color: '#333' }}>{fmtCurrency(totalOther)}</strong></p>
-            <p style={{ fontWeight: 700, color: '#0D1B3D', marginTop: 4, fontSize: 14 }}>Total Cost: {fmtCurrency(totalCost)}</p>
+            <p style={{ fontWeight: 700, color: '#111827', marginTop: 4, fontSize: 14 }}>Total Cost: {fmtCurrency(totalCost)}</p>
           </div>
           <div style={{ textAlign: 'right' }}>
             <p style={{ color: '#6B7280' }}>Revenue: <strong style={{ color: '#333' }}>{fmtCurrency(jobRevenue)}</strong></p>

@@ -4,7 +4,7 @@ import { useChatContext } from '@/contexts/ChatContext'
 import { useAuth } from '@/hooks/useAuth'
 
 const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
-  admin:   { bg: 'rgba(200,169,110,0.15)', text: '#b8862a' },
+  admin:   { bg: 'rgba(79,108,247,0.12)',  text: '#4F6CF7' },
   manager: { bg: 'rgba(59,130,246,0.12)',  text: '#2563eb' },
   office:  { bg: 'rgba(16,185,129,0.12)',  text: '#059669' },
   field:   { bg: 'rgba(139,92,246,0.12)',  text: '#7c3aed' },
@@ -28,9 +28,9 @@ function formatTime(iso: string): string {
 function DateSeparator({ label }: { label: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '8px 0' }}>
-      <div style={{ flex: 1, height: 1, background: '#e8e6e2' }} />
-      <span style={{ fontSize: 11, color: '#9a8f82', fontWeight: 500, whiteSpace: 'nowrap' }}>{label}</span>
-      <div style={{ flex: 1, height: 1, background: '#e8e6e2' }} />
+      <div style={{ flex: 1, height: 1, background: '#E5E7EB' }} />
+      <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 500, whiteSpace: 'nowrap' }}>{label}</span>
+      <div style={{ flex: 1, height: 1, background: '#E5E7EB' }} />
     </div>
   )
 }
@@ -119,14 +119,14 @@ export default function ChatPage() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#FAFAF7' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#F8F9FC' }}>
       {/* Header */}
       <div style={{
         flexShrink: 0, padding: '20px 24px 16px',
-        borderBottom: '1px solid #e8e6e2', background: 'white',
+        borderBottom: '1px solid #E5E7EB', background: 'white',
       }}>
-        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#1a2744' }}>Team Chat</h1>
-        <p style={{ margin: '2px 0 0', fontSize: 13, color: '#9a8f82' }}>
+        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#111827' }}>Team Chat</h1>
+        <p style={{ margin: '2px 0 0', fontSize: 13, color: '#9CA3AF' }}>
           Internal messages — all team members
         </p>
       </div>
@@ -145,13 +145,13 @@ export default function ChatPage() {
         }}
       >
         {loading ? (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9a8f82', fontSize: 14 }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: 14 }}>
             Loading messages…
           </div>
         ) : messages.length === 0 ? (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8 }}>
             <span style={{ fontSize: 32 }}>👋</span>
-            <span style={{ fontSize: 15, color: '#9a8f82' }}>No messages yet. Say hello!</span>
+            <span style={{ fontSize: 15, color: '#9CA3AF' }}>No messages yet. Say hello!</span>
           </div>
         ) : (
           renderItems.map(item => {
@@ -176,7 +176,7 @@ export default function ChatPage() {
                 {/* Sender name + role badge (others only) */}
                 {!isOwn && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3, paddingLeft: 4 }}>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: '#1a2744' }}>{msg.user_name}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#111827' }}>{msg.user_name}</span>
                     <span style={{
                       fontSize: 10, fontWeight: 600,
                       padding: '1px 7px', borderRadius: 99,
@@ -194,8 +194,8 @@ export default function ChatPage() {
                   maxWidth: '68%',
                   padding: '9px 14px',
                   borderRadius: isOwn ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                  backgroundColor: isOwn ? '#1a2744' : '#f0ede8',
-                  color: isOwn ? '#ffffff' : '#2a2520',
+                  backgroundColor: isOwn ? '#4F6CF7' : '#F3F4F6',
+                  color: isOwn ? '#ffffff' : '#111827',
                   fontSize: 14,
                   lineHeight: 1.55,
                   wordBreak: 'break-word',
@@ -207,7 +207,7 @@ export default function ChatPage() {
 
                 {/* Timestamp */}
                 <span style={{
-                  fontSize: 11, color: '#b0a898',
+                  fontSize: 11, color: '#9CA3AF',
                   marginTop: 3,
                   paddingLeft: isOwn ? 0 : 4,
                   paddingRight: isOwn ? 4 : 0,
@@ -223,7 +223,7 @@ export default function ChatPage() {
       {/* Input bar */}
       <div style={{
         flexShrink: 0,
-        borderTop: '1px solid #e8e6e2',
+        borderTop: '1px solid #E5E7EB',
         padding: '12px 20px',
         display: 'flex',
         gap: 10,
@@ -245,7 +245,7 @@ export default function ChatPage() {
           style={{
             flex: 1,
             resize: 'none',
-            border: '1px solid #e0ddd8',
+            border: '1px solid #E5E7EB',
             borderRadius: 12,
             padding: '10px 14px',
             fontSize: 14,
@@ -254,12 +254,12 @@ export default function ChatPage() {
             outline: 'none',
             maxHeight: 120,
             overflowY: 'auto',
-            backgroundColor: '#fafaf7',
-            color: '#1a1a1a',
+            backgroundColor: '#F8F9FC',
+            color: '#111827',
             transition: 'border-color 150ms',
           }}
-          onFocus={e => { e.currentTarget.style.borderColor = '#1a2744' }}
-          onBlur={e => { e.currentTarget.style.borderColor = '#e0ddd8' }}
+          onFocus={e => { e.currentTarget.style.borderColor = '#4F6CF7' }}
+          onBlur={e => { e.currentTarget.style.borderColor = '#E5E7EB' }}
         />
         <button
           onClick={handleSend}
@@ -274,11 +274,11 @@ export default function ChatPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: input.trim() && !sending ? '#1a2744' : '#e8e6e2',
+            backgroundColor: input.trim() && !sending ? '#4F6CF7' : '#E5E7EB',
             transition: 'background-color 150ms',
           }}
         >
-          <Send size={16} strokeWidth={1.5} color={input.trim() && !sending ? '#c8a96e' : '#9a8f82'} />
+          <Send size={16} strokeWidth={1.5} color={input.trim() && !sending ? 'white' : '#9CA3AF'} />
         </button>
       </div>
     </div>

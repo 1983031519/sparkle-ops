@@ -121,7 +121,7 @@ export function PhotoUpload({ jobId, photos, onPhotosChange }: Props) {
           <ImageIcon className="h-4 w-4" />
           Photos
           {photos.length > 0 && (
-            <span className="inline-flex items-center rounded-full bg-navy-900/10 px-2 py-0.5 text-[11px] font-semibold text-navy-900">
+            <span className="inline-flex items-center rounded-full bg-[#EEF1FE] px-2 py-0.5 text-[11px] font-semibold text-[#4F6CF7]">
               {photos.length}
             </span>
           )}

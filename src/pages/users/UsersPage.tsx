@@ -118,7 +118,7 @@ export default function UsersPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#0D1B3D', letterSpacing: -0.5 }}>Users</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#111827', letterSpacing: -0.5 }}>Users</h1>
           <p style={{ fontSize: 13, color: '#6B7280', marginTop: 2 }}>Manage team access and roles</p>
         </div>
         <Button onClick={() => setShowInvite(true)} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -141,7 +141,7 @@ export default function UsersPage() {
       </div>
 
       {/* Users List */}
-      <div style={{ background: 'white', borderRadius: 16, border: '1px solid rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+      <div style={{ background: 'white', borderRadius: 16, border: '1px solid #E5E7EB', overflow: 'hidden' }}>
         {/* Table header */}
         <div style={{
           display: 'grid', gridTemplateColumns: '1fr 1fr 140px 100px 80px',
@@ -177,7 +177,7 @@ export default function UsersPage() {
                 }}>
                   <RoleIcon size={15} color={cfg.color} strokeWidth={1.5} />
                 </div>
-                <span style={{ fontSize: 14, fontWeight: 500, color: '#0D1B3D' }}>
+                <span style={{ fontSize: 14, fontWeight: 500, color: '#111827' }}>
                   {p.full_name || 'No name'}
                 </span>
               </div>
@@ -252,7 +252,7 @@ export default function UsersPage() {
               placeholder="John Smith"
               style={{
                 display: 'block', width: '100%', height: 40, borderRadius: 10,
-                border: '1px solid #E5E3DF', padding: '0 12px', fontSize: 14, outline: 'none',
+                border: '1px solid #E5E7EB', padding: '0 12px', fontSize: 14, outline: 'none',
               }}
             />
           </div>
@@ -268,7 +268,7 @@ export default function UsersPage() {
               placeholder="john@sparkle.com"
               style={{
                 display: 'block', width: '100%', height: 40, borderRadius: 10,
-                border: '1px solid #E5E3DF', padding: '0 12px', fontSize: 14, outline: 'none',
+                border: '1px solid #E5E7EB', padding: '0 12px', fontSize: 14, outline: 'none',
               }}
             />
           </div>
@@ -282,7 +282,7 @@ export default function UsersPage() {
               onChange={e => setInviteRole(e.target.value as UserRole)}
               style={{
                 display: 'block', width: '100%', height: 40, borderRadius: 10,
-                border: '1px solid #E5E3DF', padding: '0 12px', fontSize: 14, outline: 'none',
+                border: '1px solid #E5E7EB', padding: '0 12px', fontSize: 14, outline: 'none',
                 cursor: 'pointer',
               }}
             >

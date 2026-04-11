@@ -135,7 +135,7 @@ export default function VendorsPage() {
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-[18px] font-bold text-navy-900">Vendors & Team</h1>
+        <h1 className="text-[18px] font-bold text-[#111827]">Vendors & Team</h1>
         <Button onClick={openNew}><Plus className="h-4 w-4" /> Add Record</Button>
       </div>
 
@@ -143,16 +143,16 @@ export default function VendorsPage() {
         <div className="border-b border-stone-100 px-4 py-3 flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-            <input className="w-full rounded-[10px] border border-stone-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-stone-400 focus:border-navy-900 focus:outline-none focus:ring-[3px] focus:ring-navy-900/[0.08]" placeholder="Search vendors & team..." value={search} onChange={e => setSearch(e.target.value)} />
+            <input className="w-full rounded-[10px] border border-stone-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-stone-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search vendors & team..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <div className="flex gap-1">
             {['All', ...ROLES].map(r => (
-              <button key={r} onClick={() => setRoleFilter(r)} className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${roleFilter === r ? 'bg-navy-900 text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}>{r}</button>
+              <button key={r} onClick={() => setRoleFilter(r)} className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${roleFilter === r ? 'bg-[#4F6CF7] text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}>{r}</button>
             ))}
           </div>
           <div className="flex gap-1">
             {['Active', 'Inactive', 'All'].map(s => (
-              <button key={s} onClick={() => setStatusFilter(s)} className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${statusFilter === s ? 'bg-navy-900 text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}>{s}</button>
+              <button key={s} onClick={() => setStatusFilter(s)} className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${statusFilter === s ? 'bg-[#4F6CF7] text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}>{s}</button>
             ))}
           </div>
         </div>
@@ -191,7 +191,7 @@ export default function VendorsPage() {
             <div className="flex gap-4">
               {['Company', 'Individual'].map(t => (
                 <label key={t} className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="record_type" value={t} checked={form.record_type === t} onChange={() => setForm(f => ({ ...f, record_type: t }))} className="accent-navy-900" />
+                  <input type="radio" name="record_type" value={t} checked={form.record_type === t} onChange={() => setForm(f => ({ ...f, record_type: t }))} className="accent-blue-600" />
                   <span className="text-[13px] font-medium">{t}</span>
                 </label>
               ))}
@@ -204,7 +204,7 @@ export default function VendorsPage() {
             <div className="flex gap-4">
               {ROLES.map(r => (
                 <label key={r} className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={hasRole(r)} onChange={() => toggleRole(r)} className="accent-navy-900 rounded" />
+                  <input type="checkbox" checked={hasRole(r)} onChange={() => toggleRole(r)} className="accent-blue-600 rounded" />
                   <span className="text-[13px] font-medium">{r}</span>
                 </label>
               ))}
@@ -249,8 +249,8 @@ export default function VendorsPage() {
 
           {/* === SUBCONTRACTOR FIELDS === */}
           {hasRole('Subcontractor') && (
-            <div className="border rounded-lg border-gold-500/30 bg-gold-100/30 p-4 space-y-3">
-              <h3 className="text-[12px] font-semibold uppercase tracking-[0.5px] text-gold-500">Subcontractor Details</h3>
+            <div className="border rounded-lg border-[#4F6CF7]/20 bg-[#EEF1FE]/30 p-4 space-y-3">
+              <h3 className="text-[12px] font-semibold uppercase tracking-[0.5px] text-[#4F6CF7]">Subcontractor Details</h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Select label="Trade" id="v-trade" value={form.trade} onChange={e => setForm(f => ({ ...f, trade: e.target.value }))} options={TRADES.map(t => ({ value: t, label: t }))} />
                 <Input label="EIN / Tax ID" id="v-ein" value={form.ein} onChange={e => setForm(f => ({ ...f, ein: e.target.value }))} />
@@ -261,7 +261,7 @@ export default function VendorsPage() {
                 <Input label="Rate ($)" id="v-rate-sub" type="number" step="0.01" value={form.pay_rate} onChange={e => setForm(f => ({ ...f, pay_rate: e.target.value }))} />
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={form.requires_1099} onChange={e => setForm(f => ({ ...f, requires_1099: e.target.checked }))} className="accent-navy-900 rounded" />
+                <input type="checkbox" checked={form.requires_1099} onChange={e => setForm(f => ({ ...f, requires_1099: e.target.checked }))} className="accent-blue-600 rounded" />
                 <span className="text-[13px] font-medium">Requires 1099</span>
               </label>
             </div>

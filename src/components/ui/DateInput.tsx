@@ -8,14 +8,12 @@ const MONTHS = [
 ]
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-/** Format YYYY-MM-DD → MM/DD/YYYY for display */
 function toDisplay(iso: string): string {
   if (!iso) return ''
   const [y, m, d] = iso.split('-')
   return `${m}/${d}/${y}`
 }
 
-/** Parse MM/DD/YYYY → YYYY-MM-DD */
 function toISO(display: string): string {
   const match = display.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
   if (!match) return ''
@@ -34,7 +32,7 @@ function firstDayOfWeek(year: number, month: number): number {
 interface Props {
   label?: string
   id?: string
-  value: string          // YYYY-MM-DD (ISO) — what gets stored
+  value: string
   onChange: (iso: string) => void
   required?: boolean
   placeholder?: string
@@ -47,7 +45,6 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
   const [viewMonth, setViewMonth] = useState(() => value ? parseInt(value.split('-')[1]) - 1 : new Date().getMonth())
   const ref = useRef<HTMLDivElement>(null)
 
-  // Sync display when value prop changes externally
   useEffect(() => {
     setInputText(toDisplay(value))
     if (value) {
@@ -57,7 +54,6 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
     }
   }, [value])
 
-  // Close on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
@@ -68,7 +64,6 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
 
   function handleInputChange(text: string) {
     setInputText(text)
-    // Auto-convert when full date typed
     const iso = toISO(text)
     if (iso) onChange(iso)
   }
@@ -80,7 +75,6 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
     } else if (!inputText) {
       onChange('')
     } else {
-      // Reset to last valid value
       setInputText(toDisplay(value))
     }
   }
@@ -106,7 +100,6 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
   const totalDays = daysInMonth(viewYear, viewMonth)
   const startDow = firstDayOfWeek(viewYear, viewMonth)
 
-  // Determine which day is selected in this view
   const selectedDay = (() => {
     if (!value) return -1
     const [sy, sm, sd] = value.split('-').map(Number)
@@ -122,7 +115,7 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
 
   return (
     <div className="space-y-1" ref={ref}>
-      {label && <label htmlFor={id} className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">{label}</label>}
+      {label && <label htmlFor={id} className="block text-[13px] font-medium text-[#374151]">{label}</label>}
       <div className="relative">
         <input
           id={id}
@@ -134,33 +127,33 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
           onBlur={handleInputBlur}
           onFocus={() => setOpen(true)}
           required={required}
-          className="block w-full h-[40px] rounded-[10px] border border-stone-200 bg-white px-3 pr-10 text-[14px] shadow-none placeholder:text-stone-400 transition-all duration-150 focus:border-navy-900 focus:outline-none focus:ring-[3px] focus:ring-navy-900/[0.08]"
+          className="block w-full h-[40px] rounded-[8px] border border-[#D1D5DB] bg-white px-3 pr-10 text-[14px] placeholder:text-[#9CA3AF] transition-all duration-150 focus:border-[#4F6CF7] focus:outline-none focus:shadow-[0_0_0_3px_rgba(79,108,247,0.12)]"
           autoComplete="off"
         />
         <button
           type="button"
           tabIndex={-1}
           onClick={() => setOpen(o => !o)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-stone-400 hover:text-stone-600"
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-[#9CA3AF] hover:text-[#6B7280]"
         >
           <Calendar size={16} strokeWidth={1.5} />
         </button>
 
         {open && (
-          <div className="absolute left-0 top-full z-50 mt-1 w-[280px] rounded-[16px] border border-black/[0.06] bg-white p-3 shadow-[0_8px_30px_rgba(0,0,0,0.1)]">
+          <div className="absolute left-0 top-full z-50 mt-1 w-[280px] rounded-[10px] border border-[#E5E7EB] bg-white p-3 shadow-[0_8px_24px_rgba(0,0,0,0.10)]">
             {/* Header */}
             <div className="mb-2 flex items-center justify-between">
-              <button type="button" onClick={prevMonth} className="rounded p-1 hover:bg-stone-100">
+              <button type="button" onClick={prevMonth} className="rounded p-1 hover:bg-[#F3F4F6]">
                 <ChevronLeft size={16} strokeWidth={1.5} />
               </button>
-              <span className="text-sm font-semibold">{MONTHS[viewMonth]} {viewYear}</span>
-              <button type="button" onClick={nextMonth} className="rounded p-1 hover:bg-stone-100">
+              <span className="text-sm font-semibold text-[#111827]">{MONTHS[viewMonth]} {viewYear}</span>
+              <button type="button" onClick={nextMonth} className="rounded p-1 hover:bg-[#F3F4F6]">
                 <ChevronRight size={16} strokeWidth={1.5} />
               </button>
             </div>
 
             {/* Day names */}
-            <div className="grid grid-cols-7 text-center text-[11px] font-medium text-stone-500">
+            <div className="grid grid-cols-7 text-center text-[11px] font-medium text-[#9CA3AF]">
               {DAYS.map(d => <div key={d} className="py-1">{d}</div>)}
             </div>
 
@@ -178,9 +171,9 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
                     onClick={() => selectDay(day)}
                     className={clsx(
                       'mx-auto flex h-8 w-8 items-center justify-center rounded-full text-xs transition-colors',
-                      isSelected && 'bg-navy-900 text-white font-bold',
-                      !isSelected && isToday && 'ring-1 ring-gold-500 text-navy-900 font-medium',
-                      !isSelected && !isToday && 'hover:bg-stone-100 text-stone-700',
+                      isSelected && 'bg-[#4F6CF7] text-white font-bold',
+                      !isSelected && isToday && 'ring-1 ring-[#4F6CF7] text-[#4F6CF7] font-medium',
+                      !isSelected && !isToday && 'hover:bg-[#F3F4F6] text-[#374151]',
                     )}
                   >
                     {day}
@@ -190,7 +183,7 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
             </div>
 
             {/* Today shortcut */}
-            <div className="mt-2 border-t border-stone-100 pt-2 text-center">
+            <div className="mt-2 border-t border-[#F3F4F6] pt-2 text-center">
               <button
                 type="button"
                 onClick={() => {
@@ -199,7 +192,7 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
                   onChange(iso)
                   setOpen(false)
                 }}
-                className="text-xs font-medium text-navy-900 hover:underline"
+                className="text-xs font-medium text-[#4F6CF7] hover:underline"
               >
                 Today
               </button>

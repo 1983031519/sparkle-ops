@@ -9,7 +9,7 @@ const TYPE_CONFIG: Record<SearchResult['type'], { icon: typeof Users; color: str
   job:      { icon: Briefcase,  color: '#7C3AED', label: 'Job' },
   estimate: { icon: FileText,   color: '#D97706', label: 'Estimate' },
   invoice:  { icon: Receipt,    color: '#059669', label: 'Invoice' },
-  project:  { icon: FolderOpen, color: '#0D1B3D', label: 'Project' },
+  project:  { icon: FolderOpen, color: '#4F6CF7', label: 'Project' },
   phase:    { icon: Layers,     color: '#0D6E6E', label: 'Phase' },
 }
 
@@ -73,7 +73,7 @@ export function GlobalSearch({ mobile = false }: { mobile?: boolean }) {
       <div ref={containerRef} style={{ position: 'relative' }}>
         {!open ? (
           <button onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 50) }} style={{ background: 'none', border: 'none', padding: 8, cursor: 'pointer' }}>
-            <Search size={20} strokeWidth={1.5} color="#0D1B3D" />
+            <Search size={20} strokeWidth={1.5} color="#374151" />
           </button>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -86,7 +86,7 @@ export function GlobalSearch({ mobile = false }: { mobile?: boolean }) {
                 onKeyDown={handleKey}
                 onFocus={() => setOpen(true)}
                 placeholder="Search..."
-                style={{ width: '100%', height: 36, borderRadius: 8, border: '1px solid #E5E3DF', paddingLeft: 34, paddingRight: 10, fontSize: 14, outline: 'none' }}
+                style={{ width: '100%', height: 36, borderRadius: 8, border: '1px solid #E5E7EB', paddingLeft: 34, paddingRight: 10, fontSize: 14, outline: 'none' }}
               />
             </div>
             <button onClick={() => { clear(); setOpen(false) }} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer' }}>

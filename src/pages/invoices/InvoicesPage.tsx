@@ -169,7 +169,7 @@ export default function InvoicesPage() {
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-[18px] font-bold text-navy-900">Invoices</h1>
+        <h1 className="text-[18px] font-bold text-[#111827]">Invoices</h1>
         <Button onClick={openNew}><Plus className="h-4 w-4" /> New Invoice</Button>
       </div>
 
@@ -177,7 +177,7 @@ export default function InvoicesPage() {
         <div className="border-b border-stone-100 px-4 py-3">
           <div className="relative max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-            <input className="w-full rounded-[10px] border border-stone-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-stone-400 focus:border-navy-900 focus:outline-none focus:ring-[3px] focus:ring-navy-900/[0.08]" placeholder="Search invoices..." value={search} onChange={e => setSearch(e.target.value)} />
+            <input className="w-full rounded-[10px] border border-stone-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-stone-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search invoices..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
         {loading ? <p className="p-6 text-sm text-stone-500">Loading...</p> : (
@@ -251,7 +251,7 @@ export default function InvoicesPage() {
               <div className="space-y-1.5">
                 {PAYMENT_METHOD_OPTIONS.map(m => (
                   <label key={m} className="flex items-center gap-2.5 cursor-pointer">
-                    <input type="radio" name="payment_method" value={m} checked={form.payment_method_used === m} onChange={() => setForm(f => ({ ...f, payment_method_used: m, payment_method_custom: m === 'Multiple' ? f.payment_method_custom : '' }))} className="accent-navy-900" />
+                    <input type="radio" name="payment_method" value={m} checked={form.payment_method_used === m} onChange={() => setForm(f => ({ ...f, payment_method_used: m, payment_method_custom: m === 'Multiple' ? f.payment_method_custom : '' }))} className="accent-blue-600" />
                     <span className="text-[13px]">
                       {m === 'Check' && `Check (payable to ${COMPANY.check_payable})`}
                       {m === 'ACH / Bank Transfer' && 'ACH / Bank Transfer'}
@@ -279,7 +279,7 @@ export default function InvoicesPage() {
                     ...f, has_deposit: checked,
                     deposit_received: checked && f.deposit_received === 0 ? Math.round(total * 50) / 100 : checked ? f.deposit_received : 0,
                   }))
-                }} className="accent-navy-900 rounded" />
+                }} className="accent-blue-600 rounded" />
                 <span className="text-[13px] font-medium">Deposit received</span>
               </label>
               {form.has_deposit && (
@@ -287,7 +287,7 @@ export default function InvoicesPage() {
                   <Input label="Deposit Amount ($)" id="inv-deposit" type="number" step="0.01" value={form.deposit_received} onChange={e => setForm(f => ({ ...f, deposit_received: Number(e.target.value) }))} />
                   <div className="space-y-1.5">
                     <label className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">Balance Due</label>
-                    <p className="h-[40px] flex items-center text-[18px] font-bold text-navy-900">{fmtCurrency(total - form.deposit_received)}</p>
+                    <p className="h-[40px] flex items-center text-[18px] font-bold text-[#111827]">{fmtCurrency(total - form.deposit_received)}</p>
                   </div>
                 </div>
               )}
@@ -388,7 +388,7 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
             <p style={{ fontSize: 11, color: '#666' }}>{COMPANY.phone} | {COMPANY.email}</p>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <h3 style={{ fontSize: 20, fontWeight: 700, color: '#1a2744', margin: 0 }}>INVOICE</h3>
+            <h3 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: 0 }}>INVOICE</h3>
             <p style={{ fontFamily: 'monospace', fontSize: 13, color: '#555', margin: '4px 0' }}>{inv.number}</p>
             <p style={{ fontSize: 12, color: '#666' }}>Date: {fmtDate(isoDatePart(inv.created_at))}</p>
             {inv.due_date && <p style={{ fontSize: 12, color: '#666' }}>Due: {fmtDate(inv.due_date)}</p>}
@@ -405,7 +405,7 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
           {client?.email && <p style={{ color: '#555', margin: '2px 0' }}>{client.email}</p>}
         </div>
 
-        {job?.re_line && <p style={{ marginBottom: 12 }}><span style={{ fontWeight: 600, color: '#1a2744' }}>RE:</span> {job.re_line}</p>}
+        {job?.re_line && <p style={{ marginBottom: 12 }}><span style={{ fontWeight: 600, color: '#111827' }}>RE:</span> {job.re_line}</p>}
 
         {/* Line Items */}
         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 12 }}>
@@ -427,14 +427,14 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
         <div style={{ marginLeft: 'auto', width: 280, textAlign: 'right', marginBottom: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}><span>Subtotal</span><span>${inv.subtotal.toFixed(2)}</span></div>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}><span>Tax (0%)</span><span>$0.00</span></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #1a2744', paddingTop: 4, marginTop: 4, fontSize: 15, fontWeight: 700, color: '#1a2744' }}><span>Total</span><span>${inv.total.toFixed(2)}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #111827', paddingTop: 4, marginTop: 4, fontSize: 15, fontWeight: 700, color: '#111827' }}><span>Total</span><span>${inv.total.toFixed(2)}</span></div>
           {depositAmt > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', color: '#16a34a' }}><span>Deposit Received</span><span>-${depositAmt.toFixed(2)}</span></div>}
-          {depositAmt > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #1a2744', paddingTop: 4, marginTop: 4, fontSize: 17, fontWeight: 700, color: '#1a2744' }}><span>Balance Due</span><span>${balanceDue.toFixed(2)}</span></div>}
+          {depositAmt > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #111827', paddingTop: 4, marginTop: 4, fontSize: 17, fontWeight: 700, color: '#111827' }}><span>Balance Due</span><span>${balanceDue.toFixed(2)}</span></div>}
         </div>
 
         {/* Payment */}
         <div style={{ background: '#f5f4f2', border: '1px solid #e8e6e2', borderRadius: 8, padding: 16, marginBottom: 16 }}>
-          <h4 style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 8 }}>Payment Information</h4>
+          <h4 style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 8 }}>Payment Information</h4>
           {method && <p style={{ color: '#333' }}>Payment Method: <strong>{method}</strong></p>}
           {inv.payment_terms && <p style={{ color: '#333' }}>Payment Terms: <strong>{inv.payment_terms}</strong></p>}
           {method && method.includes('Check') && <p style={{ fontSize: 11, color: '#888', marginTop: 6 }}>Check payable to: {COMPANY.check_payable}</p>}
@@ -442,18 +442,18 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
           {method && method.includes('ACH') && <p style={{ fontSize: 11, color: '#888' }}>ACH / Bank Transfer — contact office for details</p>}
         </div>
 
-        {inv.notes && <div style={{ marginBottom: 16 }}><h4 style={{ fontSize: 13, fontWeight: 600, color: '#1a2744', marginBottom: 4 }}>Notes</h4><p style={{ color: '#555' }}>{inv.notes}</p></div>}
+        {inv.notes && <div style={{ marginBottom: 16 }}><h4 style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Notes</h4><p style={{ color: '#555' }}>{inv.notes}</p></div>}
 
         {/* Signatures */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, marginTop: 40, paddingTop: 20, borderTop: '1px solid #e0e0e0' }}>
           <div>
             <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9a8f82', marginBottom: 40 }}>Authorized By</p>
-            <div style={{ borderTop: '1.5px solid #1a2744', marginBottom: 4 }} />
+            <div style={{ borderTop: '1.5px solid #111827', marginBottom: 4 }} />
             <p style={{ fontSize: 13, color: '#1a1a1a' }}>{COMPANY.signatory} — {COMPANY.legal_name}</p>
           </div>
           <div>
             <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9a8f82', marginBottom: 40 }}>Received By</p>
-            <div style={{ borderTop: '1.5px solid #1a2744', marginBottom: 4 }} />
+            <div style={{ borderTop: '1.5px solid #111827', marginBottom: 4 }} />
             <p style={{ fontSize: 13, color: '#1a1a1a' }}>Client Signature & Date</p>
           </div>
         </div>
