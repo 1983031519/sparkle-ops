@@ -23,9 +23,9 @@ export function Table<T extends { id: string }>({ columns, data, onRowClick, emp
     <div className="overflow-x-auto">
       <table className="min-w-full">
         <thead>
-          <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+          <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
             {columns.map(col => (
-              <th key={col.key} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 500, textTransform: 'none', letterSpacing: 0, color: '#9CA3AF' }}>
+              <th key={col.key} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 12, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6B7280' }}>
                 {col.header}
               </th>
             ))}
@@ -36,12 +36,12 @@ export function Table<T extends { id: string }>({ columns, data, onRowClick, emp
             <tr
               key={row.id}
               onClick={() => onRowClick?.(row)}
-              style={{ height: 44, borderBottom: '1px solid rgba(0,0,0,0.04)', cursor: onRowClick ? 'pointer' : 'default', transition: 'box-shadow 100ms ease-out' }}
-              onMouseEnter={e => { if (onRowClick) (e.currentTarget as HTMLTableRowElement).style.boxShadow = 'inset 2px 0 0 #0D1B3D' }}
-              onMouseLeave={e => { if (onRowClick) (e.currentTarget as HTMLTableRowElement).style.boxShadow = 'none' }}
+              style={{ borderBottom: '1px solid #F3F4F6', cursor: onRowClick ? 'pointer' : 'default', transition: 'background 80ms ease-out' }}
+              onMouseEnter={e => { if (onRowClick) (e.currentTarget as HTMLTableRowElement).style.background = '#F9FAFB' }}
+              onMouseLeave={e => { if (onRowClick) (e.currentTarget as HTMLTableRowElement).style.background = '' }}
             >
               {columns.map((col, i) => (
-                <td key={col.key} style={{ padding: '10px 16px', fontSize: 13, color: i === 0 ? '#0D1B3D' : '#4B5563', fontWeight: i === 0 ? 600 : 400 }} className={col.className}>
+                <td key={col.key} style={{ padding: '12px 16px', fontSize: 13, color: i === 0 ? '#111827' : '#6B7280', fontWeight: i === 0 ? 500 : 400 }} className={col.className}>
                   {col.render(row)}
                 </td>
               ))}

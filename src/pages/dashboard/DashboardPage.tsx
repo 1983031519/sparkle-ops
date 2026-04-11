@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { DollarSign, Users, Briefcase, FileText, FolderOpen, Package, AlertTriangle, ChevronLeft, ChevronRight, UserCheck } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { DollarSign, Users, Briefcase, FileText, FolderOpen, Package, AlertTriangle, ChevronLeft, ChevronRight, UserCheck, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react'
+import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { Badge, statusColor } from '@/components/ui/Badge'
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO } from 'date-fns'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO, subMonths } from 'date-fns'
 import { enUS } from 'date-fns/locale'
 import { fmtCurrency, fmtDateShort } from '@/lib/constants'
 import type { Job, Invoice } from '@/lib/database.types'
@@ -14,6 +14,11 @@ function useIsMobile() {
   return m
 }
 
+function pctChange(current: number, prev: number) {
+  if (prev === 0) return current > 0 ? 100 : 0
+  return Math.round(((current - prev) / prev) * 100)
+}
+
 export default function DashboardPage() {
   const [revenue, setRevenue] = useState(0)
   const [outstanding, setOutstanding] = useState(0)
@@ -22,6 +27,10 @@ export default function DashboardPage() {
   const [pendingEstimates, setPendingEstimates] = useState(0)
   const [activeVendors, setActiveVendors] = useState(0)
   const [activeProjects, setActiveProjects] = useState(0)
+  const [prevRevenue, setPrevRevenue] = useState(0)
+  const [prevOutstanding, setPrevOutstanding] = useState(0)
+  const [prevActiveJobs, setPrevActiveJobs] = useState(0)
+  const [prevClientCount, setPrevClientCount] = useState(0)
   const [jobs, setJobs] = useState<Job[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [lowStock, setLowStock] = useState<{ name: string; quantity: number; low_stock_threshold: number }[]>([])
@@ -33,15 +42,27 @@ export default function DashboardPage() {
   useEffect(() => { loadDashboard() }, [])
 
   async function loadDashboard() {
-    const [clientRes, jobRes, invRes, stockRes, clientsRes, estRes, vendorRes, projRes] = await Promise.all([
+    const now = new Date()
+    const thisMonthStart = startOfMonth(now).toISOString()
+    const prevMonthStart = startOfMonth(subMonths(now, 1)).toISOString()
+    const prevMonthEnd = endOfMonth(subMonths(now, 1)).toISOString()
+
+    const [clientRes, jobRes, invRes, stockRes, clientsRes, estRes, vendorRes, projRes,
+           prevInvRes, prevJobRes, prevClientRes] = await Promise.all([
       supabase.from('clients').select('id', { count: 'exact', head: true }),
       supabase.from('jobs').select('id, client_id, title, status, start_date, division, created_at').order('created_at', { ascending: false }),
-      supabase.from('invoices').select('id, client_id, status, total, balance_due, number, created_at').order('created_at', { ascending: false }),
+      supabase.from('invoices').select('id, client_id, status, total, balance_due, number, due_date, created_at').order('created_at', { ascending: false }),
       supabase.from('inventory').select('name, quantity, low_stock_threshold'),
       supabase.from('clients').select('id, name'),
       supabase.from('estimates').select('status'),
       supabase.from('suppliers').select('status'),
       supabase.from('projects').select('status'),
+      // prev month invoices for comparison
+      supabase.from('invoices').select('status, total').gte('created_at', prevMonthStart).lte('created_at', prevMonthEnd),
+      // prev month jobs
+      supabase.from('jobs').select('status').gte('created_at', prevMonthStart).lte('created_at', prevMonthEnd),
+      // client count at start of this month (rough: total minus this month)
+      supabase.from('clients').select('id', { count: 'exact', head: true }).lt('created_at', thisMonthStart),
     ])
 
     const allJobs = (jobRes.data ?? []) as Job[]
@@ -51,85 +72,87 @@ export default function DashboardPage() {
     setClientMap(Object.fromEntries((clientsRes.data ?? []).map((c: { id: string; name: string }) => [c.id, c.name])))
 
     const invData = allInvoices as { total: number; status: string }[]
-    setRevenue(invData.filter(i => i.status === 'Paid').reduce((s, i) => s + (i.total || 0), 0))
-    setOutstanding(invData.filter(i => i.status === 'Unpaid' || i.status === 'Overdue').reduce((s, i) => s + (i.total || 0), 0))
-    setClientCount(clientRes.count ?? 0)
-    setActiveJobs(allJobs.filter(j => j.status === 'In Progress' || j.status === 'Scheduled').length)
+    const rev = invData.filter(i => i.status === 'Paid').reduce((s, i) => s + (i.total || 0), 0)
+    const out = invData.filter(i => i.status === 'Unpaid' || i.status === 'Overdue').reduce((s, i) => s + (i.total || 0), 0)
+    const cc = clientRes.count ?? 0
+    const aj = allJobs.filter(j => j.status === 'In Progress' || j.status === 'Scheduled').length
+
+    setRevenue(rev)
+    setOutstanding(out)
+    setClientCount(cc)
+    setActiveJobs(aj)
     setPendingEstimates(((estRes.data ?? []) as { status: string }[]).filter(e => e.status === 'Draft' || e.status === 'Sent').length)
     setActiveVendors(((vendorRes.data ?? []) as { status: string }[]).filter(v => (v.status ?? 'Active') === 'Active').length)
     setActiveProjects(((projRes.data ?? []) as { status: string }[]).filter(p => p.status === 'Draft' || p.status === 'Sent' || p.status === 'In Progress').length)
+
+    // prev month comparisons
+    const prevInv = (prevInvRes.data ?? []) as { total: number; status: string }[]
+    setPrevRevenue(prevInv.filter(i => i.status === 'Paid').reduce((s, i) => s + (i.total || 0), 0))
+    setPrevOutstanding(prevInv.filter(i => i.status === 'Unpaid' || i.status === 'Overdue').reduce((s, i) => s + (i.total || 0), 0))
+    setPrevActiveJobs(((prevJobRes.data ?? []) as { status: string }[]).filter(j => j.status === 'In Progress' || j.status === 'Scheduled').length)
+    setPrevClientCount(prevClientRes.count ?? 0)
 
     const items = (stockRes.data ?? []) as { name: string; quantity: number; low_stock_threshold: number }[]
     setLowStock(items.filter(i => i.quantity <= i.low_stock_threshold))
   }
 
-  /* ─── MOBILE APP LAUNCHER ─── */
+  /* ─── MOBILE ─── */
   if (isMobile) {
     const today = format(new Date(), 'EEEE, MMMM d', { locale: enUS })
     const modules = [
-      { icon: FileText, label: 'Estimates', value: String(pendingEstimates), sub: 'pending', to: '/estimates', color: '#2563EB' },
-      { icon: Briefcase, label: 'Jobs', value: String(activeJobs), sub: 'active', to: '/jobs', color: '#7C3AED' },
-      { icon: DollarSign, label: 'Invoices', value: fmtCurrency(outstanding), sub: 'unpaid', to: '/invoices', color: '#D97706' },
-      { icon: FolderOpen, label: 'Projects', value: String(activeProjects), sub: 'active', to: '/projects', color: '#0D1B3D' },
-      { icon: Users, label: 'Clients', value: String(clientCount), sub: 'total', to: '/clients', color: '#6B7280' },
-      { icon: UserCheck, label: 'Vendors & Team', value: String(activeVendors), sub: 'active', to: '/vendors', color: '#16A34A' },
-      { icon: Package, label: 'Inventory', value: lowStock.length > 0 ? String(lowStock.length) : '0', sub: lowStock.length > 0 ? 'low stock' : 'all good', to: '/inventory', color: lowStock.length > 0 ? '#E11D48' : '#6B7280' },
+      { icon: FileText,  label: 'Estimates',     value: String(pendingEstimates), sub: 'pending',   to: '/estimates', color: '#4F6CF7' },
+      { icon: Briefcase, label: 'Jobs',           value: String(activeJobs),      sub: 'active',    to: '/jobs',      color: '#7C3AED' },
+      { icon: DollarSign,label: 'Invoices',       value: fmtCurrency(outstanding),sub: 'unpaid',    to: '/invoices',  color: '#F59E0B' },
+      { icon: FolderOpen,label: 'Projects',       value: String(activeProjects),  sub: 'active',    to: '/projects',  color: '#0EA5E9' },
+      { icon: Users,     label: 'Clients',        value: String(clientCount),     sub: 'total',     to: '/clients',   color: '#6B7280' },
+      { icon: UserCheck, label: 'Vendors & Team', value: String(activeVendors),   sub: 'active',    to: '/vendors',   color: '#10B981' },
+      { icon: Package,   label: 'Inventory',      value: lowStock.length > 0 ? String(lowStock.length) : '✓', sub: lowStock.length > 0 ? 'low stock' : 'all good', to: '/inventory', color: lowStock.length > 0 ? '#EF4444' : '#10B981' },
     ]
 
     return (
-      <div style={{ background: '#FAFAF7', minHeight: '100vh' }}>
-        {/* Navy header */}
-        <div style={{
-          background: '#0D1B3D', padding: '24px 20px 28px',
-          borderRadius: '0 0 24px 24px', color: 'white',
-        }}>
-          <img src="/logo-white.png" alt="Sparkle" style={{ height: 24, width: 'auto', marginBottom: 16, opacity: 0.7 }} />
-          <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>Welcome back, Oscar!</h1>
-          <p style={{ fontSize: 13, color: '#C8A96E' }}>{today}</p>
-
-          {/* KPI pills */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+      <div style={{ background: '#F8F9FC', minHeight: '100vh' }}>
+        <div style={{ background: 'white', borderBottom: '1px solid #E5E7EB', padding: '20px 20px 24px' }}>
+          <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{today}</p>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 16 }}>Good morning, Oscar 👋</h1>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
             {[
               { label: 'Revenue', value: fmtCurrency(revenue) },
               { label: 'Outstanding', value: fmtCurrency(outstanding) },
               { label: 'Active Jobs', value: String(activeJobs) },
             ].map(k => (
-              <div key={k.label} style={{
-                flex: 1, background: 'rgba(255,255,255,0.12)', borderRadius: 12, padding: '10px 8px', textAlign: 'center',
-              }}>
-                <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: 'rgba(255,255,255,0.5)', marginBottom: 2 }}>{k.label}</p>
-                <p style={{ fontSize: 15, fontWeight: 700, color: 'white', fontVariantNumeric: 'tabular-nums' }}>{k.value}</p>
+              <div key={k.label} style={{ background: '#F8F9FC', borderRadius: 10, padding: '12px 10px', border: '1px solid #E5E7EB', textAlign: 'center' }}>
+                <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9CA3AF', marginBottom: 4 }}>{k.label}</p>
+                <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', fontVariantNumeric: 'tabular-nums' }}>{k.value}</p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Low stock alert */}
         {lowStock.length > 0 && (
-          <div style={{ margin: '16px 16px 0', background: '#FEF9C3', borderRadius: 12, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <AlertTriangle size={16} strokeWidth={1.5} color="#B45309" />
+          <div style={{ margin: '12px 16px 0', background: '#FFFBEB', borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #FDE68A' }}>
+            <AlertTriangle size={14} strokeWidth={2} color="#F59E0B" />
             <p style={{ fontSize: 12, color: '#92400E' }}><strong>Low stock:</strong> {lowStock.length} item{lowStock.length > 1 ? 's' : ''}</p>
           </div>
         )}
 
-        {/* Module grid */}
-        <div style={{ padding: '20px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div style={{ padding: '16px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {modules.map(mod => (
             <button
               key={mod.label}
               onClick={() => navigate(mod.to)}
               style={{
-                background: 'white', borderRadius: 16, padding: 16, border: 'none',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.06)', cursor: 'pointer',
-                textAlign: 'left', transition: 'transform 150ms',
-                display: 'flex', flexDirection: 'column', gap: 8,
+                background: 'white', borderRadius: 12, padding: 16, border: '1px solid #E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.05)', cursor: 'pointer',
+                textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 8,
               }}
             >
-              <mod.icon size={28} strokeWidth={1.5} color={mod.color} />
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: mod.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <mod.icon size={18} strokeWidth={1.75} color={mod.color} />
+              </div>
               <div>
-                <p style={{ fontSize: 14, fontWeight: 600, color: '#0D1B3D' }}>{mod.label}</p>
-                <p style={{ fontSize: 18, fontWeight: 700, color: '#0D1B3D', fontVariantNumeric: 'tabular-nums', marginTop: 2 }}>{mod.value}</p>
-                <p style={{ fontSize: 12, color: '#9CA3AF', marginTop: 1 }}>{mod.sub}</p>
+                <p style={{ fontSize: 12, fontWeight: 500, color: '#6B7280' }}>{mod.label}</p>
+                <p style={{ fontSize: 18, fontWeight: 700, color: '#111827', fontVariantNumeric: 'tabular-nums', marginTop: 2 }}>{mod.value}</p>
+                <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 1 }}>{mod.sub}</p>
               </div>
             </button>
           ))}
@@ -138,12 +161,24 @@ export default function DashboardPage() {
     )
   }
 
-  /* ─── DESKTOP DASHBOARD (unchanged) ─── */
+  /* ─── DESKTOP ─── */
   const kpis = [
-    { label: 'Revenue', value: fmtCurrency(revenue), accent: true },
-    { label: 'Outstanding', value: fmtCurrency(outstanding), accent: false },
-    { label: 'Total Clients', value: String(clientCount), accent: false },
-    { label: 'Active Jobs', value: String(activeJobs), accent: false },
+    {
+      label: 'Revenue', value: fmtCurrency(revenue), icon: DollarSign, iconColor: '#4F6CF7', iconBg: '#EEF1FE',
+      pct: pctChange(revenue, prevRevenue), pctLabel: 'vs last month',
+    },
+    {
+      label: 'Outstanding', value: fmtCurrency(outstanding), icon: FileText, iconColor: '#F59E0B', iconBg: '#FFFBEB',
+      pct: pctChange(outstanding, prevOutstanding), pctLabel: 'vs last month', invertSign: true,
+    },
+    {
+      label: 'Total Clients', value: String(clientCount), icon: Users, iconColor: '#10B981', iconBg: '#ECFDF5',
+      pct: pctChange(clientCount, prevClientCount), pctLabel: 'vs last month',
+    },
+    {
+      label: 'Active Jobs', value: String(activeJobs), icon: Briefcase, iconColor: '#8B5CF6', iconBg: '#EDE9FE',
+      pct: pctChange(activeJobs, prevActiveJobs), pctLabel: 'vs last month',
+    },
   ]
 
   const monthStart = startOfMonth(currentMonth)
@@ -152,77 +187,126 @@ export default function DashboardPage() {
   const startDow = monthStart.getDay()
   const scheduledJobs = jobs.filter(j => j.start_date)
 
-  return (
-    <div style={{ padding: 32, maxWidth: 1200, margin: '0 auto' }}>
-      <p style={{ fontSize: 13, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>Overview</p>
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
-        {kpis.map(kpi => (
-          <div key={kpi.label} style={{
-            background: 'white', borderRadius: 16, padding: 28,
-            border: '1px solid rgba(0,0,0,0.06)',
-            borderBottom: kpi.accent ? '3px solid #C8A96E' : '1px solid rgba(0,0,0,0.06)',
-          }}>
-            <p style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1.5, color: '#9CA3AF', marginBottom: 8 }}>{kpi.label}</p>
-            <p style={{ fontSize: 36, fontWeight: 700, color: '#0D1B3D', lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>{kpi.value}</p>
-          </div>
-        ))}
+  return (
+    <div style={{ padding: '28px 32px', maxWidth: 1280, margin: '0 auto' }}>
+      {/* Greeting */}
+      <div style={{ marginBottom: 28 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: '#111827' }}>{greeting}, Oscar 👋</h2>
+        <p style={{ fontSize: 14, color: '#6B7280', marginTop: 4 }}>Here's what's happening with your business today.</p>
       </div>
 
+      {/* KPI cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
+        {kpis.map(kpi => {
+          const positive = kpi.invertSign ? kpi.pct <= 0 : kpi.pct >= 0
+          const KpiIcon = kpi.icon
+          return (
+            <div key={kpi.label} style={{
+              background: 'white', borderRadius: 10, padding: '20px 24px',
+              border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6B7280' }}>{kpi.label}</p>
+                <div style={{ width: 34, height: 34, borderRadius: 8, background: kpi.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <KpiIcon size={16} strokeWidth={2} color={kpi.iconColor} />
+                </div>
+              </div>
+              <p style={{ fontSize: 28, fontWeight: 700, color: '#111827', lineHeight: 1.1, fontVariantNumeric: 'tabular-nums', marginBottom: 8 }}>{kpi.value}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                {positive
+                  ? <TrendingUp size={13} color="#10B981" />
+                  : <TrendingDown size={13} color="#EF4444" />
+                }
+                <span style={{ fontSize: 12, fontWeight: 600, color: positive ? '#059669' : '#DC2626' }}>
+                  {kpi.pct > 0 ? '+' : ''}{kpi.pct}%
+                </span>
+                <span style={{ fontSize: 12, color: '#9CA3AF' }}>{kpi.pctLabel}</span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Low stock alert */}
       {lowStock.length > 0 && (
-        <div style={{ background: '#FEF9C3', borderRadius: 12, padding: '16px 20px', marginBottom: 32, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <AlertTriangle style={{ width: 18, height: 18, color: '#B45309', flexShrink: 0 }} />
-          <p style={{ fontSize: 13, color: '#92400E' }}><strong>Low stock:</strong> {lowStock.map(i => `${i.name} (${i.quantity} left)`).join(' · ')}</p>
+        <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 10, padding: '12px 16px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <AlertTriangle style={{ width: 16, height: 16, color: '#F59E0B', flexShrink: 0 }} />
+          <p style={{ fontSize: 13, color: '#92400E' }}><strong>Low stock alert:</strong> {lowStock.map(i => `${i.name} (${i.quantity} left)`).join(' · ')}</p>
         </div>
       )}
 
-      <p style={{ fontSize: 13, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>Recent Activity</p>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 32 }}>
-        <div>
-          <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 12 }}>Jobs</p>
-          {jobs.length === 0 ? <p style={{ fontSize: 13, color: '#9CA3AF', padding: '20px 0' }}>No jobs yet.</p> : (
-            <div>{jobs.slice(0, 6).map(job => (
-              <div key={job.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: '1px solid #F3F4F6' }}>
-                <div>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: '#0D1B3D' }}>{clientMap[job.client_id] ?? 'Unknown'}</p>
-                  <p style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2 }}>{job.title}</p>
+      {/* Recent Activity + Schedule */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+        {/* Recent Jobs */}
+        <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #F3F4F6' }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Recent Jobs</p>
+            <Link to="/jobs" style={{ fontSize: 12, fontWeight: 500, color: '#4F6CF7', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+              See all <ArrowRight size={12} />
+            </Link>
+          </div>
+          {jobs.length === 0
+            ? <p style={{ fontSize: 13, color: '#9CA3AF', padding: '24px 20px' }}>No jobs yet.</p>
+            : jobs.slice(0, 6).map(job => (
+              <div key={job.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid #F9FAFB' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: job.status === 'In Progress' ? '#3B82F6' : job.status === 'Completed' ? '#10B981' : job.status === 'Cancelled' ? '#EF4444' : '#9CA3AF', flexShrink: 0 }} />
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{clientMap[job.client_id] ?? 'Unknown'}</p>
+                    <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{job.title}</p>
+                  </div>
                 </div>
                 <Badge color={statusColor(job.status)}>{job.status}</Badge>
               </div>
-            ))}</div>
-          )}
+            ))
+          }
         </div>
-        <div>
-          <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 12 }}>Invoices</p>
-          {invoices.length === 0 ? <p style={{ fontSize: 13, color: '#9CA3AF', padding: '20px 0' }}>No invoices yet.</p> : (
-            <div>{invoices.slice(0, 6).map(inv => (
-              <div key={inv.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: '1px solid #F3F4F6' }}>
-                <div>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: '#0D1B3D' }}>{clientMap[inv.client_id] ?? 'Unknown'}</p>
-                  <p style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2 }}>{inv.number} · {fmtDateShort(inv.due_date)}</p>
+
+        {/* Recent Invoices */}
+        <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #F3F4F6' }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Recent Invoices</p>
+            <Link to="/invoices" style={{ fontSize: 12, fontWeight: 500, color: '#4F6CF7', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+              See all <ArrowRight size={12} />
+            </Link>
+          </div>
+          {invoices.length === 0
+            ? <p style={{ fontSize: 13, color: '#9CA3AF', padding: '24px 20px' }}>No invoices yet.</p>
+            : invoices.slice(0, 6).map(inv => (
+              <div key={inv.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid #F9FAFB' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: inv.status === 'Paid' ? '#10B981' : inv.status === 'Overdue' ? '#EF4444' : '#F59E0B', flexShrink: 0 }} />
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{clientMap[inv.client_id] ?? 'Unknown'}</p>
+                    <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 1 }}>{inv.number} · {fmtDateShort(inv.due_date)}</p>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Badge color={statusColor(inv.status)}>{inv.status}</Badge>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#0D1B3D', minWidth: 80, textAlign: 'right' }}>{fmtCurrency(inv.total)}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#111827', minWidth: 72, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(inv.total)}</span>
                 </div>
               </div>
-            ))}</div>
-          )}
+            ))
+          }
         </div>
       </div>
 
-      <p style={{ fontSize: 13, fontWeight: 500, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>Schedule</p>
-
-      <div style={{ background: 'white', borderRadius: 16, border: '1px solid rgba(0,0,0,0.06)', padding: 24 }}>
+      {/* Schedule */}
+      <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', padding: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <button onClick={() => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() - 1))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 6, color: '#6B7280' }}><ChevronLeft style={{ width: 20, height: 20 }} /></button>
-          <span style={{ fontSize: 15, fontWeight: 600, color: '#0D1B3D' }}>{format(currentMonth, 'MMMM yyyy', { locale: enUS })}</span>
-          <button onClick={() => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() + 1))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 6, color: '#6B7280' }}><ChevronRight style={{ width: 20, height: 20 }} /></button>
+          <p style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Schedule</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button onClick={() => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() - 1))} style={{ background: 'none', border: '1px solid #E5E7EB', borderRadius: 6, cursor: 'pointer', padding: '4px 8px', color: '#6B7280', display: 'flex', alignItems: 'center' }}><ChevronLeft style={{ width: 16, height: 16 }} /></button>
+            <span style={{ fontSize: 14, fontWeight: 600, color: '#111827', minWidth: 120, textAlign: 'center' }}>{format(currentMonth, 'MMMM yyyy', { locale: enUS })}</span>
+            <button onClick={() => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() + 1))} style={{ background: 'none', border: '1px solid #E5E7EB', borderRadius: 6, cursor: 'pointer', padding: '4px 8px', color: '#6B7280', display: 'flex', alignItems: 'center' }}><ChevronRight style={{ width: 16, height: 16 }} /></button>
+          </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', marginBottom: 4 }}>
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-            <div key={d} style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 0.5, padding: '8px 0' }}>{d}</div>
+            <div key={d} style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '6px 0' }}>{d}</div>
           ))}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
@@ -231,13 +315,18 @@ export default function DashboardPage() {
             const dayJobs = scheduledJobs.filter(j => j.start_date && isSameDay(parseISO(j.start_date), day))
             const isToday = isSameDay(day, new Date())
             return (
-              <div key={day.toISOString()} style={{ minHeight: 64, padding: '6px 4px', borderRadius: 8 }}>
-                <div style={{ textAlign: 'center', marginBottom: 4 }}>
-                  <span style={{ fontSize: 13, fontWeight: isToday ? 700 : 400, color: isToday ? '#0D1B3D' : '#6B7280' }}>{format(day, 'd', { locale: enUS })}</span>
-                  {isToday && <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#0D1B3D', margin: '2px auto 0' }} />}
+              <div key={day.toISOString()} style={{ minHeight: 60, padding: '4px 3px', borderRadius: 6 }}>
+                <div style={{ textAlign: 'center', marginBottom: 3 }}>
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    width: 26, height: 26, borderRadius: '50%',
+                    fontSize: 13, fontWeight: isToday ? 700 : 400,
+                    background: isToday ? '#4F6CF7' : 'transparent',
+                    color: isToday ? 'white' : '#374151',
+                  }}>{format(day, 'd', { locale: enUS })}</span>
                 </div>
                 {dayJobs.slice(0, 2).map(j => (
-                  <div key={j.id} style={{ fontSize: 10, background: 'rgba(200,169,110,0.15)', color: '#92700A', borderRadius: 4, padding: '1px 4px', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{j.title}</div>
+                  <div key={j.id} style={{ fontSize: 10, background: '#EEF1FE', color: '#3451D1', borderRadius: 4, padding: '1px 4px', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{j.title}</div>
                 ))}
                 {dayJobs.length > 2 && <div style={{ fontSize: 10, color: '#9CA3AF' }}>+{dayJobs.length - 2}</div>}
               </div>

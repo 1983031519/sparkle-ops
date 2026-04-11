@@ -112,13 +112,13 @@ export function GlobalSearch({ mobile = false }: { mobile?: boolean }) {
         onFocus={() => setOpen(true)}
         placeholder="Search clients, jobs, invoices..."
         style={{
-          width: '100%', height: 38, borderRadius: 10,
-          border: '1px solid #E5E3DF', paddingLeft: 36, paddingRight: 36,
-          fontSize: 13, outline: 'none', background: 'white',
+          width: '100%', height: 36, borderRadius: 8,
+          border: '1px solid #D1D5DB', paddingLeft: 36, paddingRight: 36,
+          fontSize: 13, outline: 'none', background: '#F9FAFB',
           transition: 'border-color 150ms, box-shadow 150ms',
         }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = '#C8A96E40' }}
-        onMouseLeave={e => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = '#E5E3DF' }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = '#4F6CF7' }}
+        onMouseLeave={e => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = '#D1D5DB' }}
       />
       {query && (
         <button onClick={() => { clear(); inputRef.current?.focus() }} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
@@ -158,18 +158,18 @@ function Dropdown({ results, loading, activeIdx, onSelect }: { results: SearchRe
             style={{
               display: 'flex', alignItems: 'center', gap: 12, width: '100%',
               padding: '10px 16px', border: 'none', cursor: 'pointer', textAlign: 'left',
-              background: i === activeIdx ? '#F5F4F2' : 'transparent',
+              background: i === activeIdx ? '#F3F4F6' : 'transparent',
               borderBottom: i < results.length - 1 ? '1px solid #F9FAFB' : 'none',
               transition: 'background 100ms',
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#F5F4F2' }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#F3F4F6' }}
             onMouseLeave={e => { if (i !== activeIdx) e.currentTarget.style.background = 'transparent' }}
           >
             <div style={{ width: 32, height: 32, borderRadius: 8, background: cfg.color + '10', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Icon size={16} strokeWidth={1.5} color={cfg.color} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#0D1B3D', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.primary}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.primary}</div>
               {r.secondary && <div style={{ fontSize: 11, color: '#9CA3AF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.secondary}</div>}
               {r.snippet && <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontStyle: 'italic' }}>{r.snippet}</div>}
             </div>

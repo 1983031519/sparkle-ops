@@ -1,29 +1,64 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Users, Briefcase, FileText, FolderOpen, Receipt, UsersRound, Package, BarChart3, Shield, Bot, MessageSquare, LogOut, Menu, X } from 'lucide-react'
+import {
+  LayoutDashboard, Users, Briefcase, FileText, FolderOpen, Receipt,
+  UsersRound, Package, BarChart3, Shield, Bot, MessageSquare,
+  LogOut, Menu, X, Bell, ChevronDown,
+} from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { GlobalSearch } from '@/components/GlobalSearch'
 import { useChatContext } from '@/contexts/ChatContext'
 
-const NAVY = '#0D1B3D'
-
-const allNav = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard', module: 'dashboard' },
-  { to: '/clients', icon: Users, label: 'Clients', module: 'clients' },
-  { to: '/jobs', icon: Briefcase, label: 'Jobs', module: 'jobs' },
-  { to: '/estimates', icon: FileText, label: 'Estimates', module: 'estimates' },
-  { to: '/projects', icon: FolderOpen, label: 'Projects', module: 'projects' },
-  { to: '/invoices', icon: Receipt, label: 'Invoices', module: 'invoices' },
-  { to: '/vendors', icon: UsersRound, label: 'Vendors & Team', module: 'vendors' },
-  { to: '/inventory', icon: Package, label: 'Inventory', module: 'inventory' },
-  { to: '/reports', icon: BarChart3, label: 'Reports', module: 'reports' },
-  { to: '/rocko', icon: Bot, label: 'Rocko AI', module: 'rocko' },
-  { to: '/users', icon: Shield, label: 'Users', module: 'users' },
-  { to: '/chat', icon: MessageSquare, label: 'Chat', module: 'chat' },
+/* ── Nav structure with section labels ── */
+const navGroups = [
+  {
+    label: null,
+    items: [
+      { to: '/', icon: LayoutDashboard, label: 'Dashboard', module: 'dashboard' },
+    ],
+  },
+  {
+    label: 'OPERATIONS',
+    items: [
+      { to: '/clients',   icon: Users,      label: 'Clients',       module: 'clients'   },
+      { to: '/jobs',      icon: Briefcase,  label: 'Jobs',          module: 'jobs'      },
+      { to: '/estimates', icon: FileText,   label: 'Estimates',     module: 'estimates' },
+      { to: '/projects',  icon: FolderOpen, label: 'Projects',      module: 'projects'  },
+      { to: '/invoices',  icon: Receipt,    label: 'Invoices',      module: 'invoices'  },
+    ],
+  },
+  {
+    label: 'MANAGEMENT',
+    items: [
+      { to: '/vendors',   icon: UsersRound, label: 'Vendors & Team', module: 'vendors'   },
+      { to: '/inventory', icon: Package,    label: 'Inventory',      module: 'inventory' },
+    ],
+  },
+  {
+    label: 'ANALYTICS',
+    items: [
+      { to: '/reports', icon: BarChart3, label: 'Reports', module: 'reports' },
+    ],
+  },
+  {
+    label: 'SYSTEM',
+    items: [
+      { to: '/rocko', icon: Bot,           label: 'Rocko AI', module: 'rocko' },
+      { to: '/users', icon: Shield,        label: 'Users',    module: 'users' },
+      { to: '/chat',  icon: MessageSquare, label: 'Chat',     module: 'chat'  },
+    ],
+  },
 ]
 
-// Bottom nav: derived inside component from visibleNav
-// bottomNav derived inside Layout from visibleNav
+const allNavFlat = navGroups.flatMap(g => g.items)
+
+/* ── Page title map ── */
+const pageTitles: Record<string, string> = {
+  '/': 'Dashboard', '/clients': 'Clients', '/jobs': 'Jobs',
+  '/estimates': 'Estimates', '/projects': 'Projects', '/invoices': 'Invoices',
+  '/vendors': 'Vendors & Team', '/inventory': 'Inventory', '/reports': 'Reports',
+  '/rocko': 'Rocko AI', '/users': 'Users', '/chat': 'Team Chat',
+}
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(false)
@@ -36,41 +71,157 @@ function useIsMobile() {
   return mobile
 }
 
+/* ── Avatar + dropdown ── */
+function UserMenu({ email, onSignOut }: { email: string; onSignOut: () => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const initial = (email?.[0] ?? 'U').toUpperCase()
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          background: 'none', border: 'none', cursor: 'pointer',
+          padding: '4px 8px', borderRadius: 8,
+          transition: 'background 100ms',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = '#F3F4F6' }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+      >
+        <div style={{
+          width: 32, height: 32, borderRadius: '50%',
+          background: '#4F6CF7', color: 'white',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 13, fontWeight: 600, flexShrink: 0,
+        }}>
+          {initial}
+        </div>
+        <ChevronDown size={14} color="#6B7280" />
+      </button>
+      {open && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 6px)', right: 0,
+          background: 'white', border: '1px solid #E5E7EB', borderRadius: 10,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.10)', zIndex: 999, minWidth: 200,
+          padding: '6px',
+        }}>
+          <div style={{ padding: '8px 12px', borderBottom: '1px solid #F3F4F6', marginBottom: 4 }}>
+            <p style={{ fontSize: 11, color: '#9CA3AF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email}</p>
+          </div>
+          <button
+            onClick={() => { setOpen(false); onSignOut() }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+              padding: '8px 12px', border: 'none', cursor: 'pointer', borderRadius: 6,
+              fontSize: 13, fontWeight: 500, color: '#374151', background: 'transparent',
+              transition: 'background 100ms',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#F9FAFB' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+          >
+            <LogOut size={14} strokeWidth={1.5} color="#6B7280" />
+            Sign Out
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ── Desktop nav item ── */
+function NavItem({ to, icon: Icon, label, isChat, chatBadge, canAccess }: {
+  to: string; icon: typeof LayoutDashboard; label: string;
+  isChat: boolean; chatBadge: number; canAccess: boolean
+}) {
+  if (!canAccess) return null
+  return (
+    <NavLink
+      key={to} to={to} end={to === '/'}
+      style={({ isActive }) => ({
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '8px 12px', borderRadius: 8,
+        fontSize: 13, fontWeight: isActive ? 600 : 500,
+        textDecoration: 'none', transition: 'all 100ms ease',
+        color: isActive ? '#4F6CF7' : '#6B7280',
+        background: isActive ? '#EEF1FE' : 'transparent',
+        boxShadow: isActive ? 'inset 3px 0 0 #4F6CF7' : 'none',
+      })}
+      onMouseEnter={e => {
+        const el = e.currentTarget
+        if (!el.style.background.includes('EEF1FE')) {
+          el.style.background = '#F9FAFB'
+          el.style.color = '#374151'
+        }
+      }}
+      onMouseLeave={e => {
+        const el = e.currentTarget
+        if (!el.style.background.includes('EEF1FE')) {
+          el.style.background = 'transparent'
+          el.style.color = '#6B7280'
+        }
+      }}
+    >
+      <Icon size={16} strokeWidth={1.75} />
+      {isChat ? (
+        <>
+          <span style={{ flex: 1 }}>{label}</span>
+          {chatBadge > 0 && (
+            <span style={{
+              background: '#EF4444', color: 'white',
+              fontSize: 10, fontWeight: 700, lineHeight: 1,
+              padding: '3px 6px', borderRadius: 99, minWidth: 18, textAlign: 'center',
+            }}>
+              {chatBadge > 99 ? '99+' : chatBadge}
+            </span>
+          )}
+        </>
+      ) : label}
+    </NavLink>
+  )
+}
+
 export function Layout() {
   const { user, signOut, canAccessModule } = useAuth()
   const { unreadCount } = useChatContext()
   const isMobile = useIsMobile()
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const visibleNav = allNav.filter(n => canAccessModule(n.module))
-  const bottomNav = visibleNav.slice(0, 5)
+  const visibleNavFlat = allNavFlat.filter(n => canAccessModule(n.module))
+  const bottomNav = visibleNavFlat.slice(0, 5)
   const location = useLocation()
-  // Don't show badge while actively viewing chat
   const chatBadge = location.pathname === '/chat' ? 0 : unreadCount
+  const pageTitle = pageTitles[location.pathname] ?? 'Sparkle Ops'
 
-  // Close drawer on navigation
   useEffect(() => { setDrawerOpen(false) }, [location.pathname])
 
   /* ─── MOBILE ─── */
   if (isMobile) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        {/* Top bar */}
         <header className="no-print" style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           height: 56, padding: '0 16px', background: 'white',
-          borderBottom: '1px solid #F3F4F6', position: 'sticky', top: 0, zIndex: 40,
+          borderBottom: '1px solid #E5E7EB', position: 'sticky', top: 0, zIndex: 40,
         }}>
           <img src="/logo-dark.png" alt="Sparkle" style={{ height: 28, width: 'auto' }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <GlobalSearch mobile />
             <button onClick={() => setDrawerOpen(true)} style={{ background: 'none', border: 'none', padding: 8, cursor: 'pointer' }}>
-              <Menu size={22} strokeWidth={1.5} color={NAVY} />
+              <Menu size={22} strokeWidth={1.5} color="#374151" />
             </button>
           </div>
         </header>
 
-        {/* Content */}
-        <main style={{ flex: 1, background: '#FAFAF7', paddingBottom: 70, overflowX: 'hidden' }}>
+        <main style={{ flex: 1, background: '#F8F9FC', paddingBottom: 70, overflowX: 'hidden' }}>
           <Outlet />
         </main>
 
@@ -78,9 +229,9 @@ export function Layout() {
         <nav className="no-print" style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
           display: 'flex', height: 60, background: 'white',
-          borderTop: '1px solid #F3F4F6',
+          borderTop: '1px solid #E5E7EB',
         }}>
-          {bottomNav.map(({ to, icon: Icon, label, img }: typeof allNav[number] & { img?: string }) => (
+          {bottomNav.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}
@@ -88,78 +239,79 @@ export function Layout() {
               style={({ isActive }) => ({
                 flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 gap: 2, textDecoration: 'none', fontSize: 10, fontWeight: 500,
-                color: isActive ? '#C8A96E' : '#9CA3AF',
+                color: isActive ? '#4F6CF7' : '#9CA3AF',
                 transition: 'color 150ms',
               })}
             >
-              {img ? <img src={img} alt="" style={{ width: 20, height: 20, objectFit: 'contain' }} /> : <Icon size={20} strokeWidth={1.5} />}
+              <Icon size={20} strokeWidth={1.5} />
               {label}
             </NavLink>
           ))}
         </nav>
 
-        {/* Drawer overlay */}
+        {/* Drawer */}
         {drawerOpen && (
           <div style={{ position: 'fixed', inset: 0, zIndex: 50 }} onClick={() => setDrawerOpen(false)}>
-            {/* Backdrop */}
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)' }} />
-            {/* Drawer */}
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(2px)' }} />
             <div
               onClick={e => e.stopPropagation()}
               style={{
                 position: 'absolute', top: 0, left: 0, bottom: 0, width: 280,
-                background: NAVY, display: 'flex', flexDirection: 'column',
-                animation: 'slideIn 200ms ease-out',
+                background: 'white', display: 'flex', flexDirection: 'column',
+                animation: 'slideIn 200ms ease-out', borderRight: '1px solid #E5E7EB',
               }}
             >
-              {/* Drawer header */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 12px', borderBottom: '1px solid rgba(200,169,110,0.2)' }}>
-                <img src="/logo-white.png" alt="Sparkle" style={{ height: 32, width: 'auto' }} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 12px', borderBottom: '1px solid #E5E7EB' }}>
+                <img src="/logo-dark.png" alt="Sparkle" style={{ height: 30, width: 'auto' }} />
                 <button onClick={() => setDrawerOpen(false)} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer' }}>
-                  <X size={20} strokeWidth={1.5} color="rgba(255,255,255,0.6)" />
+                  <X size={20} strokeWidth={1.5} color="#6B7280" />
                 </button>
               </div>
-              {/* Drawer nav */}
-              <nav style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {visibleNav.map(({ to, icon: Icon, label, img }: typeof allNav[number] & { img?: string }) => {
-                  const isChat = to === '/chat'
-                  return (
-                    <NavLink
-                      key={to} to={to} end={to === '/'}
-                      style={({ isActive }) => ({
-                        display: 'flex', alignItems: 'center', gap: 12,
-                        padding: '12px 12px', borderRadius: 8,
-                        fontSize: 14, fontWeight: isActive ? 600 : 500,
-                        textDecoration: 'none', transition: 'all 150ms',
-                        color: isActive ? '#C8A96E' : 'rgba(255,255,255,0.65)',
-                        backgroundColor: isActive ? 'rgba(200,169,110,0.08)' : 'transparent',
-                        boxShadow: isActive ? 'inset 3px 0 0 #C8A96E' : 'none',
-                      })}
-                    >
-                      {img ? <img src={img} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} /> : <Icon size={18} strokeWidth={1.5} />}
-                      {isChat ? (
-                        <>
-                          <span style={{ flex: 1 }}>{label}</span>
-                          {chatBadge > 0 && (
-                            <span style={{
-                              background: '#ef4444', color: 'white',
-                              fontSize: 10, fontWeight: 700, lineHeight: 1,
-                              padding: '3px 6px', borderRadius: 99,
-                              minWidth: 18, textAlign: 'center',
-                            }}>
-                              {chatBadge > 99 ? '99+' : chatBadge}
-                            </span>
-                          )}
-                        </>
-                      ) : label}
-                    </NavLink>
-                  )
-                })}
+              <nav style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 1, overflowY: 'auto' }}>
+                {navGroups.map((group, gi) => (
+                  <div key={gi}>
+                    {group.label && (
+                      <p style={{ fontSize: 10, fontWeight: 600, color: '#9CA3AF', letterSpacing: '0.08em', padding: '10px 12px 4px', textTransform: 'uppercase' }}>
+                        {group.label}
+                      </p>
+                    )}
+                    {group.items.map(({ to, icon: Icon, label, module }) => {
+                      if (!canAccessModule(module)) return null
+                      const isChat = to === '/chat'
+                      const isActive = to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)
+                      return (
+                        <NavLink
+                          key={to} to={to} end={to === '/'}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 10,
+                            padding: '9px 12px', borderRadius: 8,
+                            fontSize: 14, fontWeight: isActive ? 600 : 500,
+                            textDecoration: 'none',
+                            color: isActive ? '#4F6CF7' : '#6B7280',
+                            background: isActive ? '#EEF1FE' : 'transparent',
+                            boxShadow: isActive ? 'inset 3px 0 0 #4F6CF7' : 'none',
+                          }}
+                        >
+                          <Icon size={17} strokeWidth={1.75} />
+                          {isChat ? (
+                            <>
+                              <span style={{ flex: 1 }}>{label}</span>
+                              {chatBadge > 0 && (
+                                <span style={{ background: '#EF4444', color: 'white', fontSize: 10, fontWeight: 700, padding: '3px 6px', borderRadius: 99 }}>
+                                  {chatBadge > 99 ? '99+' : chatBadge}
+                                </span>
+                              )}
+                            </>
+                          ) : label}
+                        </NavLink>
+                      )
+                    })}
+                  </div>
+                ))}
               </nav>
-              {/* Drawer footer */}
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '12px 16px' }}>
-                {user?.email && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</p>}
-                <button onClick={signOut} style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 10, padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.5)', backgroundColor: 'transparent' }}>
+              <div style={{ borderTop: '1px solid #E5E7EB', padding: '12px 16px' }}>
+                {user?.email && <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</p>}
+                <button onClick={signOut} style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 10, padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, color: '#6B7280', backgroundColor: 'transparent' }}>
                   <LogOut size={16} strokeWidth={1.5} /> Sign Out
                 </button>
               </div>
@@ -173,69 +325,67 @@ export function Layout() {
   /* ─── DESKTOP ─── */
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
-      <aside className="no-print" style={{ width: 240, display: 'flex', flexDirection: 'column', backgroundColor: NAVY, minHeight: '100vh' }}>
-        <div style={{ backgroundColor: NAVY, padding: '20px 20px 16px', borderBottom: '1px solid rgba(200,169,110,0.2)' }}>
-          <img src="/logo-white.png" alt="Sparkle Stone & Pavers" style={{ width: 195, height: 'auto', maxHeight: 60, display: 'block', objectFit: 'contain' }} />
+      {/* Sidebar */}
+      <aside className="no-print" style={{
+        width: 220, display: 'flex', flexDirection: 'column',
+        background: '#FFFFFF', borderRight: '1px solid #E5E7EB',
+        minHeight: '100vh', flexShrink: 0,
+      }}>
+        {/* Logo */}
+        <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid #E5E7EB' }}>
+          <img src="/logo-dark.png" alt="Sparkle Stone & Pavers" style={{ width: 160, height: 'auto', maxHeight: 48, display: 'block', objectFit: 'contain' }} />
         </div>
-        <nav style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {visibleNav.map(({ to, icon: Icon, label, img }: typeof allNav[number] & { img?: string }) => {
-            const isChat = to === '/chat'
-            return (
-              <NavLink
-                key={to} to={to} end={to === '/'}
-                className={({ isActive }) => isActive ? 'nav-item nav-active' : 'nav-item nav-inactive'}
-                style={({ isActive }) => ({
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '10px 12px', borderRadius: 8,
-                  fontSize: 13, fontWeight: isActive ? 600 : 500,
-                  textDecoration: 'none', transition: 'all 150ms ease',
-                  color: isActive ? '#C8A96E' : 'rgba(255,255,255,0.65)',
-                  backgroundColor: isActive ? 'rgba(200,169,110,0.08)' : 'transparent',
-                  boxShadow: isActive ? 'inset 3px 0 0 #C8A96E' : 'none',
-                })}
-                onMouseEnter={e => { const el = e.currentTarget; if (!el.classList.contains('nav-active')) { el.style.color = 'white'; el.style.backgroundColor = 'rgba(255,255,255,0.06)' } }}
-                onMouseLeave={e => { const el = e.currentTarget; if (!el.classList.contains('nav-active')) { el.style.color = 'rgba(255,255,255,0.65)'; el.style.backgroundColor = 'transparent' } }}
-              >
-                {img ? <img src={img} alt="" style={{ width: 20, height: 20, objectFit: 'contain' }} /> : <Icon size={18} strokeWidth={1.5} />}
-                {isChat ? (
-                  <>
-                    <span style={{ flex: 1 }}>{label}</span>
-                    {chatBadge > 0 && (
-                      <span style={{
-                        background: '#ef4444', color: 'white',
-                        fontSize: 10, fontWeight: 700, lineHeight: 1,
-                        padding: '3px 6px', borderRadius: 99,
-                        minWidth: 18, textAlign: 'center',
-                      }}>
-                        {chatBadge > 99 ? '99+' : chatBadge}
-                      </span>
-                    )}
-                  </>
-                ) : label}
-              </NavLink>
-            )
-          })}
+
+        {/* Nav groups */}
+        <nav style={{ flex: 1, padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 0, overflowY: 'auto' }}>
+          {navGroups.map((group, gi) => (
+            <div key={gi} style={{ marginBottom: 4 }}>
+              {group.label && (
+                <p style={{ fontSize: 10, fontWeight: 600, color: '#9CA3AF', letterSpacing: '0.08em', padding: '10px 12px 4px', textTransform: 'uppercase' }}>
+                  {group.label}
+                </p>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {group.items.map(({ to, icon, label, module }) => (
+                  <NavItem
+                    key={to}
+                    to={to}
+                    icon={icon}
+                    label={label}
+                    isChat={to === '/chat'}
+                    chatBadge={chatBadge}
+                    canAccess={canAccessModule(module)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
         </nav>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '12px 16px' }}>
-          {user?.email && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</p>}
-          <button onClick={signOut} style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 10, padding: '8px 8px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.5)', backgroundColor: 'transparent', transition: 'all 150ms' }}
-            onMouseEnter={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.8)'; e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)' }}
-            onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; e.currentTarget.style.backgroundColor = 'transparent' }}
-          >
-            <LogOut size={16} strokeWidth={1.5} /> Sign Out
-          </button>
-        </div>
       </aside>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {/* Top bar with search */}
+
+      {/* Main content area */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+        {/* Top bar */}
         <header className="no-print" style={{
-          height: 56, display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
-          padding: '0 24px', background: 'white', borderBottom: '1px solid rgba(0,0,0,0.06)',
+          height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 24px', background: 'white', borderBottom: '1px solid #E5E7EB',
           flexShrink: 0,
         }}>
-          <GlobalSearch />
+          <h1 style={{ fontSize: 18, fontWeight: 600, color: '#111827' }}>{pageTitle}</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <GlobalSearch />
+            <button
+              style={{ background: 'none', border: 'none', padding: 8, cursor: 'pointer', borderRadius: 8, color: '#6B7280', transition: 'background 100ms' }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#F3F4F6' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+            >
+              <Bell size={18} strokeWidth={1.75} />
+            </button>
+            <UserMenu email={user?.email ?? ''} onSignOut={signOut} />
+          </div>
         </header>
-        <main style={{ flex: 1, overflow: 'auto', backgroundColor: '#FAFAF7' }}>
+
+        <main style={{ flex: 1, overflow: 'auto', background: '#F8F9FC' }}>
           <Outlet />
         </main>
       </div>

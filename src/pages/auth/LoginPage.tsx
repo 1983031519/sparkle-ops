@@ -18,14 +18,10 @@ export default function LoginPage() {
     if (!password) { setError('Please enter your password.'); return }
 
     setLoading(true)
-    console.log('[Login] Submitting for:', trimmedEmail)
     try {
       await signIn(trimmedEmail, password)
-      console.log('[Login] Success — redirecting to /')
-      // Force navigation — don't rely on React state across hook instances
       window.location.href = '/'
     } catch (err: unknown) {
-      console.error('[Login] Auth error:', err)
       setLoading(false)
       const msg = err instanceof Error ? err.message : 'Sign in failed'
       if (msg.includes('Invalid login')) {
@@ -41,16 +37,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: '#FAFAF7', padding: '16px' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: '#F8F9FC', padding: '16px' }}>
       <div style={{ width: '100%', maxWidth: 380 }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <img
             src="/logo-dark.png"
             alt="Sparkle Stone & Pavers"
-            style={{ width: 160, height: 'auto', display: 'block', margin: '0 auto 16px' }}
+            style={{ width: 160, height: 'auto', display: 'block', margin: '0 auto 20px' }}
           />
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#0D1B3D', letterSpacing: -0.5 }}>Welcome back</h1>
-          <p style={{ marginTop: 4, fontSize: 13, color: '#6B7280' }}>Sign in to your operations portal</p>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#111827', letterSpacing: -0.3 }}>Welcome back</h1>
+          <p style={{ marginTop: 6, fontSize: 14, color: '#6B7280' }}>Sign in to your operations portal</p>
         </div>
 
         <form
@@ -58,13 +54,13 @@ export default function LoginPage() {
           action="#"
           method="POST"
           style={{
-            background: 'white', borderRadius: 20, padding: 28,
-            border: '1px solid rgba(0,0,0,0.06)',
-            boxShadow: '0 2px 16px rgba(0,0,0,0.05)',
+            background: 'white', borderRadius: 12, padding: 28,
+            border: '1px solid #E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
           }}
         >
-          <div style={{ marginBottom: 20 }}>
-            <label htmlFor="email" style={{ display: 'block', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280', marginBottom: 6 }}>Email</label>
+          <div style={{ marginBottom: 18 }}>
+            <label htmlFor="email" style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>Email</label>
             <input
               id="email"
               name="email"
@@ -79,18 +75,18 @@ export default function LoginPage() {
               onChange={e => setEmail(e.target.value)}
               placeholder="you@example.com"
               style={{
-                display: 'block', width: '100%', height: 44, borderRadius: 10,
-                border: '1px solid #E5E3DF', background: 'white', padding: '0 12px',
-                fontSize: 16, /* 16px prevents iOS zoom */
-                outline: 'none', WebkitAppearance: 'none',
+                display: 'block', width: '100%', height: 42, borderRadius: 8,
+                border: '1px solid #D1D5DB', background: 'white', padding: '0 12px',
+                fontSize: 16,
+                outline: 'none', WebkitAppearance: 'none', boxSizing: 'border-box',
               }}
-              onFocus={e => { e.currentTarget.style.borderColor = '#0D1B3D'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(13,27,61,0.08)' }}
-              onBlur={e => { e.currentTarget.style.borderColor = '#E5E3DF'; e.currentTarget.style.boxShadow = 'none' }}
+              onFocus={e => { e.currentTarget.style.borderColor = '#4F6CF7'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79,108,247,0.12)' }}
+              onBlur={e => { e.currentTarget.style.borderColor = '#D1D5DB'; e.currentTarget.style.boxShadow = 'none' }}
             />
           </div>
 
           <div style={{ marginBottom: 20 }}>
-            <label htmlFor="password" style={{ display: 'block', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280', marginBottom: 6 }}>Password</label>
+            <label htmlFor="password" style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>Password</label>
             <input
               id="password"
               name="password"
@@ -102,23 +98,23 @@ export default function LoginPage() {
               onChange={e => setPassword(e.target.value)}
               placeholder="Your password"
               style={{
-                display: 'block', width: '100%', height: 44, borderRadius: 10,
-                border: '1px solid #E5E3DF', background: 'white', padding: '0 12px',
+                display: 'block', width: '100%', height: 42, borderRadius: 8,
+                border: '1px solid #D1D5DB', background: 'white', padding: '0 12px',
                 fontSize: 16,
-                outline: 'none', WebkitAppearance: 'none',
+                outline: 'none', WebkitAppearance: 'none', boxSizing: 'border-box',
               }}
-              onFocus={e => { e.currentTarget.style.borderColor = '#0D1B3D'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(13,27,61,0.08)' }}
-              onBlur={e => { e.currentTarget.style.borderColor = '#E5E3DF'; e.currentTarget.style.boxShadow = 'none' }}
+              onFocus={e => { e.currentTarget.style.borderColor = '#4F6CF7'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79,108,247,0.12)' }}
+              onBlur={e => { e.currentTarget.style.borderColor = '#D1D5DB'; e.currentTarget.style.boxShadow = 'none' }}
             />
           </div>
 
           {error && (
-            <div style={{ background: '#FFF1F2', border: '1px solid #FECDD3', borderRadius: 10, padding: '10px 14px', marginBottom: 20 }}>
-              <p style={{ fontSize: 13, color: '#E11D48', fontWeight: 500 }}>{error}</p>
+            <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '10px 14px', marginBottom: 18 }}>
+              <p style={{ fontSize: 13, color: '#DC2626', fontWeight: 500 }}>{error}</p>
             </div>
           )}
 
-          <Button type="submit" className="w-full" style={{ height: 44 }} disabled={loading}>
+          <Button type="submit" className="w-full" style={{ height: 42 }} disabled={loading}>
             {loading ? 'Signing in...' : 'Sign In'}
           </Button>
         </form>

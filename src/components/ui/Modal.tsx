@@ -10,7 +10,6 @@ interface Props {
 }
 
 export function Modal({ open, onClose, title, children, wide }: Props) {
-  // Lock body scroll when open
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
@@ -18,7 +17,6 @@ export function Modal({ open, onClose, title, children, wide }: Props) {
     }
   }, [open])
 
-  // Close on Escape key
   useEffect(() => {
     if (!open) return
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -30,24 +28,24 @@ export function Modal({ open, onClose, title, children, wide }: Props) {
 
   return (
     <>
-      {/* Overlay — fixed fullscreen */}
+      {/* Overlay */}
       <div
         onClick={onClose}
         style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(8px)',
+          background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)',
           zIndex: 9998,
         }}
       />
-      {/* Modal — fixed centered */}
+      {/* Modal */}
       <div
         style={{
           position: 'fixed', top: '50%', left: '50%',
           transform: 'translate(-50%, -50%)',
           width: '100%', maxWidth: wide ? 896 : 512,
           maxHeight: '95vh',
-          background: 'white', borderRadius: 14,
-          boxShadow: 'var(--shadow-elevated)',
+          background: 'white', borderRadius: 12,
+          boxShadow: '0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)',
           zIndex: 9999,
           display: 'flex', flexDirection: 'column',
           animation: 'modalIn 200ms cubic-bezier(0.16, 1, 0.3, 1)',
@@ -55,23 +53,23 @@ export function Modal({ open, onClose, title, children, wide }: Props) {
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Header — sticky */}
+        {/* Header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '16px 24px', borderBottom: '1px solid rgba(0,0,0,0.06)',
-          borderRadius: '14px 14px 0 0', flexShrink: 0,
+          padding: '16px 24px', borderBottom: '1px solid #E5E7EB',
+          borderRadius: '12px 12px 0 0', flexShrink: 0,
         }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0D1B3D', letterSpacing: -0.3 }}>{title}</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: '#111827' }}>{title}</h2>
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', padding: 6, borderRadius: 20, cursor: 'pointer', transition: 'background 150ms' }}
+            style={{ background: 'none', border: 'none', padding: 6, borderRadius: 6, cursor: 'pointer', transition: 'background 100ms', color: '#9CA3AF' }}
             onMouseEnter={e => { e.currentTarget.style.background = '#F3F4F6' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
           >
-            <X size={16} strokeWidth={1.5} color="#9CA3AF" />
+            <X size={16} strokeWidth={2} />
           </button>
         </div>
-        {/* Body — scrollable */}
+        {/* Body */}
         <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1 }}>
           {children}
         </div>

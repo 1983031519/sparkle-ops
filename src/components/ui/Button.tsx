@@ -2,11 +2,11 @@ import { clsx } from 'clsx'
 import type { ButtonHTMLAttributes } from 'react'
 
 const variants = {
-  primary: 'bg-navy-900 text-white hover:bg-navy-800 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(13,27,61,0.25)] active:translate-y-0 active:scale-[0.99] focus:ring-navy-700/30',
-  gold: 'bg-gold-500 text-white hover:bg-gold-400 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(200,169,110,0.35)] active:translate-y-0 active:scale-[0.99] focus:ring-gold-500/30',
-  secondary: 'bg-stone-100 text-stone-700 hover:bg-stone-200 active:scale-[0.99] focus:ring-stone-300',
-  danger: 'bg-danger-600 text-white hover:bg-red-700 hover:-translate-y-px active:translate-y-0 active:scale-[0.99] focus:ring-red-500/30',
-  ghost: 'text-stone-500 border border-stone-200 hover:bg-stone-50 hover:text-stone-700 hover:border-gold-500/40 active:scale-[0.99] focus:ring-stone-300',
+  primary: 'bg-[#4F6CF7] text-white hover:bg-[#3451D1] active:scale-[0.99] focus:ring-[#4F6CF7]/30',
+  gold: 'bg-[#4F6CF7] text-white hover:bg-[#3451D1] active:scale-[0.99] focus:ring-[#4F6CF7]/30',
+  secondary: 'bg-white text-[#374151] border border-[#E5E7EB] hover:bg-[#F9FAFB] active:scale-[0.99] focus:ring-stone-300',
+  danger: 'bg-[#EF4444] text-white hover:bg-[#DC2626] active:scale-[0.99] focus:ring-red-500/30',
+  ghost: 'text-[#6B7280] border border-[#E5E7EB] hover:bg-[#F9FAFB] hover:text-[#374151] active:scale-[0.99] focus:ring-stone-300',
 }
 
 const sizes = {

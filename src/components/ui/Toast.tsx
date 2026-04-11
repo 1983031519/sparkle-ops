@@ -56,17 +56,17 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   return (
     <div
       style={{ transition: 'all 200ms cubic-bezier(0.16, 1, 0.3, 1)' }}
-      className={`flex items-center gap-3 rounded-[12px] border px-4 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.08)] backdrop-blur-sm ${
+      className={`flex items-center gap-3 rounded-[10px] border px-4 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.10)] backdrop-blur-sm ${
         visible ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'
       } ${
         toast.type === 'success'
-          ? 'border-success-600/20 bg-success-50 text-success-600'
-          : 'border-danger-600/20 bg-danger-50 text-danger-600'
+          ? 'border-[#A7F3D0] bg-[#ECFDF5] text-[#065F46]'
+          : 'border-[#FECACA] bg-[#FEF2F2] text-[#991B1B]'
       }`}
     >
       {toast.type === 'success'
-        ? <CheckCircle className="h-[18px] w-[18px] shrink-0" />
-        : <XCircle className="h-[18px] w-[18px] shrink-0" />
+        ? <CheckCircle className="h-[16px] w-[16px] shrink-0" />
+        : <XCircle className="h-[16px] w-[16px] shrink-0" />
       }
       <p className="text-[13px] font-semibold">{toast.message}</p>
       <button onClick={onClose} className="ml-2 shrink-0 rounded-full p-0.5 hover:bg-black/5">
