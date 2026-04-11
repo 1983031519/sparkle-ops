@@ -198,7 +198,7 @@ export function Layout() {
   const visibleNavFlat = allNavFlat.filter(n => canAccessModule(n.module))
   const bottomNav = visibleNavFlat.slice(0, 5)
   const location = useLocation()
-  const chatBadge = location.pathname === '/chat' ? 0 : unreadCount
+  const chatBadge = unreadCount
   const pageTitle = pageTitles[location.pathname] ?? 'Sparkle Ops'
 
   useEffect(() => { setDrawerOpen(false) }, [location.pathname])

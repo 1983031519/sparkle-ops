@@ -1,41 +1,52 @@
 /**
- * ChatContext — single Supabase Realtime subscription shared by Layout (badge)
- * and ChatPage (full UI). Wrap ProtectedRoutes with <ChatProvider> in App.tsx.
+ * ChatContext — manages direct messages (DMs) between users.
+ * Shared by Layout (sidebar badge) and ChatPage (full UI).
  *
- * IMPORTANT: Realtime must be enabled on the `chat_messages` table in the
- * Supabase dashboard (Table Editor → chat_messages → Enable Realtime toggle).
+ * IMPORTANT: Realtime must be enabled on the `direct_messages` table in the
+ * Supabase dashboard (Table Editor → direct_messages → Enable Realtime toggle).
  */
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 
-export interface ChatMessage {
+export interface DirectMessage {
   id: string
-  user_id: string
-  user_name: string
-  user_role: string
+  sender_id: string
+  recipient_id: string
+  sender_name: string
+  recipient_name: string
   content: string
+  read_at: string | null
   created_at: string
 }
 
+export interface TeamMember {
+  id: string
+  full_name: string
+  email: string
+  role: string
+}
+
 interface ChatContextValue {
-  messages: ChatMessage[]
-  sendMessage: (content: string) => Promise<void>
-  unreadCount: number
+  messages: DirectMessage[]           // all DMs involving the current user
+  teamMembers: TeamMember[]            // all other active users
+  sendMessage: (recipientId: string, content: string) => Promise<void>
+  markConversationRead: (otherUserId: string) => Promise<void>
+  unreadCount: number                  // total unread across all conversations
+  unreadByUser: Record<string, number> // per-user unread counts
   loading: boolean
-  markRead: () => Promise<void>
 }
 
 const ChatContext = createContext<ChatContextValue | null>(null)
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
   const { user, profile } = useAuth()
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [messages, setMessages] = useState<DirectMessage[]>([])
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [loading, setLoading] = useState(true)
-  const [lastReadAt, setLastReadAt] = useState<string | null>(null)
   const seenIds = useRef(new Set<string>())
 
-  // Load history + last_read_at on mount
+  // Load team members + message history on mount
   useEffect(() => {
     if (!user) {
       setLoading(false)
@@ -45,30 +56,28 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     let mounted = true
 
     async function init() {
-      // Last 100 messages in chronological order
+      // Other active users
+      const { data: profilesRaw } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, role')
+        .eq('active', true)
+        .neq('id', userId)
+        .order('full_name', { ascending: true })
+
+      // All DMs involving me (sent or received), most recent 500
       const { data: msgsRaw } = await supabase
-        .from('chat_messages')
+        .from('direct_messages')
         .select('*')
+        .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
         .order('created_at', { ascending: true })
-        .limit(100)
+        .limit(500)
 
       if (!mounted) return
-      const msgs = (msgsRaw ?? []) as ChatMessage[]
+      const members = (profilesRaw ?? []) as TeamMember[]
+      const msgs = (msgsRaw ?? []) as DirectMessage[]
       msgs.forEach(m => seenIds.current.add(m.id))
+      setTeamMembers(members)
       setMessages(msgs)
-
-      // User's last read timestamp (may not exist for new users)
-      const { data: readData } = await supabase
-        .from('chat_reads')
-        .select('last_read_at')
-        .eq('user_id', userId)
-        .single()
-
-      if (!mounted) return
-      if (readData) {
-        setLastReadAt((readData as { last_read_at: string }).last_read_at)
-      }
-
       setLoading(false)
     }
 
@@ -76,21 +85,34 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     return () => { mounted = false }
   }, [user])
 
-  // Realtime: subscribe to new messages
+  // Realtime: subscribe to INSERTs and UPDATEs on direct_messages
   useEffect(() => {
     if (!user) return
+    const userId = user.id
 
     const channel = supabase
-      .channel('chat_global_messages')
+      .channel('dm_realtime')
       .on(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         'postgres_changes' as any,
-        { event: 'INSERT', schema: 'public', table: 'chat_messages' },
-        (payload: { new: ChatMessage }) => {
+        { event: 'INSERT', schema: 'public', table: 'direct_messages' },
+        (payload: { new: DirectMessage }) => {
           const msg = payload.new
+          // Only handle messages involving the current user
+          if (msg.sender_id !== userId && msg.recipient_id !== userId) return
           if (seenIds.current.has(msg.id)) return
           seenIds.current.add(msg.id)
           setMessages(prev => [...prev, msg])
+        }
+      )
+      .on(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        'postgres_changes' as any,
+        { event: 'UPDATE', schema: 'public', table: 'direct_messages' },
+        (payload: { new: DirectMessage }) => {
+          const msg = payload.new
+          if (msg.sender_id !== userId && msg.recipient_id !== userId) return
+          setMessages(prev => prev.map(m => (m.id === msg.id ? msg : m)))
         }
       )
       .subscribe()
@@ -98,36 +120,75 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     return () => { supabase.removeChannel(channel) }
   }, [user])
 
-  const sendMessage = useCallback(async (content: string) => {
+  const sendMessage = useCallback(async (recipientId: string, content: string) => {
     if (!user || !profile || !content.trim()) return
-    await supabase
-      .from('chat_messages')
+    const recipient = teamMembers.find(m => m.id === recipientId)
+    if (!recipient) return
+
+    const { data } = await supabase
+      .from('direct_messages')
       .insert({
-        user_id: user.id,
-        user_name: profile.full_name || user.email || 'Unknown',
-        user_role: profile.role,
+        sender_id: user.id,
+        recipient_id: recipientId,
+        sender_name: profile.full_name || user.email || 'Unknown',
+        recipient_name: recipient.full_name || recipient.email || 'Unknown',
         content: content.trim(),
       } as never)
-  }, [user, profile])
+      .select()
+      .single()
 
-  const markRead = useCallback(async () => {
+    // Optimistic: add locally in case realtime is delayed
+    if (data) {
+      const msg = data as DirectMessage
+      if (!seenIds.current.has(msg.id)) {
+        seenIds.current.add(msg.id)
+        setMessages(prev => [...prev, msg])
+      }
+    }
+  }, [user, profile, teamMembers])
+
+  const markConversationRead = useCallback(async (otherUserId: string) => {
     if (!user) return
     const now = new Date().toISOString()
-    await supabase
-      .from('chat_reads')
-      .upsert({ user_id: user.id, last_read_at: now } as never, { onConflict: 'user_id' })
-    setLastReadAt(now)
-  }, [user])
 
-  // Only messages from OTHER users count as unread
-  const unreadCount = messages.filter(m => {
-    if (m.user_id === user?.id) return false
-    if (!lastReadAt) return true
-    return m.created_at > lastReadAt
-  }).length
+    // Update unread messages from otherUserId → me to have read_at
+    const unreadIds = messages
+      .filter(m => m.recipient_id === user.id && m.sender_id === otherUserId && !m.read_at)
+      .map(m => m.id)
+
+    if (unreadIds.length === 0) return
+
+    // Optimistic local update
+    setMessages(prev => prev.map(m => (unreadIds.includes(m.id) ? { ...m, read_at: now } : m)))
+
+    await supabase
+      .from('direct_messages')
+      .update({ read_at: now } as never)
+      .in('id', unreadIds)
+  }, [user, messages])
+
+  // Unread counts: messages where I'm the recipient and read_at is null
+  const unreadByUser: Record<string, number> = {}
+  let unreadCount = 0
+  if (user) {
+    for (const m of messages) {
+      if (m.recipient_id === user.id && !m.read_at) {
+        unreadByUser[m.sender_id] = (unreadByUser[m.sender_id] ?? 0) + 1
+        unreadCount++
+      }
+    }
+  }
 
   return (
-    <ChatContext.Provider value={{ messages, sendMessage, unreadCount, loading, markRead }}>
+    <ChatContext.Provider value={{
+      messages,
+      teamMembers,
+      sendMessage,
+      markConversationRead,
+      unreadCount,
+      unreadByUser,
+      loading,
+    }}>
       {children}
     </ChatContext.Provider>
   )
