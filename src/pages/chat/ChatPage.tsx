@@ -197,9 +197,8 @@ export default function ChatPage() {
         background: 'white',
         display: 'flex', flexDirection: 'column',
       }}>
-        <div style={{ padding: '20px 20px 14px', borderBottom: '1px solid #E5E7EB' }}>
-          <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111827' }}>Messages</h1>
-          <p style={{ margin: '2px 0 0', fontSize: 12, color: '#9CA3AF' }}>
+        <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid #E5E7EB' }}>
+          <p style={{ margin: 0, fontSize: 12, color: '#9CA3AF' }}>
             {teamMembers.length} team member{teamMembers.length === 1 ? '' : 's'}
           </p>
         </div>

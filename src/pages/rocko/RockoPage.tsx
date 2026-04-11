@@ -68,10 +68,7 @@ export default function RockoPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #F3F4F6', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <img src="/rocko.png" alt="Rocko" style={{ width: 40, height: 40, borderRadius: 12, objectFit: 'contain' }} />
-          <div>
-            <h1 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: 0 }}>Rocko</h1>
-            <p style={{ fontSize: 12, color: '#9CA3AF', margin: 0 }}>Sparkle AI Partner</p>
-          </div>
+          <p style={{ fontSize: 12, color: '#9CA3AF', margin: 0 }}>Sparkle AI Partner</p>
         </div>
         {messages.length > 0 && (
           <button onClick={clearChat} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: '1px solid #E5E7EB', borderRadius: 8, padding: '6px 12px', fontSize: 12, color: '#6B7280', cursor: 'pointer' }}>

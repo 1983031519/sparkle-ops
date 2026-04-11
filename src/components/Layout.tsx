@@ -57,7 +57,7 @@ const pageTitles: Record<string, string> = {
   '/': 'Dashboard', '/clients': 'Clients', '/jobs': 'Jobs',
   '/estimates': 'Estimates', '/projects': 'Projects', '/invoices': 'Invoices',
   '/vendors': 'Vendors & Team', '/inventory': 'Inventory', '/reports': 'Reports',
-  '/rocko': 'Rocko AI', '/users': 'Users', '/chat': 'Team Chat',
+  '/rocko': 'Rocko AI', '/users': 'Users', '/chat': 'Messages',
 }
 
 function useIsMobile() {

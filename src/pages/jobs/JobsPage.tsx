@@ -218,8 +218,7 @@ export default function JobsPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Jobs</h1>
+      <div className="flex items-center justify-end">
         <Button onClick={openNew}><Plus className="h-4 w-4" /> Add Job</Button>
       </div>
 

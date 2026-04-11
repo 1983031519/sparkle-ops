@@ -117,10 +117,7 @@ export default function UsersPage() {
     <div style={{ padding: '24px 28px', maxWidth: 960 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#111827', letterSpacing: -0.5 }}>Users</h1>
-          <p style={{ fontSize: 13, color: '#6B7280', marginTop: 2 }}>Manage team access and roles</p>
-        </div>
+        <p style={{ fontSize: 13, color: '#6B7280' }}>Manage team access and roles</p>
         <Button onClick={() => setShowInvite(true)} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <UserPlus size={16} strokeWidth={1.5} />
           Invite User

@@ -210,8 +210,7 @@ export default function ProjectsPage() {
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
-      <div className="flex items-center justify-between">
-        <h1 style={{ fontSize: 18, fontWeight: 700, color: '#111827', letterSpacing: -0.5 }}>Projects</h1>
+      <div className="flex items-center justify-end">
         <Button onClick={openNew}><Plus size={16} strokeWidth={1.5} /> New Project</Button>
       </div>
 

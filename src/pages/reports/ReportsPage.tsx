@@ -145,8 +145,7 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Reports</h1>
+      <div className="flex items-center justify-end">
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium text-stone-600">Period:</label>
           <select

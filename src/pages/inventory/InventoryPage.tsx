@@ -72,7 +72,6 @@ export default function InventoryPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">Inventory / Stock</h1>
           {lowStockCount > 0 && (
             <Badge color="red" className="flex items-center gap-1">
               <AlertTriangle className="h-3 w-3" /> {lowStockCount} low stock
