@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Users, Briefcase, FileText, FolderOpen, Receipt, UsersRound, Package, BarChart3, Shield, Bot, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Users, Briefcase, FileText, FolderOpen, Receipt, UsersRound, Package, BarChart3, Shield, Bot, MessageSquare, LogOut, Menu, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { GlobalSearch } from '@/components/GlobalSearch'
+import { useChatContext } from '@/contexts/ChatContext'
 
 const NAVY = '#0D1B3D'
 
@@ -18,6 +19,7 @@ const allNav = [
   { to: '/reports', icon: BarChart3, label: 'Reports', module: 'reports' },
   { to: '/rocko', icon: Bot, label: 'Rocko AI', module: 'rocko' },
   { to: '/users', icon: Shield, label: 'Users', module: 'users' },
+  { to: '/chat', icon: MessageSquare, label: 'Chat', module: 'chat' },
 ]
 
 // Bottom nav: derived inside component from visibleNav
@@ -36,11 +38,14 @@ function useIsMobile() {
 
 export function Layout() {
   const { user, signOut, canAccessModule } = useAuth()
+  const { unreadCount } = useChatContext()
   const isMobile = useIsMobile()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const visibleNav = allNav.filter(n => canAccessModule(n.module))
   const bottomNav = visibleNav.slice(0, 5)
   const location = useLocation()
+  // Don't show badge while actively viewing chat
+  const chatBadge = location.pathname === '/chat' ? 0 : unreadCount
 
   // Close drawer on navigation
   useEffect(() => { setDrawerOpen(false) }, [location.pathname])
@@ -116,23 +121,40 @@ export function Layout() {
               </div>
               {/* Drawer nav */}
               <nav style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {visibleNav.map(({ to, icon: Icon, label, img }: typeof allNav[number] & { img?: string }) => (
-                  <NavLink
-                    key={to} to={to} end={to === '/'}
-                    style={({ isActive }) => ({
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '12px 12px', borderRadius: 8,
-                      fontSize: 14, fontWeight: isActive ? 600 : 500,
-                      textDecoration: 'none', transition: 'all 150ms',
-                      color: isActive ? '#C8A96E' : 'rgba(255,255,255,0.65)',
-                      backgroundColor: isActive ? 'rgba(200,169,110,0.08)' : 'transparent',
-                      boxShadow: isActive ? 'inset 3px 0 0 #C8A96E' : 'none',
-                    })}
-                  >
-                    {img ? <img src={img} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} /> : <Icon size={18} strokeWidth={1.5} />}
-                    {label}
-                  </NavLink>
-                ))}
+                {visibleNav.map(({ to, icon: Icon, label, img }: typeof allNav[number] & { img?: string }) => {
+                  const isChat = to === '/chat'
+                  return (
+                    <NavLink
+                      key={to} to={to} end={to === '/'}
+                      style={({ isActive }) => ({
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        padding: '12px 12px', borderRadius: 8,
+                        fontSize: 14, fontWeight: isActive ? 600 : 500,
+                        textDecoration: 'none', transition: 'all 150ms',
+                        color: isActive ? '#C8A96E' : 'rgba(255,255,255,0.65)',
+                        backgroundColor: isActive ? 'rgba(200,169,110,0.08)' : 'transparent',
+                        boxShadow: isActive ? 'inset 3px 0 0 #C8A96E' : 'none',
+                      })}
+                    >
+                      {img ? <img src={img} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} /> : <Icon size={18} strokeWidth={1.5} />}
+                      {isChat ? (
+                        <>
+                          <span style={{ flex: 1 }}>{label}</span>
+                          {chatBadge > 0 && (
+                            <span style={{
+                              background: '#ef4444', color: 'white',
+                              fontSize: 10, fontWeight: 700, lineHeight: 1,
+                              padding: '3px 6px', borderRadius: 99,
+                              minWidth: 18, textAlign: 'center',
+                            }}>
+                              {chatBadge > 99 ? '99+' : chatBadge}
+                            </span>
+                          )}
+                        </>
+                      ) : label}
+                    </NavLink>
+                  )
+                })}
               </nav>
               {/* Drawer footer */}
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '12px 16px' }}>
@@ -156,26 +178,43 @@ export function Layout() {
           <img src="/logo-white.png" alt="Sparkle Stone & Pavers" style={{ width: 195, height: 'auto', maxHeight: 60, display: 'block', objectFit: 'contain' }} />
         </div>
         <nav style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {visibleNav.map(({ to, icon: Icon, label, img }: typeof allNav[number] & { img?: string }) => (
-            <NavLink
-              key={to} to={to} end={to === '/'}
-              className={({ isActive }) => isActive ? 'nav-item nav-active' : 'nav-item nav-inactive'}
-              style={({ isActive }) => ({
-                display: 'flex', alignItems: 'center', gap: 12,
-                padding: '10px 12px', borderRadius: 8,
-                fontSize: 13, fontWeight: isActive ? 600 : 500,
-                textDecoration: 'none', transition: 'all 150ms ease',
-                color: isActive ? '#C8A96E' : 'rgba(255,255,255,0.65)',
-                backgroundColor: isActive ? 'rgba(200,169,110,0.08)' : 'transparent',
-                boxShadow: isActive ? 'inset 3px 0 0 #C8A96E' : 'none',
-              })}
-              onMouseEnter={e => { const el = e.currentTarget; if (!el.classList.contains('nav-active')) { el.style.color = 'white'; el.style.backgroundColor = 'rgba(255,255,255,0.06)' } }}
-              onMouseLeave={e => { const el = e.currentTarget; if (!el.classList.contains('nav-active')) { el.style.color = 'rgba(255,255,255,0.65)'; el.style.backgroundColor = 'transparent' } }}
-            >
-              {img ? <img src={img} alt="" style={{ width: 20, height: 20, objectFit: 'contain' }} /> : <Icon size={18} strokeWidth={1.5} />}
-              {label}
-            </NavLink>
-          ))}
+          {visibleNav.map(({ to, icon: Icon, label, img }: typeof allNav[number] & { img?: string }) => {
+            const isChat = to === '/chat'
+            return (
+              <NavLink
+                key={to} to={to} end={to === '/'}
+                className={({ isActive }) => isActive ? 'nav-item nav-active' : 'nav-item nav-inactive'}
+                style={({ isActive }) => ({
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '10px 12px', borderRadius: 8,
+                  fontSize: 13, fontWeight: isActive ? 600 : 500,
+                  textDecoration: 'none', transition: 'all 150ms ease',
+                  color: isActive ? '#C8A96E' : 'rgba(255,255,255,0.65)',
+                  backgroundColor: isActive ? 'rgba(200,169,110,0.08)' : 'transparent',
+                  boxShadow: isActive ? 'inset 3px 0 0 #C8A96E' : 'none',
+                })}
+                onMouseEnter={e => { const el = e.currentTarget; if (!el.classList.contains('nav-active')) { el.style.color = 'white'; el.style.backgroundColor = 'rgba(255,255,255,0.06)' } }}
+                onMouseLeave={e => { const el = e.currentTarget; if (!el.classList.contains('nav-active')) { el.style.color = 'rgba(255,255,255,0.65)'; el.style.backgroundColor = 'transparent' } }}
+              >
+                {img ? <img src={img} alt="" style={{ width: 20, height: 20, objectFit: 'contain' }} /> : <Icon size={18} strokeWidth={1.5} />}
+                {isChat ? (
+                  <>
+                    <span style={{ flex: 1 }}>{label}</span>
+                    {chatBadge > 0 && (
+                      <span style={{
+                        background: '#ef4444', color: 'white',
+                        fontSize: 10, fontWeight: 700, lineHeight: 1,
+                        padding: '3px 6px', borderRadius: 99,
+                        minWidth: 18, textAlign: 'center',
+                      }}>
+                        {chatBadge > 99 ? '99+' : chatBadge}
+                      </span>
+                    )}
+                  </>
+                ) : label}
+              </NavLink>
+            )
+          })}
         </nav>
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '12px 16px' }}>
           {user?.email && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</p>}

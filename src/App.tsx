@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { Layout } from '@/components/Layout'
 import { ToastProvider } from '@/components/ui/Toast'
+import { ChatProvider } from '@/contexts/ChatContext'
 import LoginPage from '@/pages/auth/LoginPage'
 import UnauthorizedPage from '@/pages/unauthorized/UnauthorizedPage'
 import DashboardPage from '@/pages/dashboard/DashboardPage'
@@ -16,12 +17,17 @@ import ReportsPage from '@/pages/reports/ReportsPage'
 import UsersPage from '@/pages/users/UsersPage'
 import RockoPage from '@/pages/rocko/RockoPage'
 import ViewDocumentPage from '@/pages/view/ViewDocumentPage'
+import ChatPage from '@/pages/chat/ChatPage'
 
 function ProtectedRoutes() {
   const { user, loading } = useAuth()
   if (loading) return <div className="flex h-screen items-center justify-center text-stone-500">Loading...</div>
   if (!user) return <Navigate to="/login" replace />
-  return <Layout />
+  return (
+    <ChatProvider>
+      <Layout />
+    </ChatProvider>
+  )
 }
 
 /** Wraps a page and redirects to /unauthorized if the user's role doesn't have access */
@@ -52,6 +58,7 @@ export default function App() {
             <Route path="/reports" element={<ModuleGuard module="reports"><ReportsPage /></ModuleGuard>} />
             <Route path="/users" element={<ModuleGuard module="users"><UsersPage /></ModuleGuard>} />
             <Route path="/rocko" element={<ModuleGuard module="rocko"><RockoPage /></ModuleGuard>} />
+            <Route path="/chat" element={<ChatPage />} />
           </Route>
         </Routes>
       </BrowserRouter>
