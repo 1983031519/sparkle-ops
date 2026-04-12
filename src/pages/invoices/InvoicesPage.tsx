@@ -59,6 +59,10 @@ export default function InvoicesPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [deletePaidWarning, setDeletePaidWarning] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [markPaidTarget, setMarkPaidTarget] = useState<Invoice | null>(null)
+  const [markPaidDate, setMarkPaidDate] = useState('')
+  const [markPaidMethod, setMarkPaidMethod] = useState('Check')
+  const [markingPaid, setMarkingPaid] = useState(false)
   const toast = useToast()
 
   const fetchAll = useCallback(async () => {
@@ -83,10 +87,19 @@ export default function InvoicesPage() {
   const clientMap = useMemo(() => Object.fromEntries(clients.map(c => [c.id, c])), [clients])
   const jobMap    = useMemo(() => Object.fromEntries(jobs.map(j => [j.id, j])), [jobs])
 
-  const filtered = useMemo(() => invoices.filter(e =>
-    (clientMap[e.client_id]?.name ?? '').toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-    e.number.toLowerCase().includes(debouncedSearch.toLowerCase())
-  ), [invoices, clientMap, debouncedSearch])
+  const filtered = useMemo(() => {
+    const list = invoices.filter(e =>
+      (clientMap[e.client_id]?.name ?? '').toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      e.number.toLowerCase().includes(debouncedSearch.toLowerCase())
+    )
+    // Sort: unpaid/overdue first, then by date descending
+    return list.sort((a, b) => {
+      const aUnpaid = a.status === 'Unpaid' || a.status === 'Overdue' ? 0 : 1
+      const bUnpaid = b.status === 'Unpaid' || b.status === 'Overdue' ? 0 : 1
+      if (aUnpaid !== bUnpaid) return aUnpaid - bUnpaid
+      return (b.date ?? b.created_at).localeCompare(a.date ?? a.created_at)
+    })
+  }, [invoices, clientMap, debouncedSearch])
 
   function calcTotals(items: InvoiceLineItem[]) {
     const subtotal = items.reduce((s, i) => s + i.qty * i.unit_price, 0)
@@ -155,10 +168,25 @@ export default function InvoicesPage() {
     } finally { setSaving(false) }
   }
 
-  async function markPaid(inv: Invoice) {
-    const { error } = await supabase.from('invoices').update({ status: 'Paid' } as never).eq('id', inv.id)
+  function openMarkPaid(inv: Invoice) {
+    setMarkPaidTarget(inv)
+    setMarkPaidDate(new Date().toISOString().split('T')[0])
+    setMarkPaidMethod('Check')
+  }
+
+  async function confirmMarkPaid() {
+    if (!markPaidTarget) return
+    setMarkingPaid(true)
+    const { error } = await supabase.from('invoices').update({
+      status: 'Paid',
+      paid_at: markPaidDate ? `${markPaidDate}T00:00:00Z` : new Date().toISOString(),
+      payment_method_used: markPaidMethod,
+      balance_due: 0,
+    } as never).eq('id', markPaidTarget.id)
+    setMarkingPaid(false)
     if (error) { toast.error(`Failed to mark paid: ${error.message}`); return }
-    setInvoices(prev => prev.map(i => i.id === inv.id ? { ...i, status: 'Paid' } : i))
+    setInvoices(prev => prev.map(i => i.id === markPaidTarget.id ? { ...i, status: 'Paid' as const, payment_method_used: markPaidMethod, paid_at: markPaidDate, balance_due: 0 } : i))
+    setMarkPaidTarget(null)
     toast.success('Invoice marked as paid.')
   }
 
@@ -215,7 +243,7 @@ export default function InvoicesPage() {
               { key: 'viewed', header: '', render: i => viewedDocIds.has(i.id) ? <span style={{ fontSize: 10, fontWeight: 600, color: '#16a34a', background: '#f0fdf4', padding: '2px 7px', borderRadius: 10, border: '1px solid #bbf7d0', whiteSpace: 'nowrap' }}>Viewed</span> : null },
               { key: 'actions', header: '', render: i => (
                 <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                  {i.status !== 'Paid' && <Button variant="ghost" size="sm" onClick={() => markPaid(i)} title="Mark Paid"><CheckCircle className="h-4 w-4 text-green-600" /></Button>}
+                  {i.status !== 'Paid' && <Button variant="ghost" size="sm" onClick={() => openMarkPaid(i)} title="Mark Paid"><CheckCircle className="h-4 w-4 text-green-600" /></Button>}
                   <Button variant="ghost" size="sm" onClick={() => openPreview(i)}><Printer className="h-4 w-4" /></Button>
                 </div>
               )},
@@ -353,6 +381,37 @@ export default function InvoicesPage() {
         title="Cannot Delete Paid Invoice"
         message="Paid invoices cannot be deleted to preserve your financial records. Archive or void the invoice instead."
       />
+
+      {/* Mark as Paid Modal */}
+      <Modal open={!!markPaidTarget} onClose={() => setMarkPaidTarget(null)} title={`Mark Invoice ${markPaidTarget?.number ?? ''} as Paid`}>
+        <div className="space-y-5">
+          <DateInput label="Payment Date" id="paid-date" value={markPaidDate} onChange={v => setMarkPaidDate(v)} />
+
+          <div>
+            <p className="text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500 mb-2">Payment Method</p>
+            <div className="space-y-1.5">
+              {['Check', 'Zelle', 'Cash', 'ACH', 'Other'].map(m => (
+                <label key={m} className="flex items-center gap-2.5 cursor-pointer">
+                  <input type="radio" name="paid-method" value={m} checked={markPaidMethod === m} onChange={() => setMarkPaidMethod(m)} className="accent-blue-600" />
+                  <span className="text-[13px]">{m}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-stone-50 border border-stone-200 p-3 text-[13px]">
+            <div className="flex justify-between"><span className="text-stone-500">Invoice Total</span><span className="font-semibold text-[#111827]">{fmtCurrency(markPaidTarget?.total ?? 0)}</span></div>
+          </div>
+
+          <div className="flex justify-end gap-2 border-t border-stone-200 pt-4">
+            <Button variant="secondary" type="button" onClick={() => setMarkPaidTarget(null)} disabled={markingPaid}>Cancel</Button>
+            <Button type="button" onClick={confirmMarkPaid} disabled={markingPaid}>
+              <CheckCircle className="h-4 w-4" />
+              {markingPaid ? 'Saving...' : 'Confirm Payment'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

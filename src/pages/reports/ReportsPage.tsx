@@ -36,34 +36,26 @@ function inRange(dateStr: string | null, range: { start: Date; end: Date }): boo
 }
 
 export default function ReportsPage() {
-  const [range, setRange] = useState('this_year')
+  const [range, setRange] = useState('all')
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [estimates, setEstimates] = useState<Estimate[]>([])
   const [jobs, setJobs] = useState<Job[]>([])
   const [clients, setClients] = useState<Client[]>([])
-  const [totalCosts, setTotalCosts] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
       setLoading(true)
-      const [invRes, estRes, jobRes, cliRes, matRes, labRes, othRes] = await Promise.all([
+      const [invRes, estRes, jobRes, cliRes] = await Promise.all([
         supabase.from('invoices').select('*'),
         supabase.from('estimates').select('*'),
         supabase.from('jobs').select('*'),
         supabase.from('clients').select('*'),
-        supabase.from('job_material_costs').select('total'),
-        supabase.from('job_labor_costs').select('total_amount'),
-        supabase.from('job_other_costs').select('amount'),
       ])
       setInvoices((invRes.data ?? []) as Invoice[])
       setEstimates((estRes.data ?? []) as Estimate[])
       setJobs((jobRes.data ?? []) as Job[])
       setClients((cliRes.data ?? []) as Client[])
-      const mc = ((matRes.data ?? []) as { total: number }[]).reduce((s, r) => s + (r.total || 0), 0)
-      const lc = ((labRes.data ?? []) as { total_amount: number }[]).reduce((s, r) => s + (r.total_amount || 0), 0)
-      const oc = ((othRes.data ?? []) as { amount: number }[]).reduce((s, r) => s + (r.amount || 0), 0)
-      setTotalCosts(mc + lc + oc)
       setLoading(false)
     }
     load()
@@ -163,28 +155,30 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {/* Profitability Summary */}
+      {/* Revenue Summary */}
       {(() => {
-        const rev = invoices.filter(i => i.status === 'Paid').reduce((s, i) => s + (i.total || 0), 0)
-        const profit = rev - totalCosts
-        const pctMargin = rev > 0 ? (profit / rev) * 100 : 0
+        const filteredInvoices = invoices.filter(i => inRange(invoiceDate(i), dateRange))
+        const totalInvoiced = filteredInvoices.reduce((s, i) => s + (i.total || 0), 0)
+        const totalCollected = filteredInvoices.filter(i => i.status === 'Paid').reduce((s, i) => s + (i.total || 0), 0)
+        const totalOutstanding = filteredInvoices.filter(i => i.status === 'Unpaid' || i.status === 'Overdue').reduce((s, i) => s + (i.total || 0), 0)
+        const collectionRate = totalInvoiced > 0 ? (totalCollected / totalInvoiced) * 100 : 0
         return (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
             <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid #E5E7EB' }}>
-              <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Revenue</p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: '#111827' }}>{fmtCurrency(rev)}</p>
+              <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Total Invoiced</p>
+              <p style={{ fontSize: 24, fontWeight: 700, color: '#111827' }}>{fmtCurrency(totalInvoiced)}</p>
             </div>
             <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid #E5E7EB' }}>
-              <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Total Costs</p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: '#333' }}>{fmtCurrency(totalCosts)}</p>
+              <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Total Collected</p>
+              <p style={{ fontSize: 24, fontWeight: 700, color: '#16A34A' }}>{fmtCurrency(totalCollected)}</p>
             </div>
             <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid #E5E7EB' }}>
-              <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Gross Profit</p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: profit >= 0 ? '#16A34A' : '#DC2626' }}>{fmtCurrency(profit)}</p>
+              <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Outstanding</p>
+              <p style={{ fontSize: 24, fontWeight: 700, color: totalOutstanding > 0 ? '#F59E0B' : '#16A34A' }}>{fmtCurrency(totalOutstanding)}</p>
             </div>
             <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid #E5E7EB' }}>
-              <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Margin</p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: profit >= 0 ? '#16A34A' : '#DC2626' }}>{pctMargin.toFixed(1)}%</p>
+              <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Collection Rate</p>
+              <p style={{ fontSize: 24, fontWeight: 700, color: '#111827' }}>{collectionRate.toFixed(1)}%</p>
             </div>
           </div>
         )
@@ -302,15 +296,18 @@ export default function ReportsPage() {
           <CardHeader><h2 className="font-semibold">New Clients by Month</h2></CardHeader>
           <CardBody>
             {clientsByMonth.length === 0 ? <p className="py-8 text-center text-sm text-stone-400">No new clients in this period</p> : (
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={clientsByMonth}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                  <Tooltip />
-                  <Bar dataKey="clients" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <>
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={clientsByMonth}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                    <Tooltip />
+                    <Bar dataKey="clients" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+                <p style={{ fontSize: 11, color: '#9CA3AF', fontStyle: 'italic', marginTop: 8 }}>* Legacy clients imported Apr 2026 — historical distribution may be skewed</p>
+              </>
             )}
           </CardBody>
         </Card>

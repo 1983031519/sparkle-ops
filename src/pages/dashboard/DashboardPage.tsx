@@ -24,7 +24,8 @@ function pctChange(current: number, prev: number) {
 export default function DashboardPage() {
   const { user, profile } = useAuth()
   const { unreadCount } = useChatContext()
-  const firstName = (profile?.full_name?.split(/\s+/)[0]) || user?.email?.split('@')[0] || ''
+  const rawFirst = (profile?.full_name?.split(/\s+/)[0]) || user?.email?.split('@')[0] || ''
+  const firstName = rawFirst.charAt(0).toUpperCase() + rawFirst.slice(1)
   const [revenue, setRevenue] = useState(0)
   const [outstanding, setOutstanding] = useState(0)
   const [clientCount, setClientCount] = useState(0)
@@ -53,20 +54,18 @@ export default function DashboardPage() {
     const prevMonthEnd = endOfMonth(subMonths(now, 1)).toISOString()
 
     const [clientRes, jobRes, invRes, stockRes, clientsRes, estRes, vendorRes, projRes,
-           prevInvRes, prevJobRes, prevClientRes] = await Promise.all([
+           prevJobRes, prevClientRes] = await Promise.all([
       supabase.from('clients').select('id', { count: 'exact', head: true }),
       supabase.from('jobs').select('id, client_id, title, status, start_date, division, created_at').order('created_at', { ascending: false }),
-      supabase.from('invoices').select('id, client_id, status, total, balance_due, number, due_date, created_at').order('created_at', { ascending: false }),
+      supabase.from('invoices').select('id, client_id, status, total, balance_due, number, date, due_date, created_at').order('created_at', { ascending: false }),
       supabase.from('inventory').select('name, quantity, low_stock_threshold'),
       supabase.from('clients').select('id, name'),
       supabase.from('estimates').select('status'),
       supabase.from('suppliers').select('status'),
       supabase.from('projects').select('status'),
-      // prev month invoices for comparison
-      supabase.from('invoices').select('status, total').gte('created_at', prevMonthStart).lte('created_at', prevMonthEnd),
       // prev month jobs
       supabase.from('jobs').select('status').gte('created_at', prevMonthStart).lte('created_at', prevMonthEnd),
-      // client count at start of this month (rough: total minus this month)
+      // client count at start of this month
       supabase.from('clients').select('id', { count: 'exact', head: true }).lt('created_at', thisMonthStart),
     ])
 
@@ -76,9 +75,13 @@ export default function DashboardPage() {
     setInvoices(allInvoices)
     setClientMap(Object.fromEntries((clientsRes.data ?? []).map((c: { id: string; name: string }) => [c.id, c.name])))
 
-    const invData = allInvoices as { total: number; status: string }[]
-    const rev = invData.filter(i => i.status === 'Paid').reduce((s, i) => s + (i.total || 0), 0)
-    const out = invData.filter(i => i.status === 'Unpaid' || i.status === 'Overdue').reduce((s, i) => s + (i.total || 0), 0)
+    // Faturamento (Mês): all invoices dated this month (paid or unpaid)
+    const thisMonthInvoices = allInvoices.filter(i => {
+      const d = (i as any).date ?? i.created_at
+      return d && d >= thisMonthStart.slice(0, 10) && d <= endOfMonth(now).toISOString().slice(0, 10)
+    })
+    const rev = thisMonthInvoices.reduce((s, i) => s + (i.total || 0), 0)
+    const out = allInvoices.filter(i => i.status === 'Unpaid' || i.status === 'Overdue').reduce((s, i) => s + (i.total || 0), 0)
     const cc = clientRes.count ?? 0
     const aj = allJobs.filter(j => j.status === 'In Progress' || j.status === 'Scheduled').length
 
@@ -90,10 +93,15 @@ export default function DashboardPage() {
     setActiveVendors(((vendorRes.data ?? []) as { status: string }[]).filter(v => (v.status ?? 'Active') === 'Active').length)
     setActiveProjects(((projRes.data ?? []) as { status: string }[]).filter(p => p.status === 'Draft' || p.status === 'Sent' || p.status === 'In Progress').length)
 
-    // prev month comparisons
-    const prevInv = (prevInvRes.data ?? []) as { total: number; status: string }[]
-    setPrevRevenue(prevInv.filter(i => i.status === 'Paid').reduce((s, i) => s + (i.total || 0), 0))
-    setPrevOutstanding(prevInv.filter(i => i.status === 'Unpaid' || i.status === 'Overdue').reduce((s, i) => s + (i.total || 0), 0))
+    // prev month comparisons — use invoice date field for accurate historical comparison
+    const pmStart = startOfMonth(subMonths(now, 1)).toISOString().slice(0, 10)
+    const pmEnd = endOfMonth(subMonths(now, 1)).toISOString().slice(0, 10)
+    const prevMonthInvoices = allInvoices.filter(i => {
+      const d = (i as any).date ?? i.created_at
+      return d && d >= pmStart && d <= pmEnd
+    })
+    setPrevRevenue(prevMonthInvoices.reduce((s, i) => s + (i.total || 0), 0))
+    setPrevOutstanding(prevMonthInvoices.filter(i => i.status === 'Unpaid' || i.status === 'Overdue').reduce((s, i) => s + (i.total || 0), 0))
     setPrevActiveJobs(((prevJobRes.data ?? []) as { status: string }[]).filter(j => j.status === 'In Progress' || j.status === 'Scheduled').length)
     setPrevClientCount(prevClientRes.count ?? 0)
 
@@ -119,11 +127,11 @@ export default function DashboardPage() {
       <div style={{ background: '#F8F9FC', minHeight: '100vh' }}>
         <div style={{ background: 'white', borderBottom: '1px solid #E5E7EB', padding: '20px 20px 24px' }}>
           <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{today}</p>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 16 }}>Good morning, {firstName} 👋</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 16 }}>{new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'}, {firstName} 👋</h1>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
             {[
-              { label: 'Revenue', value: fmtCurrency(revenue) },
-              { label: 'Outstanding', value: fmtCurrency(outstanding) },
+              { label: 'Faturamento', value: fmtCurrency(revenue) },
+              { label: 'Em Aberto', value: fmtCurrency(outstanding) },
               { label: 'Active Jobs', value: String(activeJobs) },
             ].map(k => (
               <div key={k.label} style={{ background: '#F8F9FC', borderRadius: 10, padding: '12px 10px', border: '1px solid #E5E7EB', textAlign: 'center' }}>
@@ -173,11 +181,11 @@ export default function DashboardPage() {
   /* ─── DESKTOP ─── */
   const kpis = [
     {
-      label: 'Revenue', value: fmtCurrency(revenue), icon: DollarSign, iconColor: '#4F6CF7', iconBg: '#EEF1FE',
+      label: 'Faturamento (Mês)', value: fmtCurrency(revenue), icon: DollarSign, iconColor: '#4F6CF7', iconBg: '#EEF1FE',
       pct: pctChange(revenue, prevRevenue), pctLabel: 'vs last month',
     },
     {
-      label: 'Outstanding', value: fmtCurrency(outstanding), icon: FileText, iconColor: '#F59E0B', iconBg: '#FFFBEB',
+      label: 'Em Aberto', value: fmtCurrency(outstanding), icon: FileText, iconColor: '#F59E0B', iconBg: '#FFFBEB',
       pct: pctChange(outstanding, prevOutstanding), pctLabel: 'vs last month', invertSign: true,
     },
     {
@@ -284,7 +292,13 @@ export default function DashboardPage() {
           </div>
           {invoices.length === 0
             ? <p style={{ fontSize: 13, color: '#9CA3AF', padding: '24px 20px' }}>No invoices yet.</p>
-            : invoices.slice(0, 6).map(inv => (
+            : [...invoices].sort((a, b) => {
+                // Unpaid/Overdue first, then by date desc
+                const aUnpaid = a.status === 'Unpaid' || a.status === 'Overdue' ? 0 : 1
+                const bUnpaid = b.status === 'Unpaid' || b.status === 'Overdue' ? 0 : 1
+                if (aUnpaid !== bUnpaid) return aUnpaid - bUnpaid
+                return ((b as any).date ?? b.created_at).localeCompare((a as any).date ?? a.created_at)
+              }).slice(0, 6).map(inv => (
               <div key={inv.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid #F9FAFB' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                   <div style={{ width: 7, height: 7, borderRadius: '50%', background: inv.status === 'Paid' ? '#10B981' : inv.status === 'Overdue' ? '#EF4444' : '#F59E0B', flexShrink: 0 }} />
