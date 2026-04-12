@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { DollarSign, Users, Briefcase, FileText, FolderOpen, Package, AlertTriangle, ChevronLeft, ChevronRight, UserCheck, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react'
+import { DollarSign, Users, Briefcase, FileText, FolderOpen, Package, AlertTriangle, ChevronLeft, ChevronRight, UserCheck, TrendingUp, TrendingDown, ArrowRight, MessageSquare } from 'lucide-react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { Badge, statusColor } from '@/components/ui/Badge'
@@ -7,6 +7,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseIS
 import { enUS } from 'date-fns/locale'
 import { fmtCurrency, fmtDateShort } from '@/lib/constants'
 import { useAuth } from '@/hooks/useAuth'
+import { useChatContext } from '@/contexts/ChatContext'
 import type { Job, Invoice } from '@/lib/database.types'
 
 function useIsMobile() {
@@ -22,6 +23,7 @@ function pctChange(current: number, prev: number) {
 
 export default function DashboardPage() {
   const { user, profile } = useAuth()
+  const { unreadCount } = useChatContext()
   const firstName = (profile?.full_name?.split(/\s+/)[0]) || user?.email?.split('@')[0] || ''
   const [revenue, setRevenue] = useState(0)
   const [outstanding, setOutstanding] = useState(0)
@@ -110,6 +112,7 @@ export default function DashboardPage() {
       { icon: Users,     label: 'Clients',        value: String(clientCount),     sub: 'total',     to: '/clients',   color: '#6B7280' },
       { icon: UserCheck, label: 'Vendors & Team', value: String(activeVendors),   sub: 'active',    to: '/vendors',   color: '#10B981' },
       { icon: Package,   label: 'Inventory',      value: lowStock.length > 0 ? String(lowStock.length) : '✓', sub: lowStock.length > 0 ? 'low stock' : 'all good', to: '/inventory', color: lowStock.length > 0 ? '#EF4444' : '#10B981' },
+      { icon: MessageSquare, label: 'Chat', value: unreadCount > 0 ? String(unreadCount) : '✓', sub: unreadCount > 0 ? 'unread messages' : 'all caught up', to: '/chat', color: '#0891B2', badge: unreadCount > 0 },
     ]
 
     return (
@@ -149,8 +152,11 @@ export default function DashboardPage() {
                 textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 8,
               }}
             >
-              <div style={{ width: 36, height: 36, borderRadius: 8, background: mod.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ position: 'relative', width: 36, height: 36, borderRadius: 8, background: mod.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <mod.icon size={18} strokeWidth={1.75} color={mod.color} />
+                {'badge' in mod && mod.badge && (
+                  <div style={{ position: 'absolute', top: -3, right: -3, width: 10, height: 10, borderRadius: '50%', background: '#4F6CF7', border: '2px solid white' }} />
+                )}
               </div>
               <div>
                 <p style={{ fontSize: 12, fontWeight: 500, color: '#6B7280' }}>{mod.label}</p>

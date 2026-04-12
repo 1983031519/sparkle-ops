@@ -196,7 +196,11 @@ export function Layout() {
   const isMobile = useIsMobile()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const visibleNavFlat = allNavFlat.filter(n => canAccessModule(n.module))
-  const bottomNav = visibleNavFlat.slice(0, 5)
+  // Mobile bottom nav: Dashboard, Clients, Jobs, Estimates, Chat
+  const bottomNav = [
+    ...visibleNavFlat.filter(n => ['dashboard', 'clients', 'jobs', 'estimates'].includes(n.module)).slice(0, 4),
+    ...visibleNavFlat.filter(n => n.module === 'chat'),
+  ]
   const location = useLocation()
   const chatBadge = unreadCount
   const pageTitle = pageTitles[location.pathname] ?? 'Sparkle Ops'
@@ -231,22 +235,37 @@ export function Layout() {
           display: 'flex', height: 60, background: 'white',
           borderTop: '1px solid #E5E7EB',
         }}>
-          {bottomNav.map(({ to, icon: Icon, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/'}
-              style={({ isActive }) => ({
-                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                gap: 2, textDecoration: 'none', fontSize: 10, fontWeight: 500,
-                color: isActive ? '#4F6CF7' : '#9CA3AF',
-                transition: 'color 150ms',
-              })}
-            >
-              <Icon size={20} strokeWidth={1.5} />
-              {label}
-            </NavLink>
-          ))}
+          {bottomNav.map(({ to, icon: Icon, label }) => {
+            const isChatTab = to === '/chat'
+            return (
+              <NavLink
+                key={to}
+                to={to}
+                end={to === '/'}
+                style={({ isActive }) => ({
+                  flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  gap: 2, textDecoration: 'none', fontSize: 10, fontWeight: 500,
+                  color: isActive ? '#4F6CF7' : '#9CA3AF',
+                  transition: 'color 150ms', position: 'relative',
+                })}
+              >
+                <div style={{ position: 'relative' }}>
+                  <Icon size={20} strokeWidth={1.5} />
+                  {isChatTab && chatBadge > 0 && (
+                    <span style={{
+                      position: 'absolute', top: -5, right: -10,
+                      background: '#EF4444', color: 'white',
+                      fontSize: 9, fontWeight: 700, lineHeight: 1,
+                      padding: '2px 5px', borderRadius: 99, minWidth: 16, textAlign: 'center',
+                    }}>
+                      {chatBadge > 99 ? '99+' : chatBadge}
+                    </span>
+                  )}
+                </div>
+                {label}
+              </NavLink>
+            )
+          })}
         </nav>
 
         {/* Drawer */}
