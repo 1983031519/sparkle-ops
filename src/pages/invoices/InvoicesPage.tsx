@@ -33,9 +33,14 @@ const PAYMENT_METHOD_OPTIONS = [
   'Multiple',
 ]
 
+const todayISO = () => new Date().toISOString().split('T')[0]
+const addDays = (iso: string, days: number) => {
+  const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + days); return d.toISOString().split('T')[0]
+}
+
 const emptyForm = {
   client_id: '', job_id: '', status: 'Unpaid' as InvoiceStatus,
-  site_address: '',
+  site_address: '', invoice_date: todayISO(),
   line_items: [{ ...emptyLine }], notes: '', due_date: '',
   payment_terms: '50% Deposit + 50% on Completion',
   payment_method_used: 'Check',
@@ -106,7 +111,7 @@ export default function InvoicesPage() {
     return { subtotal, total: subtotal }
   }
 
-  function openNew() { setEditing(null); setForm(emptyForm); setModalOpen(true) }
+  function openNew() { setEditing(null); setForm({ ...emptyForm, invoice_date: todayISO(), due_date: addDays(todayISO(), 14) }); setModalOpen(true) }
 
   function openEdit(inv: Invoice) {
     setEditing(inv)
@@ -115,7 +120,7 @@ export default function InvoicesPage() {
     const isCustomMethod = method !== '' && !['Check', 'ACH / Bank Transfer', 'Zelle', 'Cash'].includes(method)
     setForm({
       client_id: inv.client_id, job_id: inv.job_id ?? '', status: inv.status,
-      site_address: (inv as any).site_address ?? '',
+      site_address: inv.site_address ?? '', invoice_date: inv.date ?? todayISO(),
       line_items: (inv.line_items as InvoiceLineItem[]).length > 0 ? inv.line_items as InvoiceLineItem[] : [{ ...emptyLine }],
       notes: inv.notes ?? '', due_date: inv.due_date ?? '',
       payment_terms: inv.payment_terms ?? '50% Deposit + 50% on Completion',
@@ -144,7 +149,7 @@ export default function InvoicesPage() {
       const payload = {
         number: editing?.number ?? generateInvoiceNumber(invoices.length + 1),
         client_id: form.client_id, job_id: form.job_id || null, estimate_id: editing?.estimate_id ?? null,
-        status: form.status, site_address: form.site_address || null,
+        status: form.status, date: form.invoice_date || todayISO(), site_address: form.site_address || null,
         line_items: form.line_items, subtotal, total,
         notes: form.notes || null, due_date: form.due_date || null,
         payment_terms: form.payment_terms || null,
@@ -268,7 +273,16 @@ export default function InvoicesPage() {
             }} options={jobs.map(j => ({ value: j.id, label: j.title }))} />
             <Select label="Status" id="inv-status" value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as InvoiceStatus }))} options={INVOICE_STATUSES.map(s => ({ value: s, label: s }))} />
           </div>
-          <DateInput label="Due Date" id="inv-due" value={form.due_date} onChange={v => setForm(f => ({ ...f, due_date: v }))} />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <DateInput label="Invoice Date" id="inv-date" value={form.invoice_date} onChange={v => {
+              setForm(f => {
+                // Auto-suggest due date: if due_date is empty or was auto-set, update it to invoice_date + 14 days
+                const autoSuggest = !f.due_date || f.due_date === addDays(f.invoice_date, 14)
+                return { ...f, invoice_date: v, due_date: autoSuggest && v ? addDays(v, 14) : f.due_date }
+              })
+            }} />
+            <DateInput label="Due Date" id="inv-due" value={form.due_date} onChange={v => setForm(f => ({ ...f, due_date: v }))} />
+          </div>
           <Input label="Job Site Address" id="inv-site" value={form.site_address} onChange={e => setForm(f => ({ ...f, site_address: e.target.value }))} placeholder="Address where work was performed" />
 
           {/* Line Items */}
@@ -476,7 +490,7 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
         pdfBase64={pdfBase64 ?? undefined}
         documentData={{
           number: inv.number,
-          date: fmtDate(isoDatePart(inv.created_at)),
+          date: fmtDate(inv.date ?? isoDatePart(inv.created_at)),
           total: inv.total,
           clientName: client?.name ?? '',
         }}
@@ -492,7 +506,7 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
           <div style={{ textAlign: 'right' }}>
             <h3 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: 0 }}>INVOICE</h3>
             <p style={{ fontFamily: 'monospace', fontSize: 13, color: '#555', margin: '4px 0' }}>{inv.number}</p>
-            <p style={{ fontSize: 12, color: '#666' }}>Date: {fmtDate(isoDatePart(inv.created_at))}</p>
+            <p style={{ fontSize: 12, color: '#666' }}>Date: {fmtDate(inv.date ?? isoDatePart(inv.created_at))}</p>
             {inv.due_date && <p style={{ fontSize: 12, color: '#666' }}>Due: {fmtDate(inv.due_date)}</p>}
             <span style={{ display: 'inline-block', marginTop: 4, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: inv.status === 'Paid' ? '#f0fdf4' : inv.status === 'Overdue' ? '#fff1f2' : '#fffbeb', color: inv.status === 'Paid' ? '#16a34a' : inv.status === 'Overdue' ? '#e11d48' : '#d97706', border: `1px solid ${inv.status === 'Paid' ? '#bbf7d0' : inv.status === 'Overdue' ? '#fecdd3' : '#fde68a'}` }}>{inv.status}</span>
           </div>
@@ -507,7 +521,7 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
           {client?.email && <p style={{ color: '#555', margin: '2px 0' }}>{client.email}</p>}
         </div>
 
-        {(inv as any).site_address && <p style={{ marginBottom: 6 }}><span style={{ fontWeight: 600, color: '#111827' }}>Job Site:</span> {(inv as any).site_address}</p>}
+        {inv.site_address && <p style={{ marginBottom: 6 }}><span style={{ fontWeight: 600, color: '#111827' }}>Job Site:</span> {inv.site_address}</p>}
 
         {job?.re_line && <p style={{ marginBottom: 12 }}><span style={{ fontWeight: 600, color: '#111827' }}>RE:</span> {job.re_line}</p>}
 
