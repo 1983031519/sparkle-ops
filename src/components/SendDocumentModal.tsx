@@ -26,9 +26,10 @@ interface Props {
     total: number
     clientName: string
   }
+  onSent?: () => void   // called after successful email send
 }
 
-export function SendDocumentModal({ open, onClose, type, documentId, clientEmail, pdfBase64, documentData }: Props) {
+export function SendDocumentModal({ open, onClose, type, documentId, clientEmail, pdfBase64, documentData, onSent }: Props) {
   const [fromEmail, setFromEmail] = useState<FromEmail>('oscar@sparklestonepavers.com')
   const [personalMessage, setPersonalMessage] = useState('')
   const [sending, setSending] = useState(false)
@@ -91,7 +92,15 @@ export function SendDocumentModal({ open, onClose, type, documentId, clientEmail
         toast.error(detail ? `Failed to send email — ${detail}` : 'Failed to send email')
         return
       }
+      // Auto-update status to "Sent" for estimates and projects
+      if (type === 'estimate') {
+        await supabase.from('estimates').update({ status: 'Sent' } as never).eq('id', documentId)
+      } else if (type === 'project') {
+        await supabase.from('projects').update({ status: 'Sent' } as never).eq('id', documentId)
+      }
+
       toast.success(`Email sent to ${clientEmail}`)
+      onSent?.()
       onClose()
     } catch (err) {
       clearTimeout(timeout)

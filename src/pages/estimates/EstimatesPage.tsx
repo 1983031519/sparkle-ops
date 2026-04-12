@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Plus, Search, Printer, ArrowRight, Mail, Trash2, Check } from 'lucide-react'
+import { Plus, Search, Printer, ArrowRight, Mail, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input, Select, Textarea } from '@/components/ui/Input'
@@ -302,16 +302,16 @@ export default function EstimatesPage() {
                     <button
                       onClick={() => setApproveTarget(e)}
                       style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 3,
-                        fontSize: 11, fontWeight: 600, color: '#059669',
-                        background: '#f0fdf4', border: '1px solid #bbf7d0',
-                        borderRadius: 6, padding: '3px 8px', cursor: 'pointer',
+                        display: 'inline-flex', alignItems: 'center', gap: 4,
+                        fontSize: 11, fontWeight: 600, color: '#374151',
+                        background: 'white', border: '1px solid #D1D5DB',
+                        borderRadius: 6, padding: '3px 10px', cursor: 'pointer',
                         transition: 'background 100ms', whiteSpace: 'nowrap',
                       }}
-                      onMouseEnter={e => { e.currentTarget.style.background = '#dcfce7' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = '#f0fdf4' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#F3F4F6' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'white' }}
                     >
-                      <Check size={12} strokeWidth={2.5} /> Approve
+                      Approve Estimate
                     </button>
                   )}
                   {e.status === 'Approved' && !jobByEstimate[e.id] && (
@@ -445,7 +445,9 @@ export default function EstimatesPage() {
 
       {/* PRINT PREVIEW MODAL */}
       <Modal open={previewOpen} onClose={() => setPreviewOpen(false)} title="Proposal Preview" wide>
-        {previewEst && <ProposalPreview est={previewEst} client={getClientForEst(previewEst)} />}
+        {previewEst && <ProposalPreview est={previewEst} client={getClientForEst(previewEst)} onSent={() => {
+          setEstimates(prev => prev.map(e => e.id === previewEst.id ? { ...e, status: 'Sent' as EstimateStatus } : e))
+        }} />}
       </Modal>
 
       <DeleteConfirmDialog
@@ -483,7 +485,7 @@ export default function EstimatesPage() {
 }
 
 /* ─── Printable Proposal Preview ─── */
-function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
+function ProposalPreview({ est, client, onSent }: { est: Estimate; client?: Client; onSent?: () => void }) {
   const mats = (est.materials_specified ?? {}) as MaterialsSpecified
   const items = est.line_items as EstimateLineItem[]
   const deposit = est.deposit_amount ?? est.total * 0.5
@@ -547,6 +549,7 @@ function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
           total: est.total,
           clientName: client?.name ?? '',
         }}
+        onSent={onSent}
       />
       <div className="print-area" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: 13, lineHeight: 1.65, color: '#333' }}>
         {/* Header */}

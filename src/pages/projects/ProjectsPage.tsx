@@ -370,7 +370,9 @@ export default function ProjectsPage() {
 
       {/* PREVIEW MODAL */}
       <Modal open={previewOpen} onClose={() => setPreviewOpen(false)} title="Project Proposal Preview" wide>
-        {previewProject && <ProjectPreview project={previewProject} phases={previewPhases} client={previewProject.client_id ? clientMap[previewProject.client_id] : undefined} />}
+        {previewProject && <ProjectPreview project={previewProject} phases={previewPhases} client={previewProject.client_id ? clientMap[previewProject.client_id] : undefined} onSent={() => {
+          setProjects(prev => prev.map(p => p.id === previewProject.id ? { ...p, status: 'Sent' } : p))
+        }} />}
       </Modal>
     </div>
   )
@@ -396,7 +398,7 @@ function resizeImageUrl(url: string, maxWidth = 800): Promise<string> {
 }
 
 /* ─── Printable Project Preview ─── */
-function ProjectPreview({ project: p, phases, client }: { project: Project; phases: ProjectPhase[]; client?: Client }) {
+function ProjectPreview({ project: p, phases, client, onSent }: { project: Project; phases: ProjectPhase[]; client?: Client; onSent?: () => void }) {
   const dep = p.total_value * (p.deposit_percent / 100)
   const mid = p.total_value * (p.mid_percent / 100)
   const fin = p.total_value * (p.final_percent / 100)
@@ -492,6 +494,7 @@ function ProjectPreview({ project: p, phases, client }: { project: Project; phas
           total: p.total_value,
           clientName: client?.name ?? p.client_name ?? '',
         }}
+        onSent={onSent}
       />
       <div className="print-area" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: 13, lineHeight: 1.65, color: '#333' }}>
         {/* Header */}
