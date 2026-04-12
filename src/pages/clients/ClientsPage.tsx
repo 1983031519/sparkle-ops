@@ -287,10 +287,12 @@ export default function ClientsPage() {
     return acc
   }, {})
 
-  const filtered = clients.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.type.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = [...clients]
+    .filter(c =>
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.type.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => a.name.localeCompare(b.name))
 
   function openNew() {
     setEditing(null)

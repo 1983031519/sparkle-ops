@@ -118,6 +118,9 @@ export interface Invoice {
   payment_method_used: string | null
   deposit_received: number
   balance_due: number | null
+  date: string                     // DB: invoice date (NOT NULL, default CURRENT_DATE)
+  site_address: string | null
+  paid_at: string | null
   created_at: string
 }
 

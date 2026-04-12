@@ -71,12 +71,17 @@ export default function ReportsPage() {
 
   const dateRange = useMemo(() => getDateRange(range), [range])
 
+  // Invoice date helper: use date field (actual invoice date), fall back to created_at
+  function invoiceDate(i: Invoice): string {
+    return i.date ?? i.created_at
+  }
+
   // 1. Monthly Revenue (paid invoices)
   const monthlyRevenue = useMemo(() => {
-    const paid = invoices.filter(i => i.status === 'Paid' && inRange(i.created_at ?? i.created_at, dateRange))
+    const paid = invoices.filter(i => i.status === 'Paid' && inRange(invoiceDate(i), dateRange))
     const byMonth: Record<string, number> = {}
     paid.forEach(i => {
-      const month = format(parseISO(i.created_at ?? i.created_at), 'yyyy-MM')
+      const month = format(parseISO(invoiceDate(i)), 'yyyy-MM')
       byMonth[month] = (byMonth[month] ?? 0) + i.total
     })
     return Object.entries(byMonth).sort().map(([month, total]) => ({
@@ -87,7 +92,7 @@ export default function ReportsPage() {
 
   // 2. Outstanding invoices
   const outstandingInvoices = useMemo(() => {
-    return invoices.filter(i => (i.status === 'Unpaid' || i.status === 'Overdue') && inRange(i.created_at, dateRange))
+    return invoices.filter(i => (i.status === 'Unpaid' || i.status === 'Overdue') && inRange(invoiceDate(i), dateRange))
   }, [invoices, dateRange])
 
   const outstandingTotal = outstandingInvoices.reduce((s, i) => s + i.total, 0)
@@ -110,7 +115,7 @@ export default function ReportsPage() {
 
   // 5. Revenue by division
   const revenueByDivision = useMemo(() => {
-    const paidInvoices = invoices.filter(i => i.status === 'Paid' && inRange(i.created_at ?? i.created_at, dateRange))
+    const paidInvoices = invoices.filter(i => i.status === 'Paid' && inRange(invoiceDate(i), dateRange))
     const jobMap = new Map(jobs.map(j => [j.id, j]))
     const divTotals: Record<string, number> = { Pavers: 0, Stone: 0 }
     paidInvoices.forEach(i => {
