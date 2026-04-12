@@ -45,6 +45,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [loading, setLoading] = useState(true)
   const seenIds = useRef(new Set<string>())
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const channelsRef = useRef<any[]>([])
 
   // Load team members + message history on mount
   useEffect(() => {
@@ -85,39 +87,66 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     return () => { mounted = false }
   }, [user])
 
-  // Realtime: subscribe to INSERTs and UPDATEs on direct_messages
+  // Realtime: two server-filtered channels so RLS + Realtime work together.
+  // Channel 1: messages I receive (INSERT + UPDATE for read receipts)
+  // Channel 2: messages I send (so my own sends appear via realtime too)
   useEffect(() => {
     if (!user) return
     const userId = user.id
+    let cancelled = false
 
-    const channel = supabase
-      .channel('dm_realtime')
-      .on(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        'postgres_changes' as any,
-        { event: 'INSERT', schema: 'public', table: 'direct_messages' },
-        (payload: { new: DirectMessage }) => {
-          const msg = payload.new
-          // Only handle messages involving the current user
-          if (msg.sender_id !== userId && msg.recipient_id !== userId) return
-          if (seenIds.current.has(msg.id)) return
-          seenIds.current.add(msg.id)
-          setMessages(prev => [...prev, msg])
-        }
-      )
-      .on(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        'postgres_changes' as any,
-        { event: 'UPDATE', schema: 'public', table: 'direct_messages' },
-        (payload: { new: DirectMessage }) => {
-          const msg = payload.new
-          if (msg.sender_id !== userId && msg.recipient_id !== userId) return
-          setMessages(prev => prev.map(m => (m.id === msg.id ? msg : m)))
-        }
-      )
-      .subscribe()
+    function addMsg(msg: DirectMessage) {
+      if (seenIds.current.has(msg.id)) return
+      seenIds.current.add(msg.id)
+      setMessages(prev => [...prev, msg])
+    }
 
-    return () => { supabase.removeChannel(channel) }
+    function updateMsg(msg: DirectMessage) {
+      setMessages(prev => prev.map(m => (m.id === msg.id ? msg : m)))
+    }
+
+    // Wait for a confirmed auth session before subscribing
+    async function startRealtime() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (cancelled || !session) return
+
+      const inbound = supabase
+        .channel(`dm-inbound-${userId}`)
+        .on(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          'postgres_changes' as any,
+          { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: `recipient_id=eq.${userId}` },
+          (payload: { new: DirectMessage }) => addMsg(payload.new)
+        )
+        .on(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          'postgres_changes' as any,
+          { event: 'UPDATE', schema: 'public', table: 'direct_messages', filter: `recipient_id=eq.${userId}` },
+          (payload: { new: DirectMessage }) => updateMsg(payload.new)
+        )
+        .subscribe()
+
+      const outbound = supabase
+        .channel(`dm-outbound-${userId}`)
+        .on(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          'postgres_changes' as any,
+          { event: 'INSERT', schema: 'public', table: 'direct_messages', filter: `sender_id=eq.${userId}` },
+          (payload: { new: DirectMessage }) => addMsg(payload.new)
+        )
+        .subscribe()
+
+      // Store channels for cleanup
+      channelsRef.current = [inbound, outbound]
+    }
+
+    startRealtime()
+
+    return () => {
+      cancelled = true
+      channelsRef.current.forEach(ch => supabase.removeChannel(ch))
+      channelsRef.current = []
+    }
   }, [user])
 
   const sendMessage = useCallback(async (recipientId: string, content: string) => {
