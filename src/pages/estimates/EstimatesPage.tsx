@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Plus, Search, Printer, ArrowRight, Mail, Trash2 } from 'lucide-react'
+import { Plus, Search, Printer, ArrowRight, Mail, Trash2, Check } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input, Select, Textarea } from '@/components/ui/Input'
@@ -26,7 +26,7 @@ const emptyMaterials: MaterialsSpecified = { paver_type: '', paver_size: '', pav
 
 interface EstForm {
   client_id: string; status: EstimateStatus; division: string; attn: string; site_address: string; re_line: string
-  scope_of_work: string; materials: MaterialsSpecified; start_date: string; end_date: string
+  scope_of_work: string; description: string; materials: MaterialsSpecified; start_date: string; end_date: string
   line_items: EstimateLineItem[]; warranty: string; notes: string; valid_until: string
   payment_terms: string; accepted_payment_methods: string[]
 }
@@ -35,7 +35,7 @@ const plus30 = futureISO(30)
 
 const emptyForm: EstForm = {
   client_id: '', status: 'Draft', division: 'Pavers', attn: '', site_address: '', re_line: '',
-  scope_of_work: '', materials: { ...emptyMaterials }, start_date: '', end_date: '',
+  scope_of_work: '', description: '', materials: { ...emptyMaterials }, start_date: '', end_date: '',
   line_items: [{ ...emptyLine }], warranty: DEFAULT_WARRANTY, notes: '', valid_until: plus30,
   payment_terms: '50% deposit + 50% on completion', accepted_payment_methods: ['Check', 'ACH', 'Zelle'],
 }
@@ -57,6 +57,7 @@ export default function EstimatesPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [deleteWarning, setDeleteWarning] = useState<{ message: string; records: LinkedRecord[] } | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [approveTarget, setApproveTarget] = useState<Estimate | null>(null)
   const toast = useToast()
 
   const fetchAll = useCallback(async () => {
@@ -107,7 +108,7 @@ export default function EstimatesPage() {
     setForm({
       client_id: est.client_id, status: est.status, division: est.division ?? 'Pavers',
       attn: est.attn ?? '', site_address: est.site_address ?? '', re_line: est.re_line ?? '',
-      scope_of_work: est.scope_of_work ?? '', materials: mats,
+      scope_of_work: est.scope_of_work ?? '', description: (est as any).description ?? '', materials: mats,
       start_date: est.start_date ?? '', end_date: est.end_date ?? '',
       line_items: (est.line_items as EstimateLineItem[]).length > 0 ? est.line_items as EstimateLineItem[] : [{ ...emptyLine }],
       warranty: est.warranty ?? DEFAULT_WARRANTY,
@@ -152,6 +153,7 @@ export default function EstimatesPage() {
         site_address: form.site_address || null,
         re_line: form.re_line || null,
         scope_of_work: form.scope_of_work || null,
+        description: form.description || null,
         materials_specified: form.materials,
         start_date: form.start_date || null,
         end_date: form.end_date || null,
@@ -226,6 +228,15 @@ export default function EstimatesPage() {
     toast.success('Estimate deleted.')
   }
 
+  async function quickApprove() {
+    if (!approveTarget) return
+    const { error } = await supabase.from('estimates').update({ status: 'Approved' } as never).eq('id', approveTarget.id)
+    if (error) { toast.error(`Failed to approve: ${error.message}`); return }
+    setEstimates(prev => prev.map(e => e.id === approveTarget.id ? { ...e, status: 'Approved' as EstimateStatus } : e))
+    setApproveTarget(null)
+    toast.success(`Estimate ${approveTarget.number} approved.`)
+  }
+
   async function convertToJob(est: Estimate) {
     const client = clientMap[est.client_id]
     const { error } = await supabase.from('jobs').insert({
@@ -286,7 +297,23 @@ export default function EstimatesPage() {
               }},
               { key: 'viewed', header: '', render: e => viewedDocIds.has(e.id) ? <span style={{ fontSize: 10, fontWeight: 600, color: '#16a34a', background: '#f0fdf4', padding: '2px 7px', borderRadius: 10, border: '1px solid #bbf7d0', whiteSpace: 'nowrap' }}>Viewed</span> : null },
               { key: 'actions', header: '', render: e => (
-                <div className="flex gap-2" onClick={ev => ev.stopPropagation()}>
+                <div className="flex gap-2 items-center" onClick={ev => ev.stopPropagation()}>
+                  {e.status === 'Sent' && (
+                    <button
+                      onClick={() => setApproveTarget(e)}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 3,
+                        fontSize: 11, fontWeight: 600, color: '#059669',
+                        background: '#f0fdf4', border: '1px solid #bbf7d0',
+                        borderRadius: 6, padding: '3px 8px', cursor: 'pointer',
+                        transition: 'background 100ms', whiteSpace: 'nowrap',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#dcfce7' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = '#f0fdf4' }}
+                    >
+                      <Check size={12} strokeWidth={2.5} /> Approve
+                    </button>
+                  )}
                   {e.status === 'Approved' && !jobByEstimate[e.id] && (
                     <Button variant="gold" size="sm" onClick={() => convertToJob(e)}>
                       <ArrowRight className="h-3 w-3" /> Convert to Job
@@ -324,6 +351,7 @@ export default function EstimatesPage() {
 
           {/* Scope */}
           <Textarea label="Scope of Work" id="est-scope" value={form.scope_of_work} onChange={e => setForm(f => ({ ...f, scope_of_work: e.target.value }))} />
+          <Textarea label="Description" id="est-description" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Brief description of the work to be performed..." />
 
           {/* Materials */}
           <div className="border rounded-lg border-stone-200 p-4 space-y-3">
@@ -437,6 +465,19 @@ export default function EstimatesPage() {
         message={deleteWarning?.message ?? ''}
         linkedRecords={deleteWarning?.records}
       />
+
+      <DeleteConfirmDialog
+        open={!!approveTarget}
+        onClose={() => setApproveTarget(null)}
+        onConfirm={quickApprove}
+        title={`Approve Estimate ${approveTarget?.number ?? ''}?`}
+        message="Mark this estimate as Approved? This will make it eligible for conversion to a job."
+        confirmLabel="Approve"
+        confirmLoadingLabel="Approving…"
+        confirmColor="#059669"
+        iconColor="#059669"
+        iconBg="#f0fdf4"
+      />
     </div>
   )
 }
@@ -542,6 +583,10 @@ function ProposalPreview({ est, client }: { est: Estimate; client?: Client }) {
 
         {est.scope_of_work && (
           <div style={{ marginBottom: 16 }}><h4 style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Scope of Work</h4><p style={{ color: '#444', whiteSpace: 'pre-wrap' }}>{est.scope_of_work}</p></div>
+        )}
+
+        {(est as any).description && (
+          <div style={{ marginBottom: 16 }}><h4 style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Description</h4><p style={{ color: '#444', whiteSpace: 'pre-wrap' }}>{(est as any).description}</p></div>
         )}
 
         {Object.values(mats).some(v => v) && (

@@ -55,19 +55,24 @@ export interface DeleteConfirmProps {
   title: string
   message?: string
   loading?: boolean
+  confirmLabel?: string
+  confirmLoadingLabel?: string
+  confirmColor?: string
+  iconColor?: string
+  iconBg?: string
 }
 
-export function DeleteConfirmDialog({ open, onClose, onConfirm, title, message, loading }: DeleteConfirmProps) {
+export function DeleteConfirmDialog({ open, onClose, onConfirm, title, message, loading, confirmLabel, confirmLoadingLabel, confirmColor, iconColor, iconBg }: DeleteConfirmProps) {
   return (
     <DialogShell open={open} onClose={onClose}>
       <div style={{ padding: '24px 24px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
           <div style={{
             width: 40, height: 40, borderRadius: 10,
-            background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: iconBg ?? '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}>
-            <AlertTriangle size={20} strokeWidth={1.75} color="#DC2626" />
+            <AlertTriangle size={20} strokeWidth={1.75} color={iconColor ?? '#DC2626'} />
           </div>
           <div style={{ flex: 1 }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#111827' }}>{title}</h3>
@@ -99,12 +104,12 @@ export function DeleteConfirmDialog({ open, onClose, onConfirm, title, message, 
           disabled={loading}
           style={{
             padding: '8px 18px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-            border: 'none', background: '#DC2626', color: 'white',
+            border: 'none', background: confirmColor ?? '#DC2626', color: 'white',
             cursor: loading ? 'default' : 'pointer',
             opacity: loading ? 0.7 : 1, transition: 'opacity 100ms',
           }}
         >
-          {loading ? 'Deleting…' : 'Delete'}
+          {loading ? (confirmLoadingLabel ?? 'Deleting…') : (confirmLabel ?? 'Delete')}
         </button>
       </div>
     </DialogShell>
