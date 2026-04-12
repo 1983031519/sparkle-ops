@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Plus, Search, Printer, CheckCircle, Mail } from 'lucide-react'
+import { Plus, Search, Printer, CheckCircle, Mail, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input, Select, Textarea } from '@/components/ui/Input'
@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Table } from '@/components/ui/Table'
 import { Badge, statusColor } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
+import { DeleteConfirmDialog, DeleteWarningDialog } from '@/components/ui/DeleteDialogs'
 import { SendDocumentModal } from '@/components/SendDocumentModal'
 import { INVOICE_STATUSES, COMPANY, generateInvoiceNumber, fmtDateShort, fmtDate, fmtCurrency, isoDatePart } from '@/lib/constants'
 import { useToast } from '@/components/ui/Toast'
@@ -54,6 +55,9 @@ export default function InvoicesPage() {
   const [form, setForm] = useState(emptyForm)
   const [previewInv, setPreviewInv] = useState<Invoice | null>(null)
   const [saving, setSaving] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [deletePaidWarning, setDeletePaidWarning] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const toast = useToast()
 
   const fetchAll = useCallback(async () => {
@@ -155,11 +159,23 @@ export default function InvoicesPage() {
     toast.success('Invoice marked as paid.')
   }
 
-  async function handleDelete() {
-    if (!editing || !confirm('Delete this invoice?')) return
+  function handleDeleteClick() {
+    if (!editing) return
+    if (editing.status === 'Paid') {
+      setDeletePaidWarning(true)
+      return
+    }
+    setDeleteConfirmOpen(true)
+  }
+
+  async function executeDelete() {
+    if (!editing) return
+    setDeleting(true)
     const { error } = await supabase.from('invoices').delete().eq('id', editing.id)
+    setDeleting(false)
     if (error) { toast.error(`Failed to delete: ${error.message}`); return }
     setInvoices(prev => prev.filter(i => i.id !== editing.id))
+    setDeleteConfirmOpen(false)
     setModalOpen(false)
     toast.success('Invoice deleted.')
   }
@@ -296,7 +312,7 @@ export default function InvoicesPage() {
           <Textarea label="Notes" id="inv-notes" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
 
           <div className="flex justify-between border-t border-stone-200 pt-4">
-            {editing && <Button variant="danger" onClick={handleDelete} type="button">Delete</Button>}
+            {editing && <Button variant="danger" onClick={handleDeleteClick} type="button"><Trash2 className="h-4 w-4" /> Delete</Button>}
             <div className="ml-auto flex gap-2">
               <Button variant="secondary" onClick={() => setModalOpen(false)} type="button">Cancel</Button>
               <Button onClick={handleSave} type="button" disabled={saving}>{saving ? 'Saving...' : editing ? 'Update' : 'Create'}</Button>
@@ -309,6 +325,22 @@ export default function InvoicesPage() {
       <Modal open={previewOpen} onClose={() => setPreviewOpen(false)} title="Invoice Preview" wide>
         {previewInv && <InvoicePreview inv={previewInv} client={clientMap[previewInv.client_id]} job={previewInv.job_id ? jobMap[previewInv.job_id] : undefined} />}
       </Modal>
+
+      <DeleteConfirmDialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        onConfirm={executeDelete}
+        title={`Delete Invoice ${editing?.number ?? ''}?`}
+        message="This action cannot be undone."
+        loading={deleting}
+      />
+
+      <DeleteWarningDialog
+        open={deletePaidWarning}
+        onClose={() => setDeletePaidWarning(false)}
+        title="Cannot Delete Paid Invoice"
+        message="Paid invoices cannot be deleted to preserve your financial records. Archive or void the invoice instead."
+      />
     </div>
   )
 }

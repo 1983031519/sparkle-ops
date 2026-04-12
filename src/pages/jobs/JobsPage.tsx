@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Table } from '@/components/ui/Table'
 import { Badge, statusColor } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
+import { DeleteConfirmDialog, DeleteWarningDialog, type LinkedRecord } from '@/components/ui/DeleteDialogs'
 import { FlowIndicator } from '@/components/FlowIndicator'
 import { PhotoUpload } from '@/components/PhotoUpload'
 import { JobCosting } from '@/components/JobCosting'
@@ -42,6 +43,10 @@ export default function JobsPage() {
   const [coForm, setCoForm] = useState(emptyCO)
   const [photos, setPhotos] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [deleteConfirmMsg, setDeleteConfirmMsg] = useState('')
+  const [deleteWarning, setDeleteWarning] = useState<{ message: string; records: LinkedRecord[] } | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const toast = useToast()
 
   const fetchAll = useCallback(async () => {
@@ -50,7 +55,7 @@ export default function JobsPage() {
       supabase.from('jobs').select('*').order('created_at', { ascending: false }),
       supabase.from('clients').select('id, name').order('name'),
       supabase.from('estimates').select('id, number, client_id, status, division, total'),
-      supabase.from('invoices').select('id, job_id, status, total'),
+      supabase.from('invoices').select('id, number, job_id, status, total'),
       supabase.from('suppliers').select('id, name, roles').eq('status', 'Active').order('name'),
     ])
     setJobs((jRes.data ?? []) as Job[])
@@ -132,11 +137,39 @@ export default function JobsPage() {
     } finally { setSaving(false) }
   }
 
-  async function handleDelete() {
-    if (!editing || !confirm('Delete this job?')) return
+  function handleDeleteClick() {
+    if (!editing) return
+
+    const linkedInvoices = invoices.filter(i => i.job_id === editing.id)
+    if (linkedInvoices.length > 0) {
+      const records: LinkedRecord[] = linkedInvoices.map((i: Invoice & { number?: string }) => ({
+        label: `Invoice: ${i.number || i.id} (${i.status})`,
+      }))
+      setDeleteWarning({
+        message: 'This job has linked invoices. Remove or reassign them before deleting.',
+        records,
+      })
+      return
+    }
+
+    // Change orders cascade automatically, but warn if any exist
+    const coCount = changeOrders.length
+    setDeleteConfirmMsg(
+      coCount > 0
+        ? `This will also delete ${coCount} change order${coCount > 1 ? 's' : ''}. This action cannot be undone.`
+        : 'This action cannot be undone.'
+    )
+    setDeleteConfirmOpen(true)
+  }
+
+  async function executeDelete() {
+    if (!editing) return
+    setDeleting(true)
     const { error } = await supabase.from('jobs').delete().eq('id', editing.id)
+    setDeleting(false)
     if (error) { toast.error(`Failed to delete: ${error.message}`); return }
     setJobs(prev => prev.filter(j => j.id !== editing.id))
+    setDeleteConfirmOpen(false)
     setModalOpen(false)
     toast.success('Job deleted.')
   }
@@ -382,7 +415,7 @@ export default function JobsPage() {
           )}
 
           <div className="flex justify-between border-t border-stone-200 pt-4">
-            {editing && <Button variant="danger" onClick={handleDelete} type="button">Delete</Button>}
+            {editing && <Button variant="danger" onClick={handleDeleteClick} type="button"><Trash2 className="h-4 w-4" /> Delete</Button>}
             <div className="ml-auto flex gap-2">
               <Button variant="secondary" onClick={() => setModalOpen(false)} type="button">Cancel</Button>
               <Button onClick={handleSave} type="button" disabled={saving}>{saving ? 'Saving...' : editing ? 'Update' : 'Create'}</Button>
@@ -409,6 +442,22 @@ export default function JobsPage() {
           </div>
         </div>
       </Modal>
+
+      <DeleteConfirmDialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        onConfirm={executeDelete}
+        title={`Delete Job "${editing?.title ?? ''}"?`}
+        message={deleteConfirmMsg}
+        loading={deleting}
+      />
+
+      <DeleteWarningDialog
+        open={!!deleteWarning}
+        onClose={() => setDeleteWarning(null)}
+        message={deleteWarning?.message ?? ''}
+        linkedRecords={deleteWarning?.records}
+      />
     </div>
   )
 }

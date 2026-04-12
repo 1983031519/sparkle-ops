@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Plus, Search, Printer, ArrowRight, Mail } from 'lucide-react'
+import { Plus, Search, Printer, ArrowRight, Mail, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input, Select, Textarea } from '@/components/ui/Input'
@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Table } from '@/components/ui/Table'
 import { Badge, statusColor } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
+import { DeleteConfirmDialog, DeleteWarningDialog, type LinkedRecord } from '@/components/ui/DeleteDialogs'
 import { FlowIndicator } from '@/components/FlowIndicator'
 import { InlineClientCreate } from '@/components/InlineClientCreate'
 import { SendDocumentModal } from '@/components/SendDocumentModal'
@@ -53,6 +54,9 @@ export default function EstimatesPage() {
   const [form, setForm] = useState<EstForm>(emptyForm)
   const [previewEst, setPreviewEst] = useState<Estimate | null>(null)
   const [saving, setSaving] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [deleteWarning, setDeleteWarning] = useState<{ message: string; records: LinkedRecord[] } | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const toast = useToast()
 
   const fetchAll = useCallback(async () => {
@@ -61,7 +65,7 @@ export default function EstimatesPage() {
       supabase.from('estimates').select('*').order('created_at', { ascending: false }),
       supabase.from('clients').select('id, name, email, phone, address, city, state, contact_name').order('name'),
       supabase.from('jobs').select('id, title, estimate_id, client_id'),
-      supabase.from('invoices').select('id, job_id, status'),
+      supabase.from('invoices').select('id, job_id, estimate_id, status, number'),
       supabase.from('document_links').select('document_id').eq('document_type', 'estimate').not('viewed_at', 'is', null),
     ])
     setEstimates((eRes.data ?? []) as Estimate[])
@@ -182,15 +186,42 @@ export default function EstimatesPage() {
     }
   }
 
-  async function handleDelete() {
-    if (!editing || !confirm('Delete this estimate?')) return
+  function handleDeleteClick() {
+    if (!editing) return
+
+    // Check for linked records
+    const linkedJobs = jobs.filter(j => j.estimate_id === editing.id)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const linkedInvoices = invoices.filter((i: any) => i.estimate_id === editing.id)
+    const linked: LinkedRecord[] = [
+      ...linkedJobs.map(j => ({ label: `Job: ${j.title || j.id}` })),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ...linkedInvoices.map((i: any) => ({ label: `Invoice: ${i.number || i.id}` })),
+    ]
+
+    if (linked.length > 0) {
+      setDeleteWarning({
+        message: 'This estimate has linked records. Remove or reassign them before deleting.',
+        records: linked,
+      })
+      return
+    }
+
+    // Status-based confirmation
+    setDeleteConfirmOpen(true)
+  }
+
+  async function executeDelete() {
+    if (!editing) return
+    setDeleting(true)
     const { error } = await supabase.from('estimates').delete().eq('id', editing.id)
+    setDeleting(false)
     if (error) {
-      console.error('Supabase delete error:', error)
       toast.error(`Failed to delete: ${error.message}`)
       return
     }
     setEstimates(prev => prev.filter(e => e.id !== editing.id))
+    setDeleteConfirmOpen(false)
     setModalOpen(false)
     toast.success('Estimate deleted.')
   }
@@ -370,7 +401,7 @@ export default function EstimatesPage() {
           <Textarea label="Notes" id="est-notes" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
 
           <div className="flex justify-between border-t border-stone-200 pt-4">
-            {editing && <Button variant="danger" onClick={handleDelete} type="button">Delete</Button>}
+            {editing && <Button variant="danger" onClick={handleDeleteClick} type="button"><Trash2 className="h-4 w-4" /> Delete</Button>}
             <div className="ml-auto flex gap-2">
               {editing && editing.status === 'Approved' && !jobByEstimate[editing.id] && (
                 <Button variant="gold" onClick={() => { convertToJob(editing); setModalOpen(false) }} type="button">
@@ -388,6 +419,24 @@ export default function EstimatesPage() {
       <Modal open={previewOpen} onClose={() => setPreviewOpen(false)} title="Proposal Preview" wide>
         {previewEst && <ProposalPreview est={previewEst} client={getClientForEst(previewEst)} />}
       </Modal>
+
+      <DeleteConfirmDialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        onConfirm={executeDelete}
+        title={`Delete Estimate ${editing?.number ?? ''}?`}
+        message={editing?.status === 'Approved'
+          ? 'This estimate is approved. Are you sure you want to delete it? This action cannot be undone.'
+          : 'This action cannot be undone.'}
+        loading={deleting}
+      />
+
+      <DeleteWarningDialog
+        open={!!deleteWarning}
+        onClose={() => setDeleteWarning(null)}
+        message={deleteWarning?.message ?? ''}
+        linkedRecords={deleteWarning?.records}
+      />
     </div>
   )
 }
