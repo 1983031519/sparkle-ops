@@ -35,6 +35,7 @@ const PAYMENT_METHOD_OPTIONS = [
 
 const emptyForm = {
   client_id: '', job_id: '', status: 'Unpaid' as InvoiceStatus,
+  site_address: '',
   line_items: [{ ...emptyLine }], notes: '', due_date: '',
   payment_terms: '50% Deposit + 50% on Completion',
   payment_method_used: 'Check',
@@ -65,7 +66,7 @@ export default function InvoicesPage() {
     const [iRes, cRes, jRes, vRes] = await Promise.all([
       supabase.from('invoices').select('*').order('created_at', { ascending: false }),
       supabase.from('clients').select('id, name, email, phone, address, city, state').order('name'),
-      supabase.from('jobs').select('id, title, client_id, estimate_id, re_line'),
+      supabase.from('jobs').select('id, title, client_id, estimate_id, re_line, site_address'),
       supabase.from('document_links').select('document_id').eq('document_type', 'invoice').not('viewed_at', 'is', null),
     ])
     setInvoices((iRes.data ?? []) as Invoice[])
@@ -101,6 +102,7 @@ export default function InvoicesPage() {
     const isCustomMethod = method !== '' && !['Check', 'ACH / Bank Transfer', 'Zelle', 'Cash'].includes(method)
     setForm({
       client_id: inv.client_id, job_id: inv.job_id ?? '', status: inv.status,
+      site_address: (inv as any).site_address ?? '',
       line_items: (inv.line_items as InvoiceLineItem[]).length > 0 ? inv.line_items as InvoiceLineItem[] : [{ ...emptyLine }],
       notes: inv.notes ?? '', due_date: inv.due_date ?? '',
       payment_terms: inv.payment_terms ?? '50% Deposit + 50% on Completion',
@@ -129,7 +131,8 @@ export default function InvoicesPage() {
       const payload = {
         number: editing?.number ?? generateInvoiceNumber(invoices.length + 1),
         client_id: form.client_id, job_id: form.job_id || null, estimate_id: editing?.estimate_id ?? null,
-        status: form.status, line_items: form.line_items, subtotal, total,
+        status: form.status, site_address: form.site_address || null,
+        line_items: form.line_items, subtotal, total,
         notes: form.notes || null, due_date: form.due_date || null,
         payment_terms: form.payment_terms || null,
         payment_method_used: methodValue || null,
@@ -226,10 +229,19 @@ export default function InvoicesPage() {
         <div className="space-y-5 max-h-[80vh] overflow-y-auto pr-1">
           <div className="grid gap-4 sm:grid-cols-3">
             <Select label="Client" id="inv-client" value={form.client_id} onChange={e => setForm(f => ({ ...f, client_id: e.target.value }))} options={clients.map(c => ({ value: c.id, label: c.name }))} />
-            <Select label="Job (optional)" id="inv-job" value={form.job_id} onChange={e => setForm(f => ({ ...f, job_id: e.target.value }))} options={jobs.map(j => ({ value: j.id, label: j.title }))} />
+            <Select label="Job (optional)" id="inv-job" value={form.job_id} onChange={e => {
+              const jobId = e.target.value
+              const selectedJob = jobs.find(j => j.id === jobId)
+              setForm(f => ({
+                ...f,
+                job_id: jobId,
+                site_address: (selectedJob as any)?.site_address ?? f.site_address,
+              }))
+            }} options={jobs.map(j => ({ value: j.id, label: j.title }))} />
             <Select label="Status" id="inv-status" value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as InvoiceStatus }))} options={INVOICE_STATUSES.map(s => ({ value: s, label: s }))} />
           </div>
           <DateInput label="Due Date" id="inv-due" value={form.due_date} onChange={v => setForm(f => ({ ...f, due_date: v }))} />
+          <Input label="Job Site Address" id="inv-site" value={form.site_address} onChange={e => setForm(f => ({ ...f, site_address: e.target.value }))} placeholder="Address where work was performed" />
 
           {/* Line Items */}
           <div>
@@ -435,6 +447,8 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
           {client?.phone && <p style={{ color: '#555', margin: '2px 0' }}>{client.phone}</p>}
           {client?.email && <p style={{ color: '#555', margin: '2px 0' }}>{client.email}</p>}
         </div>
+
+        {(inv as any).site_address && <p style={{ marginBottom: 6 }}><span style={{ fontWeight: 600, color: '#111827' }}>Job Site:</span> {(inv as any).site_address}</p>}
 
         {job?.re_line && <p style={{ marginBottom: 12 }}><span style={{ fontWeight: 600, color: '#111827' }}>RE:</span> {job.re_line}</p>}
 
