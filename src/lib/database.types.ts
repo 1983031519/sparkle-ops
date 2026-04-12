@@ -15,7 +15,7 @@ export type JobDivision = 'Pavers' | 'Stone'
 export type JobStatus = 'Lead' | 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled'
 export type EstimateStatus = 'Draft' | 'Sent' | 'Approved'
 export type InvoiceStatus = 'Unpaid' | 'Paid' | 'Overdue'
-export type InventoryCategory = 'Bricks' | 'Slabs' | 'Tiles' | 'Sand' | 'Sealant'
+export type InventoryCategory = 'Equipment' | 'Vehicles & Trailers' | 'Materials & Stock' | 'Other'
 export type ContactRole = 'Owner' | 'Manager' | 'AP' | 'Superintendent' | 'Other'
 export type PreferredContact = 'Phone' | 'Email' | 'Text'
 export type ChangeOrderStatus = 'Pending Client Approval' | 'Approved' | 'Declined'
@@ -204,15 +204,25 @@ export interface Supplier {
   created_at: string
 }
 
+export type AssetCondition = 'Good' | 'Fair' | 'Poor'
+export type AssetStatus = 'Active' | 'Sold' | 'Retired'
+
 export interface InventoryItem {
   id: string
   name: string
   category: InventoryCategory
+  description: string | null
+  brand_model: string | null
+  year_purchased: number | null
+  purchase_price: number
+  current_market_value: number | null
+  condition: AssetCondition
+  status: AssetStatus
   supplier_id: string | null
   quantity: number
   unit: string
-  low_stock_threshold: number      // DB: "low_stock_threshold" (was min_stock)
-  unit_cost: number                // DB: "unit_cost" (was cost_per_unit)
+  low_stock_threshold: number
+  unit_cost: number
   notes: string | null
   created_at: string
 }

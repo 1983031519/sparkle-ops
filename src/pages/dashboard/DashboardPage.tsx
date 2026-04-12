@@ -58,7 +58,7 @@ export default function DashboardPage() {
       supabase.from('clients').select('id', { count: 'exact', head: true }),
       supabase.from('jobs').select('id, client_id, title, status, start_date, division, created_at').order('created_at', { ascending: false }),
       supabase.from('invoices').select('id, client_id, status, total, balance_due, number, date, due_date, created_at').order('created_at', { ascending: false }),
-      supabase.from('inventory').select('name, quantity, low_stock_threshold'),
+      supabase.from('inventory').select('name, quantity, low_stock_threshold, category').eq('category', 'Materials & Stock'),
       supabase.from('clients').select('id, name'),
       supabase.from('estimates').select('status'),
       supabase.from('suppliers').select('status'),
