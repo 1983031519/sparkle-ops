@@ -10,7 +10,7 @@ import { Badge, statusColor } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { DeleteConfirmDialog, DeleteWarningDialog } from '@/components/ui/DeleteDialogs'
 import { SendDocumentModal } from '@/components/SendDocumentModal'
-import { INVOICE_STATUSES, COMPANY, generateInvoiceNumber, fmtDateShort, fmtDate, fmtCurrency, isoDatePart } from '@/lib/constants'
+import { INVOICE_STATUSES, COMPANY, fmtDateShort, fmtDate, fmtCurrency, isoDatePart } from '@/lib/constants'
 import { useToast } from '@/components/ui/Toast'
 import { useDebounce } from '@/hooks/useDebounce'
 import type { Invoice, InvoiceStatus, InvoiceLineItem, Client, Job } from '@/lib/database.types'
@@ -139,6 +139,25 @@ export default function InvoicesPage() {
     setForm(f => ({ ...f, line_items: f.line_items.map((l, idx) => idx === i ? { ...l, [field]: value } : l) }))
   }
 
+  async function nextInvoiceNumber(): Promise<string> {
+    const now = new Date()
+    const prefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`
+    const { data } = await supabase
+      .from('invoices')
+      .select('number')
+      .like('number', `${prefix}-%`)
+      .order('number', { ascending: false })
+      .limit(1)
+    let seq = 1
+    if (data && data.length > 0) {
+      const last = (data[0] as { number: string }).number
+      const parts = last.split('-')
+      const lastSeq = parseInt(parts[parts.length - 1], 10)
+      if (!isNaN(lastSeq)) seq = lastSeq + 1
+    }
+    return `${prefix}-${String(seq).padStart(3, '0')}`
+  }
+
   async function handleSave() {
     if (!form.client_id) { toast.error('Please select a client.'); return }
     setSaving(true)
@@ -146,8 +165,9 @@ export default function InvoicesPage() {
       const { subtotal, total } = calcTotals(form.line_items)
       const depositRcv = form.has_deposit ? form.deposit_received : 0
       const methodValue = form.payment_method_used === 'Multiple' ? form.payment_method_custom : form.payment_method_used
+      const invoiceNumber = editing?.number ?? await nextInvoiceNumber()
       const payload = {
-        number: editing?.number ?? generateInvoiceNumber(invoices.length + 1),
+        number: invoiceNumber,
         client_id: form.client_id, job_id: form.job_id || null, estimate_id: editing?.estimate_id ?? null,
         status: form.status, date: form.invoice_date || todayISO(), site_address: form.site_address || null,
         line_items: form.line_items, subtotal, total,
