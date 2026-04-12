@@ -44,6 +44,10 @@ export function useAuth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'INITIAL_SESSION') return
       if (!mounted) return
+      if (event === 'PASSWORD_RECOVERY') {
+        window.location.href = '/auth/reset-password'
+        return
+      }
       setUser(session?.user ?? null)
       setLoading(false)
       if (session?.user) {

@@ -4,6 +4,7 @@ import { Layout } from '@/components/Layout'
 import { ToastProvider } from '@/components/ui/Toast'
 import { ChatProvider } from '@/contexts/ChatContext'
 import LoginPage from '@/pages/auth/LoginPage'
+import ResetPasswordPage from '@/pages/auth/ResetPasswordPage'
 import UnauthorizedPage from '@/pages/unauthorized/UnauthorizedPage'
 import DashboardPage from '@/pages/dashboard/DashboardPage'
 import ClientsPage from '@/pages/clients/ClientsPage'
@@ -44,6 +45,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
           <Route path="/view/:token" element={<ViewDocumentPage />} />
           <Route element={<ProtectedRoutes />}>
             <Route path="/" element={<DashboardPage />} />
