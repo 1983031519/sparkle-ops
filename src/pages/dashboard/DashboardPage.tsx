@@ -6,6 +6,7 @@ import { Badge, statusColor } from '@/components/ui/Badge'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO, subMonths } from 'date-fns'
 import { enUS } from 'date-fns/locale'
 import { fmtCurrency, fmtDateShort } from '@/lib/constants'
+import { useAuth } from '@/hooks/useAuth'
 import type { Job, Invoice } from '@/lib/database.types'
 
 function useIsMobile() {
@@ -20,6 +21,8 @@ function pctChange(current: number, prev: number) {
 }
 
 export default function DashboardPage() {
+  const { user, profile } = useAuth()
+  const firstName = (profile?.full_name?.split(/\s+/)[0]) || user?.email?.split('@')[0] || ''
   const [revenue, setRevenue] = useState(0)
   const [outstanding, setOutstanding] = useState(0)
   const [clientCount, setClientCount] = useState(0)
@@ -113,7 +116,7 @@ export default function DashboardPage() {
       <div style={{ background: '#F8F9FC', minHeight: '100vh' }}>
         <div style={{ background: 'white', borderBottom: '1px solid #E5E7EB', padding: '20px 20px 24px' }}>
           <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{today}</p>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 16 }}>Good morning, Oscar 👋</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 16 }}>Good morning, {firstName} 👋</h1>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
             {[
               { label: 'Revenue', value: fmtCurrency(revenue) },
@@ -194,7 +197,7 @@ export default function DashboardPage() {
     <div style={{ padding: '28px 32px', maxWidth: 1280, margin: '0 auto' }}>
       {/* Greeting */}
       <div style={{ marginBottom: 28 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: '#111827' }}>{greeting}, Oscar 👋</h2>
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: '#111827' }}>{greeting}, {firstName} 👋</h2>
         <p style={{ fontSize: 14, color: '#6B7280', marginTop: 4 }}>Here's what's happening with your business today.</p>
       </div>
 
