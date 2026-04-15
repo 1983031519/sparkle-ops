@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Briefcase, FileText, FolderOpen, Receipt,
   UsersRound, Package, BarChart3, Shield, Bot, MessageSquare,
-  LogOut, Menu, X, Bell, ChevronDown,
+  LogOut, Menu, X, Bell, ChevronDown, Calendar,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { GlobalSearch } from '@/components/GlobalSearch'
@@ -22,6 +22,7 @@ const navGroups = [
     items: [
       { to: '/clients',   icon: Users,      label: 'Clients',       module: 'clients'   },
       { to: '/jobs',      icon: Briefcase,  label: 'Jobs',          module: 'jobs'      },
+      { to: '/schedule',  icon: Calendar,   label: 'Schedule',      module: 'schedule'  },
       { to: '/estimates', icon: FileText,   label: 'Estimates',     module: 'estimates' },
       { to: '/projects',  icon: FolderOpen, label: 'Projects',      module: 'projects'  },
       { to: '/invoices',  icon: Receipt,    label: 'Invoices',      module: 'invoices'  },
@@ -55,7 +56,7 @@ const allNavFlat = navGroups.flatMap(g => g.items)
 /* ── Page title map ── */
 const pageTitles: Record<string, string> = {
   '/': 'Dashboard', '/clients': 'Clients', '/jobs': 'Jobs',
-  '/estimates': 'Estimates', '/projects': 'Projects', '/invoices': 'Invoices',
+  '/estimates': 'Estimates', '/schedule': 'Schedule', '/projects': 'Projects', '/invoices': 'Invoices',
   '/vendors': 'Vendors & Team', '/inventory': 'Inventory', '/reports': 'Reports',
   '/rocko': 'Rocko AI', '/users': 'Users', '/chat': 'Messages',
 }
@@ -196,9 +197,12 @@ export function Layout() {
   const isMobile = useIsMobile()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const visibleNavFlat = allNavFlat.filter(n => canAccessModule(n.module))
-  // Mobile bottom nav: Dashboard, Clients, Jobs, Estimates, Chat
+  // Mobile bottom nav: Dashboard, Clients, Jobs, Schedule, Chat
+  const bottomNavModules = ['dashboard', 'clients', 'jobs', 'schedule']
   const bottomNav = [
-    ...visibleNavFlat.filter(n => ['dashboard', 'clients', 'jobs', 'estimates'].includes(n.module)).slice(0, 4),
+    ...bottomNavModules
+      .map(m => visibleNavFlat.find(n => n.module === m))
+      .filter((n): n is typeof visibleNavFlat[number] => !!n),
     ...visibleNavFlat.filter(n => n.module === 'chat'),
   ]
   const location = useLocation()

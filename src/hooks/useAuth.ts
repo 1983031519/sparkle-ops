@@ -95,7 +95,7 @@ export function useAuth() {
     if (isAdmin) return true
     if (isManager) return module !== 'users'
     if (isOffice) return module !== 'users' && module !== 'reports' && module !== 'rocko'
-    return module === 'jobs' || module === 'dashboard' || module === 'chat'
+    return module === 'jobs' || module === 'dashboard' || module === 'chat' || module === 'schedule'
   }
 
   const canCreate = !profile || isAdmin || isManager || isOffice

@@ -277,6 +277,24 @@ export interface DocumentLink {
   created_at: string
 }
 
+export type EventType = 'site_visit' | 'job_start' | 'job_ongoing' | 'meeting' | 'follow_up' | 'other'
+
+export interface Event {
+  id: string
+  title: string
+  type: EventType
+  date: string              // YYYY-MM-DD
+  time_start: string | null // HH:MM:SS
+  time_end: string | null
+  client_id: string | null
+  address: string | null
+  assigned_to: string | null
+  notes: string | null
+  google_calendar_link: string | null
+  created_by: string | null
+  created_at: string
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -292,6 +310,7 @@ export interface Database {
       project_phases: { Row: ProjectPhase; Insert: Omit<ProjectPhase, 'id' | 'created_at'>; Update: Partial<Omit<ProjectPhase, 'id' | 'created_at'>> }
       profiles: { Row: Profile; Insert: Omit<Profile, 'created_at' | 'updated_at'>; Update: Partial<Omit<Profile, 'id' | 'created_at'>> }
       document_links: { Row: DocumentLink; Insert: Pick<DocumentLink, 'document_type' | 'document_id'>; Update: Partial<Pick<DocumentLink, 'viewed_at'>> }
+      events: { Row: Event; Insert: Omit<Event, 'id' | 'created_at'>; Update: Partial<Omit<Event, 'id' | 'created_at'>> }
     }
   }
 }

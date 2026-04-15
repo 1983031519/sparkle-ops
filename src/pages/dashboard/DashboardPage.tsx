@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { DollarSign, Users, Briefcase, FileText, FolderOpen, Package, AlertTriangle, ChevronLeft, ChevronRight, UserCheck, TrendingUp, TrendingDown, ArrowRight, MessageSquare } from 'lucide-react'
+import { DollarSign, Users, Briefcase, FileText, FolderOpen, Package, AlertTriangle, ChevronLeft, ChevronRight, UserCheck, TrendingUp, TrendingDown, ArrowRight, MessageSquare, Calendar as CalendarIcon, Clock } from 'lucide-react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { Badge, statusColor } from '@/components/ui/Badge'
@@ -8,7 +8,23 @@ import { enUS } from 'date-fns/locale'
 import { fmtCurrency, fmtDateShort } from '@/lib/constants'
 import { useAuth } from '@/hooks/useAuth'
 import { useChatContext } from '@/contexts/ChatContext'
-import type { Job, Invoice } from '@/lib/database.types'
+import type { Job, Invoice, Event, EventType, Profile } from '@/lib/database.types'
+
+const EVENT_TYPE_META: Record<EventType, { label: string; color: string; bg: string }> = {
+  site_visit:  { label: 'Site Visit',  color: '#2563EB', bg: '#DBEAFE' },
+  job_start:   { label: 'Job Start',   color: '#059669', bg: '#D1FAE5' },
+  job_ongoing: { label: 'Job Ongoing', color: '#7C3AED', bg: '#EDE9FE' },
+  meeting:     { label: 'Meeting',     color: '#DB2777', bg: '#FCE7F3' },
+  follow_up:   { label: 'Follow-up',   color: '#D97706', bg: '#FEF3C7' },
+  other:       { label: 'Other',       color: '#6B7280', bg: '#F3F4F6' },
+}
+
+function fmtEventTime(t: string | null) {
+  if (!t) return ''
+  const [hh, mm] = t.split(':')
+  const h = parseInt(hh, 10); const ampm = h >= 12 ? 'PM' : 'AM'
+  return `${h % 12 || 12}:${mm} ${ampm}`
+}
 
 function useIsMobile() {
   const [m, setM] = useState(false)
@@ -40,6 +56,8 @@ export default function DashboardPage() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [lowStock, setLowStock] = useState<{ name: string; quantity: number; low_stock_threshold: number }[]>([])
+  const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([])
+  const [profileMap, setProfileMap] = useState<Record<string, Profile>>({})
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [clientMap, setClientMap] = useState<Record<string, string>>({})
   const isMobile = useIsMobile()
@@ -53,8 +71,9 @@ export default function DashboardPage() {
     const prevMonthStart = startOfMonth(subMonths(now, 1)).toISOString()
     const prevMonthEnd = endOfMonth(subMonths(now, 1)).toISOString()
 
+    const todayIso = format(now, 'yyyy-MM-dd')
     const [clientRes, jobRes, invRes, stockRes, clientsRes, estRes, vendorRes, projRes,
-           prevJobRes, prevClientRes] = await Promise.all([
+           prevJobRes, prevClientRes, evRes, profRes] = await Promise.all([
       supabase.from('clients').select('id', { count: 'exact', head: true }),
       supabase.from('jobs').select('id, client_id, title, status, start_date, division, created_at').order('created_at', { ascending: false }),
       supabase.from('invoices').select('id, client_id, status, total, balance_due, number, date, due_date, created_at').order('created_at', { ascending: false }),
@@ -67,6 +86,9 @@ export default function DashboardPage() {
       supabase.from('jobs').select('status').gte('created_at', prevMonthStart).lte('created_at', prevMonthEnd),
       // client count at start of this month
       supabase.from('clients').select('id', { count: 'exact', head: true }).lt('created_at', thisMonthStart),
+      // upcoming events (today forward)
+      supabase.from('events').select('*').gte('date', todayIso).order('date', { ascending: true }).order('time_start', { ascending: true, nullsFirst: true }).limit(5),
+      supabase.from('profiles').select('id, full_name, email, role, active, created_at, updated_at'),
     ])
 
     const allJobs = (jobRes.data ?? []) as Job[]
@@ -107,6 +129,9 @@ export default function DashboardPage() {
 
     const items = (stockRes.data ?? []) as { name: string; quantity: number; low_stock_threshold: number }[]
     setLowStock(items.filter(i => i.quantity <= i.low_stock_threshold))
+
+    setUpcomingEvents((evRes.data ?? []) as Event[])
+    setProfileMap(Object.fromEntries(((profRes.data ?? []) as Profile[]).map(p => [p.id, p])))
   }
 
   /* ─── MOBILE ─── */
@@ -146,6 +171,45 @@ export default function DashboardPage() {
           <div style={{ margin: '12px 16px 0', background: '#FFFBEB', borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #FDE68A' }}>
             <AlertTriangle size={14} strokeWidth={2} color="#F59E0B" />
             <p style={{ fontSize: 12, color: '#92400E' }}><strong>Low stock:</strong> {lowStock.length} item{lowStock.length > 1 ? 's' : ''}</p>
+          </div>
+        )}
+
+        {upcomingEvents.length > 0 && (
+          <div style={{ margin: '16px 16px 0', background: 'white', borderRadius: 12, border: '1px solid #E5E7EB', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid #F3F4F6' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <CalendarIcon size={13} color="#4F6CF7" strokeWidth={2} />
+                <p style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>Upcoming Events</p>
+              </div>
+              <Link to="/schedule" style={{ fontSize: 11, color: '#4F6CF7', textDecoration: 'none', fontWeight: 500 }}>See all →</Link>
+            </div>
+            {upcomingEvents.slice(0, 5).map(ev => {
+              const meta = EVENT_TYPE_META[ev.type] || EVENT_TYPE_META.other
+              const who = ev.assigned_to ? profileMap[ev.assigned_to] : null
+              const d = parseISO(ev.date)
+              return (
+                <Link key={ev.id} to="/schedule" style={{
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+                  borderBottom: '1px solid #F9FAFB', textDecoration: 'none',
+                }}>
+                  <div style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center',
+                    minWidth: 36, padding: '2px 0',
+                    background: meta.bg, color: meta.color,
+                    borderRadius: 6, flexShrink: 0,
+                  }}>
+                    <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', opacity: 0.8 }}>{format(d, 'MMM')}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, lineHeight: 1 }}>{format(d, 'd')}</span>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.title}</p>
+                    <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 1 }}>
+                      {ev.time_start ? fmtEventTime(ev.time_start) + ' · ' : ''}{who?.full_name || who?.email || 'Unassigned'}
+                    </p>
+                  </div>
+                </Link>
+              )
+            })}
           </div>
         )}
 
@@ -315,6 +379,70 @@ export default function DashboardPage() {
             ))
           }
         </div>
+      </div>
+
+      {/* Upcoming Events */}
+      <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden', marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #F3F4F6' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <CalendarIcon size={14} color="#4F6CF7" strokeWidth={2} />
+            <p style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Upcoming Events</p>
+          </div>
+          <Link to="/schedule" style={{ fontSize: 12, fontWeight: 500, color: '#4F6CF7', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+            See all <ArrowRight size={12} />
+          </Link>
+        </div>
+        {upcomingEvents.length === 0
+          ? <p style={{ fontSize: 13, color: '#9CA3AF', padding: '24px 20px' }}>No upcoming events. Schedule one to get started.</p>
+          : upcomingEvents.map(ev => {
+              const meta = EVENT_TYPE_META[ev.type] || EVENT_TYPE_META.other
+              const who = ev.assigned_to ? profileMap[ev.assigned_to] : null
+              const d = parseISO(ev.date)
+              const isToday = ev.date === format(new Date(), 'yyyy-MM-dd')
+              return (
+                <Link key={ev.id} to="/schedule" style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px',
+                  borderBottom: '1px solid #F9FAFB', textDecoration: 'none',
+                }}>
+                  <div style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center',
+                    minWidth: 40, padding: '2px 0',
+                    background: isToday ? '#4F6CF7' : '#F3F4F6',
+                    color: isToday ? 'white' : '#374151',
+                    borderRadius: 6, flexShrink: 0,
+                  }}>
+                    <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', opacity: 0.8 }}>{format(d, 'MMM')}</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, lineHeight: 1 }}>{format(d, 'd')}</span>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.title}</span>
+                      <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: meta.bg, color: meta.color, flexShrink: 0 }}>{meta.label}</span>
+                    </div>
+                    {ev.time_start && (
+                      <p style={{ fontSize: 11, color: '#6B7280', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <Clock size={10} /> {fmtEventTime(ev.time_start)}{ev.time_end ? ` – ${fmtEventTime(ev.time_end)}` : ''}
+                      </p>
+                    )}
+                  </div>
+                  {who && (
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '4px 10px', borderRadius: 99, background: '#F3F4F6',
+                      fontSize: 11, fontWeight: 500, color: '#374151', flexShrink: 0,
+                    }}>
+                      <span style={{
+                        width: 18, height: 18, borderRadius: '50%', background: '#4F6CF7',
+                        color: 'white', display: 'inline-flex', alignItems: 'center',
+                        justifyContent: 'center', fontSize: 9, fontWeight: 700,
+                      }}>{(who.full_name || who.email || '?')[0].toUpperCase()}</span>
+                      {who.full_name || who.email}
+                    </div>
+                  )}
+                </Link>
+              )
+            })
+        }
       </div>
 
       {/* Schedule */}
