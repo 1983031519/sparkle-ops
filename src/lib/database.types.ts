@@ -297,6 +297,17 @@ export interface Event {
   created_at: string
 }
 
+export interface GoogleToken {
+  id: string
+  profile_id: string
+  access_token: string
+  refresh_token: string
+  expires_at: string
+  calendar_id: string
+  created_at: string
+  updated_at: string
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -313,6 +324,7 @@ export interface Database {
       profiles: { Row: Profile; Insert: Omit<Profile, 'created_at' | 'updated_at'>; Update: Partial<Omit<Profile, 'id' | 'created_at'>> }
       document_links: { Row: DocumentLink; Insert: Pick<DocumentLink, 'document_type' | 'document_id'>; Update: Partial<Pick<DocumentLink, 'viewed_at'>> }
       events: { Row: Event; Insert: Omit<Event, 'id' | 'created_at'>; Update: Partial<Omit<Event, 'id' | 'created_at'>> }
+      google_tokens: { Row: GoogleToken; Insert: Omit<GoogleToken, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Omit<GoogleToken, 'id' | 'created_at'>> }
     }
   }
 }

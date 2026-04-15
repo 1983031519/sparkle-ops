@@ -10,6 +10,7 @@ import DashboardPage from '@/pages/dashboard/DashboardPage'
 import ClientsPage from '@/pages/clients/ClientsPage'
 import JobsPage from '@/pages/jobs/JobsPage'
 import SchedulePage from '@/pages/schedule/SchedulePage'
+import GoogleCallbackPage from '@/pages/schedule/GoogleCallbackPage'
 import EstimatesPage from '@/pages/estimates/EstimatesPage'
 import ProjectsPage from '@/pages/projects/ProjectsPage'
 import InvoicesPage from '@/pages/invoices/InvoicesPage'
@@ -54,6 +55,7 @@ export default function App() {
             <Route path="/clients" element={<ModuleGuard module="clients"><ClientsPage /></ModuleGuard>} />
             <Route path="/jobs" element={<ModuleGuard module="jobs"><JobsPage /></ModuleGuard>} />
             <Route path="/schedule" element={<ModuleGuard module="schedule"><SchedulePage /></ModuleGuard>} />
+            <Route path="/schedule/google-callback" element={<ModuleGuard module="schedule"><GoogleCallbackPage /></ModuleGuard>} />
             <Route path="/estimates" element={<ModuleGuard module="estimates"><EstimatesPage /></ModuleGuard>} />
             <Route path="/projects" element={<ModuleGuard module="projects"><ProjectsPage /></ModuleGuard>} />
             <Route path="/invoices" element={<ModuleGuard module="invoices"><InvoicesPage /></ModuleGuard>} />

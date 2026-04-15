@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   Plus, Calendar as CalendarIcon, List as ListIcon, ChevronLeft, ChevronRight,
-  Clock, MapPin, User as UserIcon, Trash2, ExternalLink, X, Building2,
+  Clock, MapPin, User as UserIcon, Trash2, ExternalLink, X, Building2, CheckCircle2, Link2,
 } from 'lucide-react'
 import {
   format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay,
@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/Button'
 import { Input, Select, Textarea } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { DateInput } from '@/components/ui/DateInput'
+import { buildAuthUrl, getStatus, disconnect as disconnectGoogle, syncEvent } from '@/lib/googleCalendar'
 import type { Event, EventType, Client, Profile, Supplier } from '@/lib/database.types'
 
 /* ─── Config ─── */
@@ -189,6 +190,9 @@ export default function SchedulePage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Event | null>(null)
 
+  const [googleConnected, setGoogleConnected] = useState<boolean>(false)
+  const [checkingGoogle, setCheckingGoogle] = useState<boolean>(true)
+
   const canEditEvent = useCallback(
     (e: Event) => isAdmin || isManager || e.assigned_to === user?.id || e.created_by === user?.id,
     [isAdmin, isManager, user?.id],
@@ -211,6 +215,42 @@ export default function SchedulePage() {
 
   useEffect(() => { load() }, [load])
 
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      setCheckingGoogle(true)
+      const s = await getStatus()
+      if (mounted) { setGoogleConnected(s.connected); setCheckingGoogle(false) }
+    })()
+    return () => { mounted = false }
+  }, [])
+
+  /** Fire-and-forget sync — never blocks the UI. Warns on failure. */
+  const fireSync = useCallback(async (
+    operation: 'create' | 'update' | 'delete',
+    payload: { event_id?: string; google_event_id?: string | null },
+  ) => {
+    if (!googleConnected) return
+    const res = await syncEvent(operation, payload)
+    if (res.error) toast.error(`Google Calendar: ${res.error}`)
+  }, [googleConnected, toast])
+
+  async function handleConnectGoogle() {
+    try { window.location.href = buildAuthUrl() }
+    catch (e) { toast.error((e as Error).message) }
+  }
+
+  async function handleDisconnectGoogle() {
+    if (!confirm('Disconnect Google Calendar? New events will no longer sync.')) return
+    try {
+      await disconnectGoogle()
+      setGoogleConnected(false)
+      toast.success('Google Calendar disconnected')
+    } catch (e) {
+      toast.error((e as Error).message)
+    }
+  }
+
   const clientMap = useMemo(() => Object.fromEntries(clients.map(c => [c.id, c])), [clients])
   const vendorMap = useMemo(() => Object.fromEntries(vendors.map(v => [v.id, v])), [vendors])
   const profileMap = useMemo(() => Object.fromEntries(profiles.map(p => [p.id, p])), [profiles])
@@ -230,9 +270,13 @@ export default function SchedulePage() {
 
   async function handleDelete(id: string) {
     if (!confirm('Delete this event?')) return
+    // Capture google_event_id BEFORE deleting so we can remove it from Google too.
+    const target = events.find(e => e.id === id)
+    const gid = target?.google_event_id ?? null
     const { error } = await supabase.from('events').delete().eq('id', id)
     if (error) { toast.error(error.message); return }
     toast.success('Event deleted')
+    if (gid) fireSync('delete', { google_event_id: gid })
     closeModal()
     load()
   }
@@ -300,6 +344,32 @@ export default function SchedulePage() {
             <option value="">All types</option>
             {TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
+          {!checkingGoogle && (googleConnected ? (
+            <button
+              onClick={handleDisconnectGoogle}
+              title="Disconnect Google Calendar"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                height: 30, padding: '0 10px', borderRadius: 99,
+                background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0',
+                fontSize: 11, fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              <CheckCircle2 size={12} /> Google Calendar Connected
+            </button>
+          ) : (
+            <button
+              onClick={handleConnectGoogle}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                height: 30, padding: '0 12px', borderRadius: 8,
+                background: 'white', color: '#374151', border: '1px solid #D1D5DB',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              <Link2 size={12} /> Connect Google Calendar
+            </button>
+          ))}
           <Button size="sm" onClick={openNew}>
             <Plus size={14} strokeWidth={2} /> New Event
           </Button>
@@ -338,7 +408,11 @@ export default function SchedulePage() {
           profiles={profiles}
           canEdit={!editing || canEditEvent(editing)}
           onClose={closeModal}
-          onSaved={async () => { await load(); closeModal() }}
+          onSaved={async ({ id, operation }) => {
+            await load()
+            closeModal()
+            if (id) fireSync(operation, { event_id: id })
+          }}
           onDelete={editing && editing.id ? () => handleDelete(editing.id) : undefined}
           userId={user?.id}
           toast={toast}
@@ -666,7 +740,7 @@ function EventModal({
   profiles: Profile[]
   canEdit: boolean
   onClose: () => void
-  onSaved: () => void | Promise<void>
+  onSaved: (arg: { id: string | null; operation: 'create' | 'update' }) => void | Promise<void>
   onDelete?: () => void
   userId?: string
   toast: { success: (m: string) => void; error: (m: string) => void }
@@ -703,13 +777,20 @@ function EventModal({
       assigned_to: form.assigned_to || null,
       created_by: form.created_by || userId || null,
     }
-    const res = isEdit
-      ? await supabase.from('events').update(payload as never).eq('id', (event as Event).id)
-      : await supabase.from('events').insert(payload as never)
-    setSaving(false)
-    if (res.error) { toast.error(res.error.message); return }
+    let savedId: string | null = null
+    if (isEdit) {
+      savedId = (event as Event).id
+      const res = await supabase.from('events').update(payload as never).eq('id', savedId)
+      setSaving(false)
+      if (res.error) { toast.error(res.error.message); return }
+    } else {
+      const res = await supabase.from('events').insert(payload as never).select('id').single()
+      setSaving(false)
+      if (res.error) { toast.error(res.error.message); return }
+      savedId = (res.data as { id: string } | null)?.id ?? null
+    }
     toast.success(isEdit ? 'Event updated' : 'Event created')
-    onSaved()
+    onSaved({ id: savedId, operation: isEdit ? 'update' : 'create' })
   }
 
   // When selecting a client, autofill address with the client's address (always overwrite
