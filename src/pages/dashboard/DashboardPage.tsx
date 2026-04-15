@@ -8,29 +8,13 @@ import { enUS } from 'date-fns/locale'
 import { fmtCurrency, fmtDateShort } from '@/lib/constants'
 import { useAuth } from '@/hooks/useAuth'
 import { useChatContext } from '@/contexts/ChatContext'
-import type { Job, Invoice, Event, EventType, Profile } from '@/lib/database.types'
-
-const EVENT_TYPE_META: Record<EventType, { label: string; color: string; bg: string }> = {
-  site_visit:  { label: 'Site Visit',  color: '#2563EB', bg: '#DBEAFE' },
-  job_start:   { label: 'Job Start',   color: '#059669', bg: '#D1FAE5' },
-  job_ongoing: { label: 'Job Ongoing', color: '#7C3AED', bg: '#EDE9FE' },
-  meeting:     { label: 'Meeting',     color: '#DB2777', bg: '#FCE7F3' },
-  follow_up:   { label: 'Follow-up',   color: '#D97706', bg: '#FEF3C7' },
-  other:       { label: 'Other',       color: '#6B7280', bg: '#F3F4F6' },
-}
+import type { Job, Invoice, Event } from '@/lib/database.types'
 
 function fmtEventTime(t: string | null) {
   if (!t) return ''
   const [hh, mm] = t.split(':')
   const h = parseInt(hh, 10); const ampm = h >= 12 ? 'PM' : 'AM'
   return `${h % 12 || 12}:${mm} ${ampm}`
-}
-
-function displayProfileName(p: Profile | null | undefined): string {
-  if (!p) return 'Unassigned'
-  if (p.full_name && p.full_name.trim()) return p.full_name.trim()
-  if (p.email) return p.email.split('@')[0]
-  return 'Unassigned'
 }
 
 function useIsMobile() {
@@ -63,8 +47,7 @@ export default function DashboardPage() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [lowStock, setLowStock] = useState<{ name: string; quantity: number; low_stock_threshold: number }[]>([])
-  const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([])
-  const [profileMap, setProfileMap] = useState<Record<string, Profile>>({})
+  const [allEvents, setUpcomingEvents] = useState<Event[]>([])
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [clientMap, setClientMap] = useState<Record<string, string>>({})
   const isMobile = useIsMobile()
@@ -78,9 +61,8 @@ export default function DashboardPage() {
     const prevMonthStart = startOfMonth(subMonths(now, 1)).toISOString()
     const prevMonthEnd = endOfMonth(subMonths(now, 1)).toISOString()
 
-    const todayIso = format(now, 'yyyy-MM-dd')
     const [clientRes, jobRes, invRes, stockRes, clientsRes, estRes, vendorRes, projRes,
-           prevJobRes, prevClientRes, evRes, profRes] = await Promise.all([
+           prevJobRes, prevClientRes, evRes] = await Promise.all([
       supabase.from('clients').select('id', { count: 'exact', head: true }),
       supabase.from('jobs').select('id, client_id, title, status, start_date, division, created_at').order('created_at', { ascending: false }),
       supabase.from('invoices').select('id, client_id, status, total, balance_due, number, date, due_date, created_at').order('created_at', { ascending: false }),
@@ -93,9 +75,8 @@ export default function DashboardPage() {
       supabase.from('jobs').select('status').gte('created_at', prevMonthStart).lte('created_at', prevMonthEnd),
       // client count at start of this month
       supabase.from('clients').select('id', { count: 'exact', head: true }).lt('created_at', thisMonthStart),
-      // upcoming events (today forward)
-      supabase.from('events').select('*').gte('date', todayIso).order('date', { ascending: true }).order('time_start', { ascending: true, nullsFirst: true }).limit(5),
-      supabase.from('profiles').select('id, full_name, email, role, active, created_at, updated_at'),
+      // all events (both the "upcoming" list and the mini-calendar need them; slicing happens in the UI)
+      supabase.from('events').select('*').order('date', { ascending: true }).order('time_start', { ascending: true, nullsFirst: true }),
     ])
 
     const allJobs = (jobRes.data ?? []) as Job[]
@@ -138,30 +119,82 @@ export default function DashboardPage() {
     setLowStock(items.filter(i => i.quantity <= i.low_stock_threshold))
 
     setUpcomingEvents((evRes.data ?? []) as Event[])
-    setProfileMap(Object.fromEntries(((profRes.data ?? []) as Profile[]).map(p => [p.id, p])))
   }
 
-  /* ─── Upcoming Events card (reused by mobile + desktop) ─── */
-  const upcomingEventsCard = (
-    <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden', marginBottom: isMobile ? 16 : 28 }}>
+  /* ─── Unified "Schedule" card (Upcoming list + monthly mini-calendar) ─── */
+  const todayIsoStr = format(new Date(), 'yyyy-MM-dd')
+
+  // Normalize events and jobs into a single stream of calendar items.
+  type CalItem =
+    | { kind: 'event'; id: string; date: string; time_start: string | null; title: string; sortKey: string }
+    | { kind: 'job'; id: string; date: string; title: string; sortKey: string }
+
+  const calItems: CalItem[] = [
+    ...allEvents.map<CalItem>(ev => ({
+      kind: 'event', id: ev.id, date: ev.date, time_start: ev.time_start, title: ev.title,
+      sortKey: `${ev.date}T${ev.time_start ?? '00:00:00'}`,
+    })),
+    ...jobs.filter(j => j.start_date).map<CalItem>(j => ({
+      kind: 'job', id: j.id, date: (j.start_date as string).slice(0, 10), title: j.title,
+      sortKey: `${(j.start_date as string).slice(0, 10)}T00:00:00`,
+    })),
+  ]
+
+  const upcomingList = calItems
+    .filter(i => i.date >= todayIsoStr)
+    .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+    .slice(0, 5)
+
+  // Per-day buckets for the mini calendar
+  const itemsByDate: Record<string, CalItem[]> = {}
+  for (const item of calItems) {
+    if (!itemsByDate[item.date]) itemsByDate[item.date] = []
+    itemsByDate[item.date].push(item)
+  }
+
+  const miniMonthStart = startOfMonth(currentMonth)
+  const miniMonthEnd = endOfMonth(currentMonth)
+  const miniDays = eachDayOfInterval({ start: miniMonthStart, end: miniMonthEnd })
+  const miniStartDow = miniMonthStart.getDay()
+
+  // Pill colors
+  const EVENT_PILL = { bg: '#DBEAFE', fg: '#1E40AF' }   // blue (event)
+  const JOB_PILL   = { bg: '#1E3A8A', fg: '#FFFFFF' }   // navy (job)
+
+  const scheduleCard = (
+    <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden', marginBottom: isMobile ? 16 : 24 }}>
+      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '12px 14px' : '16px 20px', borderBottom: '1px solid #F3F4F6' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <CalendarIcon size={isMobile ? 13 : 14} color="#4F6CF7" strokeWidth={2} />
-          <p style={{ fontSize: isMobile ? 13 : 14, fontWeight: 600, color: '#111827' }}>Upcoming Events</p>
+          <p style={{ fontSize: isMobile ? 13 : 14, fontWeight: 600, color: '#111827' }}>Schedule</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 10 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#6B7280' }}>
+              <span style={{ width: 8, height: 8, borderRadius: 2, background: EVENT_PILL.bg, border: `1px solid ${EVENT_PILL.fg}` }} /> Events
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#6B7280' }}>
+              <span style={{ width: 8, height: 8, borderRadius: 2, background: JOB_PILL.bg }} /> Jobs
+            </span>
+          </div>
         </div>
         <Link to="/schedule" style={{ fontSize: isMobile ? 11 : 12, fontWeight: 500, color: '#4F6CF7', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
           See all <ArrowRight size={12} />
         </Link>
       </div>
-      {upcomingEvents.length === 0
-        ? <p style={{ fontSize: 13, color: '#9CA3AF', padding: isMobile ? '18px 14px' : '24px 20px' }}>No upcoming events. Schedule one to get started.</p>
-        : upcomingEvents.map(ev => {
-            const meta = EVENT_TYPE_META[ev.type] || EVENT_TYPE_META.other
-            const who = ev.assigned_to ? profileMap[ev.assigned_to] : null
-            const d = parseISO(ev.date)
-            const isToday = ev.date === format(new Date(), 'yyyy-MM-dd')
+
+      {/* Section 1: Upcoming list */}
+      <div style={{ padding: isMobile ? '10px 14px 4px' : '12px 20px 4px', fontSize: 11, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        Upcoming
+      </div>
+      {upcomingList.length === 0
+        ? <p style={{ fontSize: 13, color: '#9CA3AF', padding: isMobile ? '4px 14px 16px' : '4px 20px 20px' }}>Nothing coming up. Create an event or schedule a job.</p>
+        : upcomingList.map(item => {
+            const d = parseISO(item.date)
+            const isToday = item.date === todayIsoStr
+            const meta = item.kind === 'event' ? EVENT_PILL : JOB_PILL
+            const label = item.kind === 'event' ? 'Event' : 'Job'
             return (
-              <Link key={ev.id} to="/schedule" style={{
+              <Link key={`${item.kind}-${item.id}`} to={item.kind === 'event' ? '/schedule' : '/jobs'} style={{
                 display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 12,
                 padding: isMobile ? '10px 14px' : '12px 20px',
                 borderBottom: '1px solid #F9FAFB', textDecoration: 'none',
@@ -178,33 +211,74 @@ export default function DashboardPage() {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                    <span style={{ fontSize: isMobile ? 12 : 13, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.title}</span>
-                    <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: meta.bg, color: meta.color, flexShrink: 0 }}>{meta.label}</span>
+                    <span style={{ fontSize: isMobile ? 12 : 13, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: meta.bg, color: meta.fg, flexShrink: 0 }}>{label}</span>
                   </div>
-                  <p style={{ fontSize: isMobile ? 10 : 11, color: '#6B7280', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    {ev.time_start && <><Clock size={10} /> {fmtEventTime(ev.time_start)}{ev.time_end ? ` – ${fmtEventTime(ev.time_end)}` : ''}</>}
-                    {ev.time_start && who && <span style={{ opacity: 0.5 }}>·</span>}
-                    {who && <span>{displayProfileName(who)}</span>}
-                  </p>
+                  {item.kind === 'event' && item.time_start && (
+                    <p style={{ fontSize: isMobile ? 10 : 11, color: '#6B7280', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <Clock size={10} /> {fmtEventTime(item.time_start)}
+                    </p>
+                  )}
                 </div>
-                {!isMobile && who && (
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    padding: '4px 10px', borderRadius: 99, background: '#F3F4F6',
-                    fontSize: 11, fontWeight: 500, color: '#374151', flexShrink: 0,
-                  }}>
-                    <span style={{
-                      width: 18, height: 18, borderRadius: '50%', background: '#4F6CF7',
-                      color: 'white', display: 'inline-flex', alignItems: 'center',
-                      justifyContent: 'center', fontSize: 9, fontWeight: 700,
-                    }}>{displayProfileName(who)[0]?.toUpperCase() ?? '?'}</span>
-                    {displayProfileName(who)}
-                  </div>
-                )}
               </Link>
             )
           })
       }
+
+      {/* Section 2: mini calendar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '12px 14px 6px' : '14px 20px 6px', borderTop: '1px solid #F3F4F6' }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{format(currentMonth, 'MMMM yyyy', { locale: enUS })}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button onClick={() => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() - 1))} style={{ background: 'none', border: '1px solid #E5E7EB', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: '#6B7280', display: 'flex', alignItems: 'center' }}><ChevronLeft style={{ width: 14, height: 14 }} /></button>
+          <button onClick={() => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() + 1))} style={{ background: 'none', border: '1px solid #E5E7EB', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: '#6B7280', display: 'flex', alignItems: 'center' }}><ChevronRight style={{ width: 14, height: 14 }} /></button>
+        </div>
+      </div>
+      <div style={{ padding: isMobile ? '0 10px 12px' : '0 20px 20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', marginBottom: 2 }}>
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+            <div key={d} style={{ fontSize: 10, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '4px 0' }}>{d}</div>
+          ))}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+          {Array.from({ length: miniStartDow }).map((_, i) => <div key={`e${i}`} />)}
+          {miniDays.map(day => {
+            const iso = format(day, 'yyyy-MM-dd')
+            const dayItems = itemsByDate[iso] ?? []
+            const isToday = isSameDay(day, new Date())
+            const maxShow = isMobile ? 1 : 2
+            return (
+              <div key={iso} style={{ minHeight: isMobile ? 56 : 64, padding: '3px 2px', borderRadius: 6 }}>
+                <div style={{ textAlign: 'center', marginBottom: 2 }}>
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    width: 22, height: 22, borderRadius: '50%',
+                    fontSize: 12, fontWeight: isToday ? 700 : 400,
+                    background: isToday ? '#4F6CF7' : 'transparent',
+                    color: isToday ? 'white' : '#374151',
+                  }}>{format(day, 'd')}</span>
+                </div>
+                {dayItems.slice(0, maxShow).map(item => {
+                  const pill = item.kind === 'event' ? EVENT_PILL : JOB_PILL
+                  return (
+                    <div
+                      key={`${item.kind}-${item.id}`}
+                      title={`${item.kind === 'event' ? 'Event' : 'Job'}: ${item.title}`}
+                      style={{
+                        fontSize: 9, background: pill.bg, color: pill.fg,
+                        borderRadius: 3, padding: '1px 4px', marginBottom: 2,
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}
+                    >{item.title}</div>
+                  )
+                })}
+                {dayItems.length > maxShow && (
+                  <div style={{ fontSize: 9, color: '#9CA3AF', paddingLeft: 2 }}>+{dayItems.length - maxShow}</div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 
@@ -241,7 +315,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div style={{ padding: '16px 16px 0' }}>{upcomingEventsCard}</div>
+        <div style={{ padding: '16px 16px 0' }}>{scheduleCard}</div>
 
         {lowStock.length > 0 && (
           <div style={{ margin: '0 16px', background: '#FFFBEB', borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #FDE68A' }}>
@@ -299,12 +373,6 @@ export default function DashboardPage() {
     },
   ]
 
-  const monthStart = startOfMonth(currentMonth)
-  const monthEnd = endOfMonth(currentMonth)
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd })
-  const startDow = monthStart.getDay()
-  const scheduledJobs = jobs.filter(j => j.start_date)
-
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
@@ -317,7 +385,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Upcoming Events (topo — antes de qualquer outro widget) */}
-      {upcomingEventsCard}
+      {scheduleCard}
 
       {/* KPI cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
@@ -421,46 +489,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Schedule */}
-      <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', padding: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <p style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Schedule</p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button onClick={() => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() - 1))} style={{ background: 'none', border: '1px solid #E5E7EB', borderRadius: 6, cursor: 'pointer', padding: '4px 8px', color: '#6B7280', display: 'flex', alignItems: 'center' }}><ChevronLeft style={{ width: 16, height: 16 }} /></button>
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#111827', minWidth: 120, textAlign: 'center' }}>{format(currentMonth, 'MMMM yyyy', { locale: enUS })}</span>
-            <button onClick={() => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() + 1))} style={{ background: 'none', border: '1px solid #E5E7EB', borderRadius: 6, cursor: 'pointer', padding: '4px 8px', color: '#6B7280', display: 'flex', alignItems: 'center' }}><ChevronRight style={{ width: 16, height: 16 }} /></button>
-          </div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', marginBottom: 4 }}>
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-            <div key={d} style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '6px 0' }}>{d}</div>
-          ))}
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
-          {Array.from({ length: startDow }).map((_, i) => <div key={`e${i}`} />)}
-          {days.map(day => {
-            const dayJobs = scheduledJobs.filter(j => j.start_date && isSameDay(parseISO(j.start_date), day))
-            const isToday = isSameDay(day, new Date())
-            return (
-              <div key={day.toISOString()} style={{ minHeight: 60, padding: '4px 3px', borderRadius: 6 }}>
-                <div style={{ textAlign: 'center', marginBottom: 3 }}>
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                    width: 26, height: 26, borderRadius: '50%',
-                    fontSize: 13, fontWeight: isToday ? 700 : 400,
-                    background: isToday ? '#4F6CF7' : 'transparent',
-                    color: isToday ? 'white' : '#374151',
-                  }}>{format(day, 'd', { locale: enUS })}</span>
-                </div>
-                {dayJobs.slice(0, 2).map(j => (
-                  <div key={j.id} style={{ fontSize: 10, background: '#EEF1FE', color: '#3451D1', borderRadius: 4, padding: '1px 4px', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{j.title}</div>
-                ))}
-                {dayJobs.length > 2 && <div style={{ fontSize: 10, color: '#9CA3AF' }}>+{dayJobs.length - 2}</div>}
-              </div>
-            )
-          })}
-        </div>
-      </div>
     </div>
   )
 }
