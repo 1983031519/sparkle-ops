@@ -100,11 +100,16 @@ function buildGoogleEventBody(ev: {
   time_end: string | null
   address: string | null
   notes: string | null
+  guests: string[] | null
 }) {
+  const attendees = (ev.guests ?? [])
+    .filter(Boolean)
+    .map(email => ({ email }))
   const base: Record<string, unknown> = {
     summary: ev.title,
     ...(ev.address ? { location: ev.address } : {}),
     ...(ev.notes ? { description: ev.notes } : {}),
+    ...(attendees.length ? { attendees } : {}),
   }
   if (ev.time_start) {
     const start = `${ev.date}T${ev.time_start.length === 5 ? ev.time_start + ':00' : ev.time_start}`
@@ -221,7 +226,7 @@ async function handleSync(userId: string, req: Request): Promise<Response> {
 
   if (body.operation === 'delete') {
     if (!body.google_event_id) return jsonResponse({ skipped: true, reason: 'no_google_event_id' })
-    const res = await fetch(`${calBase}/${encodeURIComponent(body.google_event_id)}`, {
+    const res = await fetch(`${calBase}/${encodeURIComponent(body.google_event_id)}?sendUpdates=all`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${access_token}` },
     })
@@ -245,11 +250,15 @@ async function handleSync(userId: string, req: Request): Promise<Response> {
     time_end: (ev.time_end as string | null) ?? null,
     address: (ev.address as string | null) ?? null,
     notes: (ev.notes as string | null) ?? null,
+    guests: (ev.guests as string[] | null) ?? null,
   })
+  // If there are guests, ask Google to email invitations automatically.
+  const hasGuests = Array.isArray(ev.guests) && (ev.guests as unknown[]).length > 0
+  const notifyQs = hasGuests ? '?sendUpdates=all' : ''
 
   if (body.operation === 'create') {
     const existingGid = (ev.google_event_id as string | null) ?? null
-    const url = existingGid ? `${calBase}/${encodeURIComponent(existingGid)}` : calBase
+    const url = (existingGid ? `${calBase}/${encodeURIComponent(existingGid)}` : calBase) + notifyQs
     const method = existingGid ? 'PATCH' : 'POST'
     const res = await fetch(url, {
       method,
@@ -269,7 +278,7 @@ async function handleSync(userId: string, req: Request): Promise<Response> {
     const gid = (ev.google_event_id as string | null) ?? null
     if (!gid) {
       // Event wasn't synced before — fall back to create.
-      const res = await fetch(calBase, {
+      const res = await fetch(calBase + notifyQs, {
         method: 'POST',
         headers: { Authorization: `Bearer ${access_token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(eventBody),
@@ -282,7 +291,7 @@ async function handleSync(userId: string, req: Request): Promise<Response> {
       await admin.from('events').update({ google_event_id: json.id } as never).eq('id', body.event_id)
       return jsonResponse({ ok: true, google_event_id: json.id, fallback: 'created' })
     }
-    const res = await fetch(`${calBase}/${encodeURIComponent(gid)}`, {
+    const res = await fetch(`${calBase}/${encodeURIComponent(gid)}${notifyQs}`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${access_token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(eventBody),

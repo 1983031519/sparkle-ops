@@ -678,6 +678,11 @@ function ListView({
                           <Building2 size={11} />{vendor.name}
                         </span>
                       )}
+                      {ev.guests && ev.guests.length > 0 && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }} title={ev.guests.join(', ')}>
+                          <UserIcon size={11} />{ev.guests.length} guest{ev.guests.length > 1 ? 's' : ''}
+                        </span>
+                      )}
                       {ev.address && (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 260 }}>
                           <MapPin size={11} />{ev.address}
@@ -712,6 +717,124 @@ function ListView({
   )
 }
 
+/* ─── Guests input with autocomplete from profiles ─── */
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+function GuestsField({
+  value, onChange, suggestions, disabled,
+}: {
+  value: string[]
+  onChange: (next: string[]) => void
+  suggestions: string[]
+  disabled?: boolean
+}) {
+  const [text, setText] = useState('')
+  const [openSug, setOpenSug] = useState(false)
+
+  function addEmail(raw: string) {
+    const email = raw.trim().toLowerCase()
+    if (!email) return
+    if (!EMAIL_RE.test(email)) return
+    if (value.includes(email)) return
+    onChange([...value, email])
+    setText('')
+    setOpenSug(false)
+  }
+
+  function removeEmail(email: string) {
+    onChange(value.filter(e => e !== email))
+  }
+
+  const filtered = suggestions
+    .filter(s => !value.includes(s))
+    .filter(s => !text || s.toLowerCase().includes(text.toLowerCase()))
+    .slice(0, 6)
+
+  return (
+    <div className="space-y-1.5">
+      <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151' }}>Guests</label>
+
+      {value.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
+          {value.map(email => (
+            <span
+              key={email}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '4px 8px 4px 10px', borderRadius: 99,
+                background: '#EEF1FE', color: '#3451D1',
+                fontSize: 12, fontWeight: 500,
+              }}
+            >
+              {email}
+              {!disabled && (
+                <button
+                  type="button"
+                  onClick={() => removeEmail(email)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3451D1', display: 'inline-flex', padding: 0 }}
+                  title="Remove"
+                >
+                  <X size={12} strokeWidth={2.5} />
+                </button>
+              )}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <div style={{ position: 'relative', display: 'flex', gap: 6 }}>
+        <input
+          type="email"
+          value={text}
+          onChange={e => { setText(e.target.value); setOpenSug(true) }}
+          onFocus={() => setOpenSug(true)}
+          onBlur={() => setTimeout(() => setOpenSug(false), 150)}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addEmail(text) }
+            if (e.key === 'Backspace' && !text && value.length) { removeEmail(value[value.length - 1]) }
+          }}
+          placeholder="Add guest email and press Enter"
+          disabled={disabled}
+          className="block w-full h-[40px] rounded-[8px] border border-[#D1D5DB] bg-white px-3 text-[14px] placeholder:text-[#9CA3AF] focus:border-[#4F6CF7] focus:outline-none focus:shadow-[0_0_0_3px_rgba(79,108,247,0.12)]"
+        />
+        <Button
+          type="button"
+          variant="secondary"
+          size="md"
+          onClick={() => addEmail(text)}
+          disabled={disabled || !EMAIL_RE.test(text.trim().toLowerCase())}
+        >
+          Add
+        </Button>
+
+        {openSug && filtered.length > 0 && (
+          <div style={{
+            position: 'absolute', top: 44, left: 0, right: 0, zIndex: 20,
+            background: 'white', border: '1px solid #E5E7EB', borderRadius: 8,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.08)', overflow: 'hidden',
+          }}>
+            {filtered.map(s => (
+              <button
+                key={s}
+                type="button"
+                onMouseDown={e => { e.preventDefault(); addEmail(s) }}
+                style={{
+                  display: 'block', width: '100%', textAlign: 'left',
+                  padding: '8px 12px', background: 'white', border: 'none', cursor: 'pointer',
+                  fontSize: 13, color: '#374151',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#F9FAFB' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'white' }}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 /* ─── Modal (form) ─── */
 function makeEmpty(userId?: string): Omit<Event, 'id' | 'created_at'> {
   return {
@@ -727,6 +850,7 @@ function makeEmpty(userId?: string): Omit<Event, 'id' | 'created_at'> {
     notes: null,
     google_calendar_link: null,
     google_event_id: null,
+    guests: [],
     created_by: userId ?? null,
   }
 }
@@ -775,6 +899,7 @@ function EventModal({
       client_id: form.client_id || null,
       vendor_id: form.vendor_id || null,
       assigned_to: form.assigned_to || null,
+      guests: (form.guests ?? []).map(g => g.trim().toLowerCase()).filter(Boolean),
       created_by: form.created_by || userId || null,
     }
     let savedId: string | null = null
@@ -882,6 +1007,15 @@ function EventModal({
             value={form.address ?? ''}
             onChange={e => update('address', e.target.value || null)}
             placeholder="Site or vendor address"
+            disabled={!canEdit}
+          />
+        </div>
+
+        <div style={{ gridColumn: '1 / -1' }}>
+          <GuestsField
+            value={form.guests ?? []}
+            onChange={next => update('guests', next)}
+            suggestions={profiles.map(p => p.email).filter(Boolean)}
             disabled={!canEdit}
           />
         </div>

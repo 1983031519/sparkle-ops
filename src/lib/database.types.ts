@@ -293,6 +293,7 @@ export interface Event {
   notes: string | null
   google_calendar_link: string | null // legacy, não preenchido mais
   google_event_id: string | null      // id do evento no Google Calendar (parte b)
+  guests: string[]                    // emails convidados — vira `attendees` no Google
   created_by: string | null
   created_at: string
 }
