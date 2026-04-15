@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   Plus, Calendar as CalendarIcon, List as ListIcon, ChevronLeft, ChevronRight,
-  Clock, MapPin, User as UserIcon, Trash2, ExternalLink, X,
+  Clock, MapPin, User as UserIcon, Trash2, ExternalLink, X, Building2,
 } from 'lucide-react'
 import {
   format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay,
@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/Button'
 import { Input, Select, Textarea } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { DateInput } from '@/components/ui/DateInput'
-import type { Event, EventType, Client, Profile } from '@/lib/database.types'
+import type { Event, EventType, Client, Profile, Supplier } from '@/lib/database.types'
 
 /* ─── Config ─── */
 const TYPE_META: Record<EventType, { label: string; color: string; bg: string }> = {
@@ -177,6 +177,7 @@ export default function SchedulePage() {
 
   const [events, setEvents] = useState<Event[]>([])
   const [clients, setClients] = useState<Client[]>([])
+  const [vendors, setVendors] = useState<Supplier[]>([])
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -195,13 +196,15 @@ export default function SchedulePage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const [evRes, clRes, prRes] = await Promise.all([
+    const [evRes, clRes, vdRes, prRes] = await Promise.all([
       supabase.from('events').select('*').order('date', { ascending: true }).order('time_start', { ascending: true, nullsFirst: true }),
       supabase.from('clients').select('id, name, address').order('name'),
+      supabase.from('suppliers').select('id, name, address, status').order('name'),
       supabase.from('profiles').select('id, full_name, email, role, active, created_at, updated_at').eq('active', true).order('full_name'),
     ])
     setEvents((evRes.data ?? []) as Event[])
     setClients((clRes.data ?? []) as Client[])
+    setVendors(((vdRes.data ?? []) as Supplier[]).filter(v => (v.status ?? 'Active') === 'Active'))
     setProfiles((prRes.data ?? []) as Profile[])
     setLoading(false)
   }, [])
@@ -209,6 +212,7 @@ export default function SchedulePage() {
   useEffect(() => { load() }, [load])
 
   const clientMap = useMemo(() => Object.fromEntries(clients.map(c => [c.id, c])), [clients])
+  const vendorMap = useMemo(() => Object.fromEntries(vendors.map(v => [v.id, v])), [vendors])
   const profileMap = useMemo(() => Object.fromEntries(profiles.map(p => [p.id, p])), [profiles])
 
   const filteredEvents = useMemo(() => events.filter(e => {
@@ -321,6 +325,7 @@ export default function SchedulePage() {
           events={filteredEvents}
           onOpen={openEdit}
           clientMap={clientMap}
+          vendorMap={vendorMap}
           profileMap={profileMap}
         />
       )}
@@ -329,6 +334,7 @@ export default function SchedulePage() {
         <EventModal
           event={editing}
           clients={clients}
+          vendors={vendors}
           profiles={profiles}
           canEdit={!editing || canEditEvent(editing)}
           onClose={closeModal}
@@ -490,11 +496,12 @@ const navBtn: React.CSSProperties = {
 
 /* ─── List View ─── */
 function ListView({
-  events, onOpen, clientMap, profileMap,
+  events, onOpen, clientMap, vendorMap, profileMap,
 }: {
   events: Event[]
   onOpen: (e: Event) => void
   clientMap: Record<string, Client>
+  vendorMap: Record<string, Supplier>
   profileMap: Record<string, Profile>
 }) {
   // Group by date
@@ -556,6 +563,7 @@ function ListView({
               const meta = TYPE_META[ev.type] || TYPE_META.other
               const who = ev.assigned_to ? profileMap[ev.assigned_to] : null
               const client = ev.client_id ? clientMap[ev.client_id] : null
+              const vendor = ev.vendor_id ? vendorMap[ev.vendor_id] : null
               return (
                 <div
                   key={ev.id}
@@ -589,6 +597,11 @@ function ListView({
                       {client && (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                           <UserIcon size={11} />{client.name}
+                        </span>
+                      )}
+                      {vendor && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: '#7C3AED' }}>
+                          <Building2 size={11} />{vendor.name}
                         </span>
                       )}
                       {ev.address && (
@@ -634,23 +647,26 @@ function makeEmpty(userId?: string): Omit<Event, 'id' | 'created_at'> {
     time_start: null,
     time_end: null,
     client_id: null,
+    vendor_id: null,
     address: null,
     assigned_to: userId ?? null,
     notes: null,
     google_calendar_link: null,
+    google_event_id: null,
     created_by: userId ?? null,
   }
 }
 
 function EventModal({
-  event, clients, profiles, canEdit, onClose, onSaved, onDelete, userId, toast,
+  event, clients, vendors, profiles, canEdit, onClose, onSaved, onDelete, userId, toast,
 }: {
   event: Event | null
   clients: Client[]
+  vendors: Supplier[]
   profiles: Profile[]
   canEdit: boolean
   onClose: () => void
-  onSaved: () => void
+  onSaved: () => void | Promise<void>
   onDelete?: () => void
   userId?: string
   toast: { success: (m: string) => void; error: (m: string) => void }
@@ -683,6 +699,7 @@ function EventModal({
       time_start: form.time_start || null,
       time_end: form.time_end || null,
       client_id: form.client_id || null,
+      vendor_id: form.vendor_id || null,
       assigned_to: form.assigned_to || null,
       created_by: form.created_by || userId || null,
     }
@@ -708,6 +725,20 @@ function EventModal({
       ...f,
       client_id: clientId,
       address: c?.address ?? f.address,
+    }))
+  }
+
+  // Vendor selection mirrors client behavior: selecting overwrites address with vendor.address.
+  function onVendorChange(vendorId: string) {
+    if (!vendorId) {
+      setForm(f => ({ ...f, vendor_id: null }))
+      return
+    }
+    const v = vendors.find(vd => vd.id === vendorId)
+    setForm(f => ({
+      ...f,
+      vendor_id: vendorId,
+      address: v?.address ?? f.address,
     }))
   }
 
@@ -757,13 +788,22 @@ function EventModal({
           options={clients.map(c => ({ value: c.id, label: c.name }))}
           disabled={!canEdit}
         />
-        <Input
-          label="Address"
-          value={form.address ?? ''}
-          onChange={e => update('address', e.target.value || null)}
-          placeholder="Site address"
+        <Select
+          label="Vendor"
+          value={form.vendor_id ?? ''}
+          onChange={e => onVendorChange(e.target.value)}
+          options={vendors.map(v => ({ value: v.id, label: v.name }))}
           disabled={!canEdit}
         />
+        <div style={{ gridColumn: '1 / -1' }}>
+          <Input
+            label="Address"
+            value={form.address ?? ''}
+            onChange={e => update('address', e.target.value || null)}
+            placeholder="Site or vendor address"
+            disabled={!canEdit}
+          />
+        </div>
 
         <div style={{ gridColumn: '1 / -1' }}>
           <Textarea

@@ -287,10 +287,12 @@ export interface Event {
   time_start: string | null // HH:MM:SS
   time_end: string | null
   client_id: string | null
+  vendor_id: string | null           // references suppliers(id) — UI chama de "Vendor"
   address: string | null
   assigned_to: string | null
   notes: string | null
-  google_calendar_link: string | null
+  google_calendar_link: string | null // legacy, não preenchido mais
+  google_event_id: string | null      // id do evento no Google Calendar (parte b)
   created_by: string | null
   created_at: string
 }
