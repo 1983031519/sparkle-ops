@@ -54,6 +54,121 @@ function timeRange(start: string | null, end: string | null) {
   return fmtTime(start || end)
 }
 
+/** Exibe nome amigável de um profile: full_name > prefixo do email > 'Unassigned' */
+export function displayName(p: Profile | null | undefined): string {
+  if (!p) return 'Unassigned'
+  if (p.full_name && p.full_name.trim()) return p.full_name.trim()
+  if (p.email) return p.email.split('@')[0]
+  return 'Unassigned'
+}
+
+export function displayInitial(p: Profile | null | undefined): string {
+  return displayName(p)[0]?.toUpperCase() ?? '?'
+}
+
+/** Gera URL "Add to Google Calendar" a partir do evento */
+function googleCalendarLink(ev: { title: string; date: string; time_start: string | null; time_end: string | null; notes: string | null; address: string | null }): string {
+  const dateCompact = ev.date.replace(/-/g, '')
+  let dates: string
+  if (ev.time_start) {
+    const startHms = ev.time_start.replace(/:/g, '').padEnd(6, '0').slice(0, 6)
+    const endSrc = ev.time_end || ev.time_start
+    const endHms = endSrc.replace(/:/g, '').padEnd(6, '0').slice(0, 6)
+    dates = `${dateCompact}T${startHms}/${dateCompact}T${endHms}`
+  } else {
+    // All-day: end = next day
+    const d = new Date(ev.date + 'T00:00:00')
+    d.setDate(d.getDate() + 1)
+    const endDate = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
+    dates = `${dateCompact}/${endDate}`
+  }
+  const params = new URLSearchParams({ action: 'TEMPLATE', text: ev.title, dates })
+  if (ev.notes) params.set('details', ev.notes)
+  if (ev.address) params.set('location', ev.address)
+  return `https://calendar.google.com/calendar/render?${params.toString()}`
+}
+
+/* ─── 12h Time Picker ─── */
+function TimePicker({ label, value, onChange, disabled }: {
+  label: string
+  value: string | null
+  onChange: (v: string | null) => void
+  disabled?: boolean
+}) {
+  // Parse "HH:MM:SS" -> { h12, m, ampm }
+  const parsed = useMemo(() => {
+    if (!value) return { h: '', m: '', ampm: 'AM' as 'AM' | 'PM' }
+    const [hh, mm] = value.split(':')
+    const h = parseInt(hh, 10)
+    return { h: String(h % 12 || 12), m: mm || '00', ampm: (h >= 12 ? 'PM' : 'AM') as 'AM' | 'PM' }
+  }, [value])
+
+  function emit(h: string, m: string, ampm: 'AM' | 'PM') {
+    if (!h) { onChange(null); return }
+    let h24 = parseInt(h, 10) % 12
+    if (ampm === 'PM') h24 += 12
+    onChange(`${String(h24).padStart(2, '0')}:${(m || '00').padStart(2, '0')}:00`)
+  }
+
+  const selectStyle: React.CSSProperties = {
+    height: 40, padding: '0 8px', borderRadius: 8, border: '1px solid #D1D5DB',
+    background: 'white', fontSize: 14, color: '#111827',
+    cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.6 : 1,
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151' }}>{label}</label>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+        <select
+          value={parsed.h}
+          onChange={e => emit(e.target.value, parsed.m || '00', parsed.ampm)}
+          disabled={disabled}
+          style={selectStyle}
+        >
+          <option value="">—</option>
+          {Array.from({ length: 12 }, (_, i) => i + 1).map(h => (
+            <option key={h} value={h}>{h}</option>
+          ))}
+        </select>
+        <span style={{ color: '#6B7280', fontWeight: 600 }}>:</span>
+        <select
+          value={parsed.m}
+          onChange={e => emit(parsed.h || '12', e.target.value, parsed.ampm)}
+          disabled={disabled}
+          style={selectStyle}
+        >
+          {['00', '15', '30', '45'].map(m => <option key={m} value={m}>{m}</option>)}
+        </select>
+        <div style={{ display: 'inline-flex', background: '#F3F4F6', borderRadius: 8, padding: 3 }}>
+          {(['AM', 'PM'] as const).map(a => (
+            <button
+              key={a}
+              type="button"
+              disabled={disabled}
+              onClick={() => emit(parsed.h || '12', parsed.m || '00', a)}
+              style={{
+                padding: '6px 12px', border: 'none', borderRadius: 6,
+                fontSize: 12, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer',
+                background: parsed.ampm === a ? 'white' : 'transparent',
+                color: parsed.ampm === a ? '#111827' : '#6B7280',
+                boxShadow: parsed.ampm === a ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+              }}
+            >{a}</button>
+          ))}
+        </div>
+        {value && !disabled && (
+          <button
+            type="button"
+            onClick={() => onChange(null)}
+            style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', fontSize: 11, marginLeft: 4 }}
+          >Clear</button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 /* ─── Page ─── */
 export default function SchedulePage() {
   const { user, isAdmin, isManager } = useAuth()
@@ -168,7 +283,7 @@ export default function SchedulePage() {
             }}
           >
             <option value="">All assignees</option>
-            {profiles.map(p => <option key={p.id} value={p.id}>{p.full_name || p.email}</option>)}
+            {profiles.map(p => <option key={p.id} value={p.id}>{displayName(p)}</option>)}
           </select>
           <select
             value={filterType}
@@ -217,7 +332,7 @@ export default function SchedulePage() {
           profiles={profiles}
           canEdit={!editing || canEditEvent(editing)}
           onClose={closeModal}
-          onSaved={() => { closeModal(); load() }}
+          onSaved={async () => { await load(); closeModal() }}
           onDelete={editing && editing.id ? () => handleDelete(editing.id) : undefined}
           userId={user?.id}
           toast={toast}
@@ -321,7 +436,7 @@ function CalendarView({
               {dayEvents.slice(0, maxShow).map(ev => {
                 const meta = TYPE_META[ev.type] || TYPE_META.other
                 const who = ev.assigned_to ? profileMap[ev.assigned_to] : null
-                const whoInitial = who?.full_name?.[0]?.toUpperCase() ?? ''
+                const whoInitial = who ? displayInitial(who) : ''
                 return (
                   <div
                     key={ev.id}
@@ -334,7 +449,7 @@ function CalendarView({
                       overflow: 'hidden', whiteSpace: 'nowrap',
                       cursor: 'pointer',
                     }}
-                    title={`${ev.title} — ${meta.label}${who ? ' · ' + (who.full_name || who.email) : ''}`}
+                    title={`${ev.title} — ${meta.label}${who ? ' · ' + displayName(who) : ''}`}
                   >
                     {ev.time_start && <span style={{ fontWeight: 600, fontSize: 9, flexShrink: 0 }}>{fmtTime(ev.time_start).replace(' ', '')}</span>}
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.title}</span>
@@ -495,9 +610,9 @@ function ListView({
                         color: 'white', display: 'inline-flex', alignItems: 'center',
                         justifyContent: 'center', fontSize: 9, fontWeight: 700,
                       }}>
-                        {(who.full_name || who.email || '?')[0].toUpperCase()}
+                        {displayInitial(who)}
                       </span>
-                      {who.full_name || who.email}
+                      {displayName(who)}
                     </div>
                   )}
                 </div>
@@ -563,7 +678,8 @@ function EventModal({
       title: form.title.trim(),
       address: form.address?.trim() || null,
       notes: form.notes?.trim() || null,
-      google_calendar_link: form.google_calendar_link?.trim() || null,
+      // google_calendar_link is auto-generated at view time — we don't persist it anymore.
+      google_calendar_link: null,
       time_start: form.time_start || null,
       time_end: form.time_end || null,
       client_id: form.client_id || null,
@@ -579,13 +695,19 @@ function EventModal({
     onSaved()
   }
 
-  // When selecting a client, autofill address if empty
+  // When selecting a client, autofill address with the client's address (always overwrite
+  // on selection so the field reflects the newly-selected client; still editable afterwards).
+  // When clearing the client, keep the current address untouched so the user can type a free location.
   function onClientChange(clientId: string) {
-    const c = clientId ? clients.find(cl => cl.id === clientId) : null
+    if (!clientId) {
+      setForm(f => ({ ...f, client_id: null }))
+      return
+    }
+    const c = clients.find(cl => cl.id === clientId)
     setForm(f => ({
       ...f,
-      client_id: clientId || null,
-      address: f.address ? f.address : (c?.address ?? null),
+      client_id: clientId,
+      address: c?.address ?? f.address,
     }))
   }
 
@@ -613,7 +735,7 @@ function EventModal({
           label="Assigned to"
           value={form.assigned_to ?? ''}
           onChange={e => update('assigned_to', e.target.value || null)}
-          options={profiles.map(p => ({ value: p.id, label: p.full_name || p.email }))}
+          options={profiles.map(p => ({ value: p.id, label: displayName(p) }))}
           disabled={!canEdit}
         />
 
@@ -623,21 +745,9 @@ function EventModal({
           onChange={iso => update('date', iso)}
           required
         />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <Input
-            label="Start"
-            type="time"
-            value={form.time_start ?? ''}
-            onChange={e => update('time_start', e.target.value || null)}
-            disabled={!canEdit}
-          />
-          <Input
-            label="End"
-            type="time"
-            value={form.time_end ?? ''}
-            onChange={e => update('time_end', e.target.value || null)}
-            disabled={!canEdit}
-          />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <TimePicker label="Start" value={form.time_start} onChange={v => update('time_start', v)} disabled={!canEdit} />
+          <TimePicker label="End" value={form.time_end} onChange={v => update('time_end', v)} disabled={!canEdit} />
         </div>
 
         <Select
@@ -654,16 +764,6 @@ function EventModal({
           placeholder="Site address"
           disabled={!canEdit}
         />
-
-        <div style={{ gridColumn: '1 / -1' }}>
-          <Input
-            label="Google Calendar link"
-            value={form.google_calendar_link ?? ''}
-            onChange={e => update('google_calendar_link', e.target.value || null)}
-            placeholder="https://calendar.google.com/..."
-            disabled={!canEdit}
-          />
-        </div>
 
         <div style={{ gridColumn: '1 / -1' }}>
           <Textarea
@@ -688,16 +788,27 @@ function EventModal({
             </Button>
           )}
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {form.google_calendar_link && (
-            <a href={form.google_calendar_link} target="_blank" rel="noreferrer"
-               style={{
-                 display: 'inline-flex', alignItems: 'center', gap: 6,
-                 padding: '8px 14px', borderRadius: 8, border: '1px solid #E5E7EB',
-                 background: 'white', color: '#374151', fontSize: 13, fontWeight: 600,
-                 textDecoration: 'none',
-               }}>
-              <ExternalLink size={13} /> Open in Calendar
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {isEdit && form.title && form.date && (
+            <a
+              href={googleCalendarLink({
+                title: form.title,
+                date: form.date,
+                time_start: form.time_start,
+                time_end: form.time_end,
+                notes: form.notes,
+                address: form.address,
+              })}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '8px 14px', borderRadius: 8, border: '1px solid #E5E7EB',
+                background: 'white', color: '#374151', fontSize: 13, fontWeight: 600,
+                textDecoration: 'none',
+              }}
+            >
+              <ExternalLink size={13} /> Add to Google Calendar
             </a>
           )}
           <Button variant="secondary" size="md" onClick={onClose}>

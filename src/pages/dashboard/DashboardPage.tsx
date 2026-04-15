@@ -26,6 +26,13 @@ function fmtEventTime(t: string | null) {
   return `${h % 12 || 12}:${mm} ${ampm}`
 }
 
+function displayProfileName(p: Profile | null | undefined): string {
+  if (!p) return 'Unassigned'
+  if (p.full_name && p.full_name.trim()) return p.full_name.trim()
+  if (p.email) return p.email.split('@')[0]
+  return 'Unassigned'
+}
+
 function useIsMobile() {
   const [m, setM] = useState(false)
   useEffect(() => { const c = () => setM(window.innerWidth < 768); c(); window.addEventListener('resize', c); return () => window.removeEventListener('resize', c) }, [])
@@ -134,6 +141,73 @@ export default function DashboardPage() {
     setProfileMap(Object.fromEntries(((profRes.data ?? []) as Profile[]).map(p => [p.id, p])))
   }
 
+  /* ─── Upcoming Events card (reused by mobile + desktop) ─── */
+  const upcomingEventsCard = (
+    <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden', marginBottom: isMobile ? 16 : 28 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '12px 14px' : '16px 20px', borderBottom: '1px solid #F3F4F6' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <CalendarIcon size={isMobile ? 13 : 14} color="#4F6CF7" strokeWidth={2} />
+          <p style={{ fontSize: isMobile ? 13 : 14, fontWeight: 600, color: '#111827' }}>Upcoming Events</p>
+        </div>
+        <Link to="/schedule" style={{ fontSize: isMobile ? 11 : 12, fontWeight: 500, color: '#4F6CF7', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+          See all <ArrowRight size={12} />
+        </Link>
+      </div>
+      {upcomingEvents.length === 0
+        ? <p style={{ fontSize: 13, color: '#9CA3AF', padding: isMobile ? '18px 14px' : '24px 20px' }}>No upcoming events. Schedule one to get started.</p>
+        : upcomingEvents.map(ev => {
+            const meta = EVENT_TYPE_META[ev.type] || EVENT_TYPE_META.other
+            const who = ev.assigned_to ? profileMap[ev.assigned_to] : null
+            const d = parseISO(ev.date)
+            const isToday = ev.date === format(new Date(), 'yyyy-MM-dd')
+            return (
+              <Link key={ev.id} to="/schedule" style={{
+                display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 12,
+                padding: isMobile ? '10px 14px' : '12px 20px',
+                borderBottom: '1px solid #F9FAFB', textDecoration: 'none',
+              }}>
+                <div style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  minWidth: isMobile ? 36 : 40, padding: '2px 0',
+                  background: isToday ? '#4F6CF7' : '#F3F4F6',
+                  color: isToday ? 'white' : '#374151',
+                  borderRadius: 6, flexShrink: 0,
+                }}>
+                  <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', opacity: 0.8 }}>{format(d, 'MMM')}</span>
+                  <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700, lineHeight: 1 }}>{format(d, 'd')}</span>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                    <span style={{ fontSize: isMobile ? 12 : 13, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.title}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: meta.bg, color: meta.color, flexShrink: 0 }}>{meta.label}</span>
+                  </div>
+                  <p style={{ fontSize: isMobile ? 10 : 11, color: '#6B7280', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    {ev.time_start && <><Clock size={10} /> {fmtEventTime(ev.time_start)}{ev.time_end ? ` – ${fmtEventTime(ev.time_end)}` : ''}</>}
+                    {ev.time_start && who && <span style={{ opacity: 0.5 }}>·</span>}
+                    {who && <span>{displayProfileName(who)}</span>}
+                  </p>
+                </div>
+                {!isMobile && who && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '4px 10px', borderRadius: 99, background: '#F3F4F6',
+                    fontSize: 11, fontWeight: 500, color: '#374151', flexShrink: 0,
+                  }}>
+                    <span style={{
+                      width: 18, height: 18, borderRadius: '50%', background: '#4F6CF7',
+                      color: 'white', display: 'inline-flex', alignItems: 'center',
+                      justifyContent: 'center', fontSize: 9, fontWeight: 700,
+                    }}>{displayProfileName(who)[0]?.toUpperCase() ?? '?'}</span>
+                    {displayProfileName(who)}
+                  </div>
+                )}
+              </Link>
+            )
+          })
+      }
+    </div>
+  )
+
   /* ─── MOBILE ─── */
   if (isMobile) {
     const today = format(new Date(), 'EEEE, MMMM d', { locale: enUS })
@@ -167,49 +241,12 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        <div style={{ padding: '16px 16px 0' }}>{upcomingEventsCard}</div>
+
         {lowStock.length > 0 && (
-          <div style={{ margin: '12px 16px 0', background: '#FFFBEB', borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #FDE68A' }}>
+          <div style={{ margin: '0 16px', background: '#FFFBEB', borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #FDE68A' }}>
             <AlertTriangle size={14} strokeWidth={2} color="#F59E0B" />
             <p style={{ fontSize: 12, color: '#92400E' }}><strong>Low stock:</strong> {lowStock.length} item{lowStock.length > 1 ? 's' : ''}</p>
-          </div>
-        )}
-
-        {upcomingEvents.length > 0 && (
-          <div style={{ margin: '16px 16px 0', background: 'white', borderRadius: 12, border: '1px solid #E5E7EB', overflow: 'hidden' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid #F3F4F6' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <CalendarIcon size={13} color="#4F6CF7" strokeWidth={2} />
-                <p style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>Upcoming Events</p>
-              </div>
-              <Link to="/schedule" style={{ fontSize: 11, color: '#4F6CF7', textDecoration: 'none', fontWeight: 500 }}>See all →</Link>
-            </div>
-            {upcomingEvents.slice(0, 5).map(ev => {
-              const meta = EVENT_TYPE_META[ev.type] || EVENT_TYPE_META.other
-              const who = ev.assigned_to ? profileMap[ev.assigned_to] : null
-              const d = parseISO(ev.date)
-              return (
-                <Link key={ev.id} to="/schedule" style={{
-                  display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
-                  borderBottom: '1px solid #F9FAFB', textDecoration: 'none',
-                }}>
-                  <div style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center',
-                    minWidth: 36, padding: '2px 0',
-                    background: meta.bg, color: meta.color,
-                    borderRadius: 6, flexShrink: 0,
-                  }}>
-                    <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', opacity: 0.8 }}>{format(d, 'MMM')}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, lineHeight: 1 }}>{format(d, 'd')}</span>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 12, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.title}</p>
-                    <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 1 }}>
-                      {ev.time_start ? fmtEventTime(ev.time_start) + ' · ' : ''}{who?.full_name || who?.email || 'Unassigned'}
-                    </p>
-                  </div>
-                </Link>
-              )
-            })}
           </div>
         )}
 
@@ -274,10 +311,13 @@ export default function DashboardPage() {
   return (
     <div style={{ padding: '28px 32px', maxWidth: 1280, margin: '0 auto' }}>
       {/* Greeting */}
-      <div style={{ marginBottom: 28 }}>
+      <div style={{ marginBottom: 20 }}>
         <h2 style={{ fontSize: 22, fontWeight: 700, color: '#111827' }}>{greeting}, {firstName} 👋</h2>
         <p style={{ fontSize: 14, color: '#6B7280', marginTop: 4 }}>Here's what's happening with your business today.</p>
       </div>
+
+      {/* Upcoming Events (topo — antes de qualquer outro widget) */}
+      {upcomingEventsCard}
 
       {/* KPI cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
@@ -379,70 +419,6 @@ export default function DashboardPage() {
             ))
           }
         </div>
-      </div>
-
-      {/* Upcoming Events */}
-      <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden', marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #F3F4F6' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <CalendarIcon size={14} color="#4F6CF7" strokeWidth={2} />
-            <p style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Upcoming Events</p>
-          </div>
-          <Link to="/schedule" style={{ fontSize: 12, fontWeight: 500, color: '#4F6CF7', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
-            See all <ArrowRight size={12} />
-          </Link>
-        </div>
-        {upcomingEvents.length === 0
-          ? <p style={{ fontSize: 13, color: '#9CA3AF', padding: '24px 20px' }}>No upcoming events. Schedule one to get started.</p>
-          : upcomingEvents.map(ev => {
-              const meta = EVENT_TYPE_META[ev.type] || EVENT_TYPE_META.other
-              const who = ev.assigned_to ? profileMap[ev.assigned_to] : null
-              const d = parseISO(ev.date)
-              const isToday = ev.date === format(new Date(), 'yyyy-MM-dd')
-              return (
-                <Link key={ev.id} to="/schedule" style={{
-                  display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px',
-                  borderBottom: '1px solid #F9FAFB', textDecoration: 'none',
-                }}>
-                  <div style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center',
-                    minWidth: 40, padding: '2px 0',
-                    background: isToday ? '#4F6CF7' : '#F3F4F6',
-                    color: isToday ? 'white' : '#374151',
-                    borderRadius: 6, flexShrink: 0,
-                  }}>
-                    <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', opacity: 0.8 }}>{format(d, 'MMM')}</span>
-                    <span style={{ fontSize: 14, fontWeight: 700, lineHeight: 1 }}>{format(d, 'd')}</span>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.title}</span>
-                      <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: meta.bg, color: meta.color, flexShrink: 0 }}>{meta.label}</span>
-                    </div>
-                    {ev.time_start && (
-                      <p style={{ fontSize: 11, color: '#6B7280', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                        <Clock size={10} /> {fmtEventTime(ev.time_start)}{ev.time_end ? ` – ${fmtEventTime(ev.time_end)}` : ''}
-                      </p>
-                    )}
-                  </div>
-                  {who && (
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      padding: '4px 10px', borderRadius: 99, background: '#F3F4F6',
-                      fontSize: 11, fontWeight: 500, color: '#374151', flexShrink: 0,
-                    }}>
-                      <span style={{
-                        width: 18, height: 18, borderRadius: '50%', background: '#4F6CF7',
-                        color: 'white', display: 'inline-flex', alignItems: 'center',
-                        justifyContent: 'center', fontSize: 9, fontWeight: 700,
-                      }}>{(who.full_name || who.email || '?')[0].toUpperCase()}</span>
-                      {who.full_name || who.email}
-                    </div>
-                  )}
-                </Link>
-              )
-            })
-        }
       </div>
 
       {/* Schedule */}
