@@ -10,21 +10,47 @@ interface DocumentData {
   clientName: string
 }
 
+type SenderId = 'oscar' | 'sabrina' | 'info'
+
 interface SendEmailBody {
   to: string
   subject?: string
   type: DocumentType
   documentData: DocumentData
-  fromEmail: 'oscar@sparklestonepavers.com' | 'info@sparklestonepavers.com'
+  senderId?: SenderId
+  // TODO: remover fromEmail legado após validação em prod (1 semana)
+  fromEmail?: string
   viewUrl?: string
   pdfBase64?: string
   personalMessage?: string
 }
 
-const ALLOWED_FROMS = new Set([
-  'oscar@sparklestonepavers.com',
-  'info@sparklestonepavers.com',
-])
+// Mirror of src/lib/senders.ts — duplicated intentionally to keep the edge function
+// free of cross-boundary imports. Keep in sync.
+const SENDERS: Record<SenderId, { id: SenderId; email: string; name: string; signature: string }> = {
+  oscar: {
+    id: 'oscar',
+    email: 'oscar@sparklestonepavers.com',
+    name: 'Oscar Rocha',
+    signature: 'Oscar Rocha\nField Operations\nSparkle Stone & Pavers\n(941) 387-5133',
+  },
+  sabrina: {
+    id: 'sabrina',
+    email: 'sabrina@sparklestonepavers.com',
+    name: 'Sabrina — Sparkle Stone & Pavers',
+    signature: 'Sabrina\nOffice & Scheduling\nSparkle Stone & Pavers\n(941) 387-5134',
+  },
+  info: {
+    id: 'info',
+    email: 'info@sparklestonepavers.com',
+    name: 'Sparkle Stone & Pavers',
+    signature: 'Sparkle Stone & Pavers Team\n(941) 387-5133\ninfo@sparklestonepavers.com',
+  },
+}
+
+const SENDERS_BY_EMAIL: Record<string, SenderId> = Object.fromEntries(
+  Object.values(SENDERS).map(s => [s.email, s.id]),
+)
 
 const TYPE_LABEL: Record<DocumentType, string> = {
   invoice: 'Invoice',
@@ -45,7 +71,15 @@ function escapeHtml(s: string): string {
     .replace(/'/g, '&#39;')
 }
 
-function buildHtml(type: DocumentType, d: DocumentData, personalMessage?: string): string {
+function renderSignatureHtml(signature: string): string {
+  // First line is the person/team name → bold. Remaining lines are plain.
+  const lines = signature.split('\n')
+  return lines
+    .map((line, i) => (i === 0 ? `<strong>${escapeHtml(line)}</strong>` : escapeHtml(line)))
+    .join('<br />')
+}
+
+function buildHtml(type: DocumentType, d: DocumentData, signatureHtml: string, personalMessage?: string): string {
   const label = TYPE_LABEL[type]
   const clientName = escapeHtml(d.clientName || 'Valued Client')
   const number = escapeHtml(d.number || '')
@@ -114,9 +148,9 @@ function buildHtml(type: DocumentType, d: DocumentData, personalMessage?: string
                 <a href="tel:+19413875133" style="color:#1a2744;font-weight:600;text-decoration:none;">(941) 387-5133</a>.
               </p>
 
-              <p style="margin:24px 0 0;font-size:13px;color:#1a2744;">
+              <p style="margin:24px 0 0;font-size:13px;color:#1a2744;line-height:1.6;">
                 Thank you,<br />
-                <strong>Sparkle Stone &amp; Pavers</strong>
+                ${signatureHtml}
               </p>
             </td>
           </tr>
@@ -158,7 +192,7 @@ export default async function handler(req: Request): Promise<Response> {
     return jsonResponse(400, { error: 'Invalid JSON body' })
   }
 
-  const { to, subject, type, documentData, fromEmail, pdfBase64, personalMessage } = body
+  const { to, subject, type, documentData, senderId, fromEmail, pdfBase64, personalMessage } = body
 
   if (!to || typeof to !== 'string') {
     return jsonResponse(400, { error: 'Missing "to" email address' })
@@ -169,9 +203,19 @@ export default async function handler(req: Request): Promise<Response> {
   if (!documentData || typeof documentData !== 'object') {
     return jsonResponse(400, { error: 'Missing "documentData"' })
   }
-  if (!fromEmail || !ALLOWED_FROMS.has(fromEmail)) {
-    return jsonResponse(400, { error: 'Invalid "fromEmail"' })
+
+  // Resolve sender: prefer senderId (new), fall back to fromEmail (legacy).
+  // TODO: remover fromEmail legado após validação em prod (1 semana)
+  let resolvedSenderId: SenderId | undefined
+  if (senderId && senderId in SENDERS) {
+    resolvedSenderId = senderId
+  } else if (fromEmail && typeof fromEmail === 'string' && fromEmail in SENDERS_BY_EMAIL) {
+    resolvedSenderId = SENDERS_BY_EMAIL[fromEmail]
   }
+  if (!resolvedSenderId) {
+    return jsonResponse(400, { error: 'Missing or invalid sender ("senderId" or "fromEmail")' })
+  }
+  const sender = SENDERS[resolvedSenderId]
 
   const label = TYPE_LABEL[type]
   const finalSubject = subject && subject.trim().length > 0
@@ -190,11 +234,11 @@ export default async function handler(req: Request): Promise<Response> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: `Sparkle Stone & Pavers <${fromEmail}>`,
+        from: `${sender.name} <${sender.email}>`,
         to: [to],
-        reply_to: 'oscar@sparklestonepavers.com',
+        reply_to: sender.email,
         subject: finalSubject,
-        html: buildHtml(type, documentData, personalMessage),
+        html: buildHtml(type, documentData, renderSignatureHtml(sender.signature), personalMessage),
         ...(pdfBase64 ? {
           attachments: [{
             filename: `Sparkle_${TYPE_LABEL[type].replace(' ', '_')}_${documentData.number}.pdf`,
