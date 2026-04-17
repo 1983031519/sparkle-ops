@@ -4,14 +4,11 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useToast } from '@/components/ui/Toast'
 import { supabase } from '@/lib/supabase'
+import { getDefaultSender, getSender, type SenderId } from '@/lib/senders'
+import { SenderSelector } from '@/components/email/SenderSelector'
+import { useAuth } from '@/hooks/useAuth'
 
 export type SendDocumentType = 'invoice' | 'estimate' | 'project'
-
-const FROM_OPTIONS = [
-  'oscar@sparklestonepavers.com',
-  'info@sparklestonepavers.com',
-] as const
-type FromEmail = typeof FROM_OPTIONS[number]
 
 interface Props {
   open: boolean
@@ -30,19 +27,20 @@ interface Props {
 }
 
 export function SendDocumentModal({ open, onClose, type, documentId, clientEmail, pdfBase64, documentData, onSent }: Props) {
-  const [fromEmail, setFromEmail] = useState<FromEmail>('oscar@sparklestonepavers.com')
+  const { user } = useAuth()
+  const [senderId, setSenderId] = useState<SenderId>(() => getDefaultSender(user?.email))
   const [personalMessage, setPersonalMessage] = useState('')
   const [sending, setSending] = useState(false)
   const toast = useToast()
 
-  // Reset default selection every time the modal opens
+  // Reset default selection every time the modal opens, based on who's logged in.
   useEffect(() => {
     if (open) {
-      setFromEmail('oscar@sparklestonepavers.com')
+      setSenderId(getDefaultSender(user?.email))
       setPersonalMessage('')
       setSending(false)
     }
-  }, [open])
+  }, [open, user?.email])
 
   async function handleSend() {
     if (!clientEmail) {
@@ -76,7 +74,7 @@ export function SendDocumentModal({ open, onClose, type, documentId, clientEmail
           to: clientEmail,
           type,
           documentData,
-          fromEmail,
+          senderId,
           viewUrl,
           pdfBase64,
           personalMessage: personalMessage.trim() || undefined,
@@ -99,6 +97,19 @@ export function SendDocumentModal({ open, onClose, type, documentId, clientEmail
         await supabase.from('projects').update({ status: 'Sent' } as never).eq('id', documentId)
       }
 
+      // Placeholder log — Phase 2 will persist this in an email_send_log table.
+      const sender = getSender(senderId)
+      const typeLabel = type === 'invoice' ? 'Invoice' : type === 'estimate' ? 'Estimate' : 'Project Proposal'
+      console.log('[email_sent]', {
+        sent_by_user_id: user?.id ?? null,
+        sent_from_email: sender.email,
+        to: clientEmail,
+        subject: `Your ${typeLabel} from Sparkle Stone & Pavers${documentData.number ? ` — ${documentData.number}` : ''}`,
+        document_type: type,
+        document_id: documentId,
+        timestamp: new Date().toISOString(),
+      })
+
       toast.success(`Email sent to ${clientEmail}`)
       onSent?.()
       onClose()
@@ -120,6 +131,12 @@ export function SendDocumentModal({ open, onClose, type, documentId, clientEmail
   return (
     <Modal open={open} onClose={onClose} title={`Send ${label}`}>
       <div className="space-y-5">
+        {/* Send from */}
+        <div>
+          <p className="text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500 mb-1.5">Send from</p>
+          <SenderSelector value={senderId} onChange={setSenderId} disabled={sending} />
+        </div>
+
         {/* Send to */}
         <div>
           <p className="text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500 mb-1.5">Send to</p>
@@ -128,26 +145,6 @@ export function SendDocumentModal({ open, onClose, type, documentId, clientEmail
           ) : (
             <p className="text-[13px] text-red-600">No email on file for this client. Add one to the client record first.</p>
           )}
-        </div>
-
-        {/* From */}
-        <div>
-          <p className="text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500 mb-1.5">From</p>
-          <div className="space-y-1.5">
-            {FROM_OPTIONS.map(addr => (
-              <label key={addr} className="flex items-center gap-2.5 cursor-pointer">
-                <input
-                  type="radio"
-                  name="send-from"
-                  value={addr}
-                  checked={fromEmail === addr}
-                  onChange={() => setFromEmail(addr)}
-                  className="accent-blue-600"
-                />
-                <span className="text-[13px] text-stone-700">{addr}</span>
-              </label>
-            ))}
-          </div>
         </div>
 
         {/* Personal message */}
