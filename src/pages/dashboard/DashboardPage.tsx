@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
-import { DollarSign, Users, Briefcase, FileText, FolderOpen, Package, AlertTriangle, ChevronLeft, ChevronRight, UserCheck, TrendingUp, TrendingDown, ArrowRight, MessageSquare, Calendar as CalendarIcon, Clock } from 'lucide-react'
-import { useNavigate, Link } from 'react-router-dom'
+import { AlertTriangle, ChevronLeft, ChevronRight, ArrowRight, Calendar as CalendarIcon, Clock, CircleDollarSign } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { Badge, statusColor } from '@/components/ui/Badge'
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO, subMonths } from 'date-fns'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO, subDays, differenceInDays } from 'date-fns'
 import { enUS } from 'date-fns/locale'
-import { fmtCurrency, fmtDateShort } from '@/lib/constants'
+import { fmtCurrency, fmtDateFull, fmtDateShort } from '@/lib/constants'
 import { useAuth } from '@/hooks/useAuth'
-import { useChatContext } from '@/contexts/ChatContext'
-import type { Job, Invoice, Event } from '@/lib/database.types'
+import { ActionCard } from '@/components/dashboard/ActionCard'
+import { NewEntityDropdown } from '@/components/dashboard/NewEntityDropdown'
+import { ClickableKPI } from '@/components/dashboard/ClickableKPI'
+import type { Job, Invoice, Event, Estimate } from '@/lib/database.types'
 
 function fmtEventTime(t: string | null) {
   if (!t) return ''
@@ -23,59 +25,42 @@ function useIsMobile() {
   return m
 }
 
-function pctChange(current: number, prev: number) {
-  if (prev === 0) return current > 0 ? 100 : 0
-  return Math.round(((current - prev) / prev) * 100)
+function greetingFor(hour: number): string {
+  if (hour >= 5 && hour < 12) return 'Good morning'
+  if (hour >= 12 && hour < 18) return 'Good afternoon'
+  return 'Good evening' // 18–23 and 0–4 fallback
 }
 
 export default function DashboardPage() {
   const { user, profile } = useAuth()
-  const { unreadCount } = useChatContext()
   const rawFirst = (profile?.full_name?.split(/\s+/)[0]) || user?.email?.split('@')[0] || ''
   const firstName = rawFirst.charAt(0).toUpperCase() + rawFirst.slice(1)
+
   const [revenue, setRevenue] = useState(0)
   const [outstanding, setOutstanding] = useState(0)
-  const [clientCount, setClientCount] = useState(0)
   const [activeJobs, setActiveJobs] = useState(0)
-  const [pendingEstimates, setPendingEstimates] = useState(0)
-  const [activeVendors, setActiveVendors] = useState(0)
-  const [activeProjects, setActiveProjects] = useState(0)
-  const [prevRevenue, setPrevRevenue] = useState(0)
-  const [prevOutstanding, setPrevOutstanding] = useState(0)
-  const [prevActiveJobs, setPrevActiveJobs] = useState(0)
-  const [prevClientCount, setPrevClientCount] = useState(0)
   const [jobs, setJobs] = useState<Job[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [estimates, setEstimates] = useState<Estimate[]>([])
   const [lowStock, setLowStock] = useState<{ name: string; quantity: number; low_stock_threshold: number }[]>([])
   const [allEvents, setUpcomingEvents] = useState<Event[]>([])
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [clientMap, setClientMap] = useState<Record<string, string>>({})
   const isMobile = useIsMobile()
-  const navigate = useNavigate()
 
   useEffect(() => { loadDashboard() }, [])
 
   async function loadDashboard() {
     const now = new Date()
     const thisMonthStart = startOfMonth(now).toISOString()
-    const prevMonthStart = startOfMonth(subMonths(now, 1)).toISOString()
-    const prevMonthEnd = endOfMonth(subMonths(now, 1)).toISOString()
+    const thisMonthEnd = endOfMonth(now).toISOString()
 
-    const [clientRes, jobRes, invRes, stockRes, clientsRes, estRes, vendorRes, projRes,
-           prevJobRes, prevClientRes, evRes] = await Promise.all([
-      supabase.from('clients').select('id', { count: 'exact', head: true }),
+    const [jobRes, invRes, stockRes, clientsRes, estRes, evRes] = await Promise.all([
       supabase.from('jobs').select('id, client_id, title, status, start_date, division, created_at').order('created_at', { ascending: false }),
       supabase.from('invoices').select('id, client_id, status, total, balance_due, number, date, due_date, created_at').order('created_at', { ascending: false }),
       supabase.from('inventory').select('name, quantity, low_stock_threshold, category').eq('category', 'Materials & Stock'),
       supabase.from('clients').select('id, name'),
-      supabase.from('estimates').select('status'),
-      supabase.from('suppliers').select('status'),
-      supabase.from('projects').select('status'),
-      // prev month jobs
-      supabase.from('jobs').select('status').gte('created_at', prevMonthStart).lte('created_at', prevMonthEnd),
-      // client count at start of this month
-      supabase.from('clients').select('id', { count: 'exact', head: true }).lt('created_at', thisMonthStart),
-      // all events (both the "upcoming" list and the mini-calendar need them; slicing happens in the UI)
+      supabase.from('estimates').select('id, status, created_at'),
       supabase.from('events').select('*').order('date', { ascending: true }).order('time_start', { ascending: true, nullsFirst: true }),
     ])
 
@@ -83,37 +68,21 @@ export default function DashboardPage() {
     const allInvoices = (invRes.data ?? []) as Invoice[]
     setJobs(allJobs)
     setInvoices(allInvoices)
+    setEstimates((estRes.data ?? []) as Estimate[])
     setClientMap(Object.fromEntries((clientsRes.data ?? []).map((c: { id: string; name: string }) => [c.id, c.name])))
 
-    // Faturamento (Mês): all invoices dated this month (paid or unpaid)
+    // Revenue (current month): all invoices dated this month
     const thisMonthInvoices = allInvoices.filter(i => {
-      const d = (i as any).date ?? i.created_at
-      return d && d >= thisMonthStart.slice(0, 10) && d <= endOfMonth(now).toISOString().slice(0, 10)
+      const d = i.date ?? i.created_at
+      return d && d >= thisMonthStart.slice(0, 10) && d <= thisMonthEnd.slice(0, 10)
     })
     const rev = thisMonthInvoices.reduce((s, i) => s + (i.total || 0), 0)
     const out = allInvoices.filter(i => i.status === 'Unpaid' || i.status === 'Overdue').reduce((s, i) => s + (i.total || 0), 0)
-    const cc = clientRes.count ?? 0
     const aj = allJobs.filter(j => j.status === 'In Progress' || j.status === 'Scheduled').length
 
     setRevenue(rev)
     setOutstanding(out)
-    setClientCount(cc)
     setActiveJobs(aj)
-    setPendingEstimates(((estRes.data ?? []) as { status: string }[]).filter(e => e.status === 'Draft' || e.status === 'Sent').length)
-    setActiveVendors(((vendorRes.data ?? []) as { status: string }[]).filter(v => (v.status ?? 'Active') === 'Active').length)
-    setActiveProjects(((projRes.data ?? []) as { status: string }[]).filter(p => p.status === 'Draft' || p.status === 'Sent' || p.status === 'In Progress').length)
-
-    // prev month comparisons — use invoice date field for accurate historical comparison
-    const pmStart = startOfMonth(subMonths(now, 1)).toISOString().slice(0, 10)
-    const pmEnd = endOfMonth(subMonths(now, 1)).toISOString().slice(0, 10)
-    const prevMonthInvoices = allInvoices.filter(i => {
-      const d = (i as any).date ?? i.created_at
-      return d && d >= pmStart && d <= pmEnd
-    })
-    setPrevRevenue(prevMonthInvoices.reduce((s, i) => s + (i.total || 0), 0))
-    setPrevOutstanding(prevMonthInvoices.filter(i => i.status === 'Unpaid' || i.status === 'Overdue').reduce((s, i) => s + (i.total || 0), 0))
-    setPrevActiveJobs(((prevJobRes.data ?? []) as { status: string }[]).filter(j => j.status === 'In Progress' || j.status === 'Scheduled').length)
-    setPrevClientCount(prevClientRes.count ?? 0)
 
     const items = (stockRes.data ?? []) as { name: string; quantity: number; low_stock_threshold: number }[]
     setLowStock(items.filter(i => i.quantity <= i.low_stock_threshold))
@@ -121,8 +90,38 @@ export default function DashboardPage() {
     setUpcomingEvents((evRes.data ?? []) as Event[])
   }
 
+  /* ─── Date helpers ─── */
+  const today = new Date()
+  const todayIsoStr = format(today, 'yyyy-MM-dd')
+  const dateSubtext = fmtDateFull(today)
+  const greeting = greetingFor(today.getHours())
+
+  /* ─── Action Row data ─── */
+
+  // Collect Today: Overdue status OR (Unpaid with due_date < today).
+  // Hybrid criterion because "Overdue" status on the DB is set manually today;
+  // using due_date fallback catches unpaid invoices the DB hasn't been marked overdue yet.
+  const collectInvoices = invoices.filter(i => {
+    if (i.status === 'Overdue') return true
+    if (i.status === 'Unpaid' && i.due_date && i.due_date < todayIsoStr) return true
+    return false
+  })
+  const collectTotal = collectInvoices.reduce((s, i) => s + (i.total || 0), 0)
+  const collectCount = collectInvoices.length
+
+  // Follow Up: estimates with status='Sent' created 7+ days ago.
+  // TODO: adicionar coluna sent_at em estimates (migração Supabase) para precisão.
+  // Fase futura de refino do ciclo de vida de estimates.
+  const sevenDaysAgoIso = format(subDays(today, 7), 'yyyy-MM-dd')
+  const followUpEstimates = estimates.filter(e => e.status === 'Sent' && e.created_at.slice(0, 10) < sevenDaysAgoIso)
+  const followUpCount = followUpEstimates.length
+
+  // Today's Schedule: events with date=today + jobs with start_date=today.
+  const todayEvents = allEvents.filter(e => e.date === todayIsoStr)
+  const todayJobs = jobs.filter(j => j.start_date && j.start_date.slice(0, 10) === todayIsoStr)
+  const todayScheduleCount = todayEvents.length + todayJobs.length
+
   /* ─── Unified "Schedule" card (Upcoming list + monthly mini-calendar) ─── */
-  const todayIsoStr = format(new Date(), 'yyyy-MM-dd')
 
   // Normalize events and jobs into a single stream of calendar items.
   type CalItem =
@@ -162,7 +161,7 @@ export default function DashboardPage() {
   const JOB_PILL   = { bg: '#1E3A8A', fg: '#FFFFFF' }   // navy (job)
 
   const scheduleCard = (
-    <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden', marginBottom: isMobile ? 16 : 24 }}>
+    <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '12px 14px' : '16px 20px', borderBottom: '1px solid #F3F4F6' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -282,146 +281,164 @@ export default function DashboardPage() {
     </div>
   )
 
+  /* ─── Collect card (replaces "Recent Invoices") ─── */
+  // Sort: Overdue first (by days_overdue desc), then Unpaid-past-due (by invoice date asc — oldest first).
+  // Excludes Unpaid invoices still within due_date (not actionable yet).
+  const collectSorted = [...collectInvoices].sort((a, b) => {
+    const aOverdue = a.status === 'Overdue' ? 0 : 1
+    const bOverdue = b.status === 'Overdue' ? 0 : 1
+    if (aOverdue !== bOverdue) return aOverdue - bOverdue
+
+    if (a.status === 'Overdue' && b.status === 'Overdue') {
+      // Both Overdue — sort by days overdue desc (most overdue first)
+      const aDays = a.due_date ? differenceInDays(today, parseISO(a.due_date)) : 0
+      const bDays = b.due_date ? differenceInDays(today, parseISO(b.due_date)) : 0
+      return bDays - aDays
+    }
+    // Both Unpaid-past-due — oldest invoice date first
+    const aDate = a.date ?? a.created_at
+    const bDate = b.date ?? b.created_at
+    return aDate.localeCompare(bDate)
+  })
+
+  const collectCard = (
+    <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #F3F4F6' }}>
+        <p style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Collect</p>
+        <Link to="/invoices" style={{ fontSize: 12, fontWeight: 500, color: '#4F6CF7', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+          View all <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+        </Link>
+      </div>
+      {collectSorted.length === 0
+        ? <p style={{ fontSize: 13, color: '#9CA3AF', padding: '24px 20px' }}>Nothing to collect. All invoices current.</p>
+        : collectSorted.slice(0, 6).map(inv => (
+            <Link key={inv.id} to="/invoices" style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '12px 20px', borderBottom: '1px solid #F9FAFB', textDecoration: 'none',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: inv.status === 'Overdue' ? '#EF4444' : '#F59E0B', flexShrink: 0 }} />
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{clientMap[inv.client_id] ?? 'Unknown'}</p>
+                  <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 1 }}>{inv.number} · due {fmtDateShort(inv.due_date)}</p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Badge color={statusColor(inv.status)}>{inv.status}</Badge>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#111827', minWidth: 72, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(inv.total)}</span>
+              </div>
+            </Link>
+          ))
+      }
+    </div>
+  )
+
+  /* ─── Action Cards ─── */
+
+  const collectHasWork = collectCount > 0
+  const followUpHasWork = followUpCount > 0
+  const scheduleHasToday = todayScheduleCount > 0
+
+  const actionCards = (
+    <>
+      <ActionCard
+        icon={<CircleDollarSign className={`h-5 w-5 ${collectHasWork ? 'text-red-600' : 'text-green-600'}`} strokeWidth={1.5} />}
+        title="Collect Today"
+        value={collectHasWork ? fmtCurrency(collectTotal) : 'All caught up'}
+        sub={collectHasWork ? `${collectCount} invoice${collectCount === 1 ? '' : 's'} overdue` : 'Nothing to collect'}
+        href="/invoices"
+        emptyState={!collectHasWork}
+      />
+      <ActionCard
+        icon={<Clock className={`h-5 w-5 ${followUpHasWork ? 'text-amber-600' : 'text-gray-400'}`} strokeWidth={1.5} />}
+        title="Follow Up"
+        value={followUpHasWork ? String(followUpCount) : '0'}
+        sub={followUpHasWork ? 'Estimates waiting 7+ days' : 'No pending follow-ups'}
+        href="/estimates"
+        emptyState={!followUpHasWork}
+      />
+      <ActionCard
+        icon={<CalendarIcon className="h-5 w-5 text-[#4F6CF7]" strokeWidth={1.5} />}
+        title="Today's Schedule"
+        value={String(todayScheduleCount)}
+        sub={scheduleHasToday ? `${todayEvents.length} event${todayEvents.length === 1 ? '' : 's'} · ${todayJobs.length} job${todayJobs.length === 1 ? '' : 's'}` : 'No schedule today'}
+        href="/schedule"
+        emptyState={!scheduleHasToday}
+      />
+    </>
+  )
+
+  /* ─── KPI Cards ─── */
+  const kpiCards = (
+    <>
+      <ClickableKPI label="Revenue (Month)" value={fmtCurrency(revenue)} href="/reports" />
+      <ClickableKPI label="Outstanding" value={fmtCurrency(outstanding)} href="/invoices" />
+      <ClickableKPI label="Active Jobs" value={String(activeJobs)} href="/jobs" />
+    </>
+  )
+
   /* ─── MOBILE ─── */
   if (isMobile) {
-    const today = format(new Date(), 'EEEE, MMMM d', { locale: enUS })
-    const modules: Array<{
-      icon: typeof FileText; label: string; value: string | null; sub: string;
-      to: string; color: string; badge?: boolean
-    }> = [
-      { icon: FileText,  label: 'Estimates',     value: String(pendingEstimates), sub: 'pending',   to: '/estimates', color: '#4F6CF7' },
-      { icon: Briefcase, label: 'Jobs',           value: String(activeJobs),      sub: 'active',    to: '/jobs',      color: '#7C3AED' },
-      { icon: DollarSign,label: 'Invoices',       value: fmtCurrency(outstanding),sub: 'unpaid',    to: '/invoices',  color: '#F59E0B' },
-      { icon: FolderOpen,label: 'Projects',       value: String(activeProjects),  sub: 'active',    to: '/projects',  color: '#0EA5E9' },
-      { icon: Users,     label: 'Clients',        value: String(clientCount),     sub: 'total',     to: '/clients',   color: '#6B7280' },
-      { icon: UserCheck, label: 'Vendors & Team', value: String(activeVendors),   sub: 'active',    to: '/vendors',   color: '#10B981' },
-      { icon: Package,   label: 'Inventory',      value: lowStock.length > 0 ? String(lowStock.length) : null, sub: lowStock.length > 0 ? 'low stock' : 'No low stock', to: '/inventory', color: lowStock.length > 0 ? '#EF4444' : '#10B981' },
-      { icon: MessageSquare, label: 'Chat', value: unreadCount > 0 ? String(unreadCount) : null, sub: unreadCount > 0 ? 'unread messages' : 'All caught up', to: '/chat', color: '#0891B2', badge: unreadCount > 0 },
-    ]
-
     return (
       <div style={{ background: '#F8F9FC', minHeight: '100vh' }}>
-        <div style={{ background: 'white', borderBottom: '1px solid #E5E7EB', padding: '20px 20px 24px' }}>
-          <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{today}</p>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 16 }}>{new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'}, {firstName}.</h1>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-            {[
-              { label: 'Faturamento', value: fmtCurrency(revenue) },
-              { label: 'Em Aberto', value: fmtCurrency(outstanding) },
-              { label: 'Active Jobs', value: String(activeJobs) },
-            ].map(k => (
-              <div key={k.label} style={{ background: '#F8F9FC', borderRadius: 10, padding: '12px 10px', border: '1px solid #E5E7EB', textAlign: 'center' }}>
-                <p style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9CA3AF', marginBottom: 4 }}>{k.label}</p>
-                <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', fontVariantNumeric: 'tabular-nums' }}>{k.value}</p>
-              </div>
-            ))}
+        {/* Header */}
+        <div style={{ background: 'white', borderBottom: '1px solid #E5E7EB', padding: '20px 16px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <h1 style={{ fontSize: 20, fontWeight: 700, color: '#111827' }}>{greeting}, {firstName}.</h1>
+              <p style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>{dateSubtext}</p>
+            </div>
+            <NewEntityDropdown compact />
           </div>
         </div>
 
-        <div style={{ padding: '16px 16px 0' }}>{scheduleCard}</div>
+        {/* Action Row (stack) */}
+        <div style={{ padding: '16px', display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
+          {actionCards}
+        </div>
 
+        {/* KPIs — 3 in a row compact */}
+        <div style={{ padding: '0 16px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
+          {kpiCards}
+        </div>
+
+        {/* Low stock alert */}
         {lowStock.length > 0 && (
-          <div style={{ margin: '0 16px', background: '#FFFBEB', borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #FDE68A' }}>
-            <AlertTriangle className="h-4 w-4" strokeWidth={2} color="#F59E0B" />
+          <div style={{ margin: '0 16px 16px', background: '#FFFBEB', borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #FDE68A' }}>
+            <AlertTriangle className="h-4 w-4 shrink-0" strokeWidth={2} color="#F59E0B" />
             <p style={{ fontSize: 12, color: '#92400E' }}><strong>Low stock:</strong> {lowStock.length} item{lowStock.length > 1 ? 's' : ''}</p>
           </div>
         )}
 
-        <div style={{ padding: '16px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {modules.map(mod => (
-            <button
-              key={mod.label}
-              onClick={() => navigate(mod.to)}
-              style={{
-                background: 'white', borderRadius: 12, padding: 16, border: '1px solid #E5E7EB',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.05)', cursor: 'pointer',
-                textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 8,
-              }}
-            >
-              <div style={{ position: 'relative', width: 36, height: 36, borderRadius: 8, background: mod.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <mod.icon className="h-5 w-5" strokeWidth={1.5} color={mod.color} />
-                {'badge' in mod && mod.badge && (
-                  <div style={{ position: 'absolute', top: -3, right: -3, width: 10, height: 10, borderRadius: '50%', background: '#4F6CF7', border: '2px solid white' }} />
-                )}
-              </div>
-              <div>
-                <p style={{ fontSize: 12, fontWeight: 500, color: '#6B7280' }}>{mod.label}</p>
-                {mod.value !== null && (
-                  <p style={{ fontSize: 18, fontWeight: 700, color: '#111827', fontVariantNumeric: 'tabular-nums', marginTop: 2 }}>{mod.value}</p>
-                )}
-                <p style={{ fontSize: 11, color: mod.value === null ? '#9CA3AF' : '#9CA3AF', marginTop: mod.value === null ? 6 : 1 }}>{mod.sub}</p>
-              </div>
-            </button>
-          ))}
+        {/* Collect first, then Schedule (mobile ordering) */}
+        <div style={{ padding: '0 16px 16px', display: 'grid', gridTemplateColumns: '1fr', gap: 16 }}>
+          {collectCard}
+          {scheduleCard}
         </div>
       </div>
     )
   }
 
   /* ─── DESKTOP ─── */
-  const kpis = [
-    {
-      label: 'Faturamento (Mês)', value: fmtCurrency(revenue), icon: DollarSign, iconColor: '#4F6CF7', iconBg: '#EEF1FE',
-      pct: pctChange(revenue, prevRevenue), pctLabel: 'vs last month',
-    },
-    {
-      label: 'Em Aberto', value: fmtCurrency(outstanding), icon: FileText, iconColor: '#F59E0B', iconBg: '#FFFBEB',
-      pct: pctChange(outstanding, prevOutstanding), pctLabel: 'vs last month', invertSign: true,
-    },
-    {
-      label: 'Total Clients', value: String(clientCount), icon: Users, iconColor: '#10B981', iconBg: '#ECFDF5',
-      pct: pctChange(clientCount, prevClientCount), pctLabel: 'vs last month',
-    },
-    {
-      label: 'Active Jobs', value: String(activeJobs), icon: Briefcase, iconColor: '#8B5CF6', iconBg: '#EDE9FE',
-      pct: pctChange(activeJobs, prevActiveJobs), pctLabel: 'vs last month',
-    },
-  ]
-
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
-
   return (
     <div style={{ padding: '28px 32px', maxWidth: 1280, margin: '0 auto' }}>
-      {/* Greeting */}
-      <div style={{ marginBottom: 20 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: '#111827' }}>{greeting}, {firstName}.</h2>
-        <p style={{ fontSize: 14, color: '#6B7280', marginTop: 4 }}>Here's what's happening with your business today.</p>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
+        <div>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: '#111827' }}>{greeting}, {firstName}.</h2>
+          <p style={{ fontSize: 13, color: '#6B7280', marginTop: 4 }}>{dateSubtext}</p>
+        </div>
+        <NewEntityDropdown />
       </div>
 
-      {/* Upcoming Events (topo — antes de qualquer outro widget) */}
-      {scheduleCard}
+      {/* Action Row — 3 cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
+        {actionCards}
+      </div>
 
-      {/* KPI cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
-        {kpis.map(kpi => {
-          const positive = kpi.invertSign ? kpi.pct <= 0 : kpi.pct >= 0
-          const KpiIcon = kpi.icon
-          return (
-            <div key={kpi.label} style={{
-              background: 'white', borderRadius: 10, padding: '20px 24px',
-              border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6B7280' }}>{kpi.label}</p>
-                <div style={{ width: 34, height: 34, borderRadius: 8, background: kpi.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <KpiIcon className="h-4 w-4" strokeWidth={1.5} color={kpi.iconColor} />
-                </div>
-              </div>
-              <p style={{ fontSize: 28, fontWeight: 700, color: '#111827', lineHeight: 1.1, fontVariantNumeric: 'tabular-nums', marginBottom: 8 }}>{kpi.value}</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                {positive
-                  ? <TrendingUp className="h-4 w-4" strokeWidth={1.5} color="#10B981" />
-                  : <TrendingDown className="h-4 w-4" strokeWidth={1.5} color="#EF4444" />
-                }
-                <span style={{ fontSize: 12, fontWeight: 600, color: positive ? '#059669' : '#DC2626' }}>
-                  {kpi.pct > 0 ? '+' : ''}{kpi.pct}%
-                </span>
-                <span style={{ fontSize: 12, color: '#9CA3AF' }}>{kpi.pctLabel}</span>
-              </div>
-            </div>
-          )
-        })}
+      {/* KPI Row — 3 clickable KPIs */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+        {kpiCards}
       </div>
 
       {/* Low stock alert */}
@@ -432,68 +449,11 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Recent Activity + Schedule */}
+      {/* Schedule + Collect */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
-        {/* Recent Jobs */}
-        <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #F3F4F6' }}>
-            <p style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Recent Jobs</p>
-            <Link to="/jobs" style={{ fontSize: 12, fontWeight: 500, color: '#4F6CF7', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
-              See all <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
-            </Link>
-          </div>
-          {jobs.length === 0
-            ? <p style={{ fontSize: 13, color: '#9CA3AF', padding: '24px 20px' }}>No jobs yet.</p>
-            : jobs.slice(0, 6).map(job => (
-              <div key={job.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid #F9FAFB' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: job.status === 'In Progress' ? '#3B82F6' : job.status === 'Completed' ? '#10B981' : job.status === 'Cancelled' ? '#EF4444' : '#9CA3AF', flexShrink: 0 }} />
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ fontSize: 13, fontWeight: 500, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{clientMap[job.client_id] ?? 'Unknown'}</p>
-                    <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{job.title}</p>
-                  </div>
-                </div>
-                <Badge color={statusColor(job.status)}>{job.status}</Badge>
-              </div>
-            ))
-          }
-        </div>
-
-        {/* Recent Invoices */}
-        <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #F3F4F6' }}>
-            <p style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Recent Invoices</p>
-            <Link to="/invoices" style={{ fontSize: 12, fontWeight: 500, color: '#4F6CF7', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
-              See all <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
-            </Link>
-          </div>
-          {invoices.length === 0
-            ? <p style={{ fontSize: 13, color: '#9CA3AF', padding: '24px 20px' }}>No invoices yet.</p>
-            : [...invoices].sort((a, b) => {
-                // Unpaid/Overdue first, then by date desc
-                const aUnpaid = a.status === 'Unpaid' || a.status === 'Overdue' ? 0 : 1
-                const bUnpaid = b.status === 'Unpaid' || b.status === 'Overdue' ? 0 : 1
-                if (aUnpaid !== bUnpaid) return aUnpaid - bUnpaid
-                return ((b as any).date ?? b.created_at).localeCompare((a as any).date ?? a.created_at)
-              }).slice(0, 6).map(inv => (
-              <div key={inv.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid #F9FAFB' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: inv.status === 'Paid' ? '#10B981' : inv.status === 'Overdue' ? '#EF4444' : '#F59E0B', flexShrink: 0 }} />
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ fontSize: 13, fontWeight: 500, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{clientMap[inv.client_id] ?? 'Unknown'}</p>
-                    <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 1 }}>{inv.number} · {fmtDateShort(inv.due_date)}</p>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Badge color={statusColor(inv.status)}>{inv.status}</Badge>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#111827', minWidth: 72, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(inv.total)}</span>
-                </div>
-              </div>
-            ))
-          }
-        </div>
+        {scheduleCard}
+        {collectCard}
       </div>
-
     </div>
   )
 }
