@@ -63,6 +63,15 @@ export function fmtMonthYear(d: string | Date): string {
   return format(date, 'MMM yyyy', { locale: enUS })
 }
 
+/** Format a date as "Friday, April 17" — used in Dashboard greeting subtext. */
+export function fmtDateFull(d: string | Date | null | undefined): string {
+  if (!d) return ''
+  try {
+    const date = typeof d === 'string' ? parseISO(d) : d
+    return format(date, 'EEEE, MMMM d', { locale: enUS })
+  } catch { return '' }
+}
+
 /** Format currency: $1,234.56 */
 export function fmtCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
