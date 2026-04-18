@@ -367,7 +367,7 @@ export function Layout() {
           {navGroups.map((group, gi) => (
             <div key={gi} style={{ marginBottom: 4 }}>
               {group.label && (
-                <p style={{ fontSize: 10, fontWeight: 600, color: '#9CA3AF', letterSpacing: '0.08em', padding: '10px 12px 4px', textTransform: 'uppercase' }}>
+                <p className="text-micro font-semibold" style={{ color: '#9CA3AF', letterSpacing: '0.08em', padding: '10px 12px 4px', textTransform: 'uppercase' }}>
                   {group.label}
                 </p>
               )}

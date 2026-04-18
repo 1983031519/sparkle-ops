@@ -121,7 +121,7 @@ export function PhotoUpload({ jobId, photos, onPhotosChange }: Props) {
           <ImageIcon className="h-4 w-4" />
           Photos
           {photos.length > 0 && (
-            <span className="inline-flex items-center rounded-full bg-[#EEF1FE] px-2 py-0.5 text-[11px] font-semibold text-[#4F6CF7]">
+            <span className="inline-flex items-center rounded-full bg-[#EEF1FE] px-2 py-0.5 text-micro font-semibold text-[#4F6CF7]">
               {photos.length}
             </span>
           )}
@@ -152,8 +152,8 @@ export function PhotoUpload({ jobId, photos, onPhotosChange }: Props) {
           onClick={() => fileRef.current?.click()}
         >
           <ImageIcon className="h-8 w-8 mb-2" />
-          <p className="text-[12px]">Click to upload before/after photos</p>
-          <p className="text-[11px] mt-1">JPG, PNG, WebP — max 10MB each</p>
+          <p className="text-eyebrow">Click to upload before/after photos</p>
+          <p className="text-micro mt-1">JPG, PNG, WebP — max 10MB each</p>
         </div>
       ) : (
         <div className="space-y-2">

@@ -142,16 +142,16 @@ export default function VendorsPage() {
         <div className="border-b border-gray-100 px-4 py-3 flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input className="w-full rounded-[10px] border border-gray-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-gray-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search vendors & team..." value={search} onChange={e => setSearch(e.target.value)} />
+            <input className="w-full rounded-[10px] border border-gray-200 py-2 pl-10 pr-3 text-label placeholder:text-gray-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search vendors & team..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <div className="flex gap-1">
             {['All', ...ROLES].map(r => (
-              <button key={r} onClick={() => setRoleFilter(r)} className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${roleFilter === r ? 'bg-[#4F6CF7] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{r}</button>
+              <button key={r} onClick={() => setRoleFilter(r)} className={`rounded-full px-3 py-1 text-micro font-semibold transition-colors ${roleFilter === r ? 'bg-[#4F6CF7] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{r}</button>
             ))}
           </div>
           <div className="flex gap-1">
             {['Active', 'Inactive', 'All'].map(s => (
-              <button key={s} onClick={() => setStatusFilter(s)} className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${statusFilter === s ? 'bg-[#4F6CF7] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{s}</button>
+              <button key={s} onClick={() => setStatusFilter(s)} className={`rounded-full px-3 py-1 text-micro font-semibold transition-colors ${statusFilter === s ? 'bg-[#4F6CF7] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{s}</button>
             ))}
           </div>
         </div>
@@ -163,7 +163,7 @@ export default function VendorsPage() {
               { key: 'name', header: 'Name', render: v => (
                 <div>
                   <span className="font-medium">{displayName(v)}</span>
-                  <span className="ml-1.5 text-[10px] text-gray-400">{v.record_type === 'Individual' ? 'Individual' : 'Company'}</span>
+                  <span className="ml-1.5 text-micro text-gray-400">{v.record_type === 'Individual' ? 'Individual' : 'Company'}</span>
                 </div>
               )},
               { key: 'roles', header: 'Roles', render: v => (
@@ -186,12 +186,12 @@ export default function VendorsPage() {
 
           {/* Record Type */}
           <div className="space-y-1.5">
-            <label className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500">Record Type</label>
+            <label className="block text-eyebrow font-semibold uppercase tracking-[0.5px] text-gray-500">Record Type</label>
             <div className="flex gap-4">
               {['Company', 'Individual'].map(t => (
                 <label key={t} className="flex items-center gap-2 cursor-pointer">
                   <input type="radio" name="record_type" value={t} checked={form.record_type === t} onChange={() => setForm(f => ({ ...f, record_type: t }))} className="accent-blue-600" />
-                  <span className="text-[13px] font-medium">{t}</span>
+                  <span className="text-label font-medium">{t}</span>
                 </label>
               ))}
             </div>
@@ -199,12 +199,12 @@ export default function VendorsPage() {
 
           {/* Roles */}
           <div className="space-y-1.5">
-            <label className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500">Roles (select all that apply)</label>
+            <label className="block text-eyebrow font-semibold uppercase tracking-[0.5px] text-gray-500">Roles (select all that apply)</label>
             <div className="flex gap-4">
               {ROLES.map(r => (
                 <label key={r} className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={hasRole(r)} onChange={() => toggleRole(r)} className="accent-blue-600 rounded" />
-                  <span className="text-[13px] font-medium">{r}</span>
+                  <span className="text-label font-medium">{r}</span>
                 </label>
               ))}
             </div>
@@ -237,7 +237,7 @@ export default function VendorsPage() {
           {/* === MATERIAL SUPPLIER FIELDS === */}
           {hasRole('Material Supplier') && (
             <div className="border rounded-lg border-blue-200 bg-blue-50/30 p-4 space-y-3">
-              <h3 className="text-[12px] font-semibold uppercase tracking-[0.5px] text-blue-700">Material Supplier Details</h3>
+              <h3 className="text-eyebrow font-semibold uppercase tracking-[0.5px] text-blue-700">Material Supplier Details</h3>
               <Select label="Category" id="v-cat" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} options={CATEGORIES.map(c => ({ value: c, label: c }))} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Input label="Account #" id="v-acct" value={form.account_number} onChange={e => setForm(f => ({ ...f, account_number: e.target.value }))} />
@@ -249,7 +249,7 @@ export default function VendorsPage() {
           {/* === SUBCONTRACTOR FIELDS === */}
           {hasRole('Subcontractor') && (
             <div className="border rounded-lg border-[#4F6CF7]/20 bg-[#EEF1FE]/30 p-4 space-y-3">
-              <h3 className="text-[12px] font-semibold uppercase tracking-[0.5px] text-[#4F6CF7]">Subcontractor Details</h3>
+              <h3 className="text-eyebrow font-semibold uppercase tracking-[0.5px] text-[#4F6CF7]">Subcontractor Details</h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Select label="Trade" id="v-trade" value={form.trade} onChange={e => setForm(f => ({ ...f, trade: e.target.value }))} options={TRADES.map(t => ({ value: t, label: t }))} />
                 <Input label="EIN / Tax ID" id="v-ein" value={form.ein} onChange={e => setForm(f => ({ ...f, ein: e.target.value }))} />
@@ -261,7 +261,7 @@ export default function VendorsPage() {
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={form.requires_1099} onChange={e => setForm(f => ({ ...f, requires_1099: e.target.checked }))} className="accent-blue-600 rounded" />
-                <span className="text-[13px] font-medium">Requires 1099</span>
+                <span className="text-label font-medium">Requires 1099</span>
               </label>
             </div>
           )}
@@ -269,7 +269,7 @@ export default function VendorsPage() {
           {/* === EMPLOYEE FIELDS === */}
           {hasRole('Employee') && (
             <div className="border rounded-lg border-green-200 bg-green-50/30 p-4 space-y-3">
-              <h3 className="text-[12px] font-semibold uppercase tracking-[0.5px] text-green-700">Employee Details</h3>
+              <h3 className="text-eyebrow font-semibold uppercase tracking-[0.5px] text-green-700">Employee Details</h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Select label="Role / Title" id="v-roletitle" value={form.role_title} onChange={e => setForm(f => ({ ...f, role_title: e.target.value }))} options={ROLE_TITLES.map(r => ({ value: r, label: r }))} />
                 <Select label="Trade" id="v-trade-emp" value={form.trade} onChange={e => setForm(f => ({ ...f, trade: e.target.value }))} options={TRADES.map(t => ({ value: t, label: t }))} />

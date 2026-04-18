@@ -7,7 +7,7 @@ export function FlowIndicator({ steps }: { steps: Step[] }) {
   if (visible.length === 0) return null
 
   return (
-    <div className="flex items-center gap-1 text-[11px]">
+    <div className="flex items-center gap-1 text-micro">
       {visible.map((step, i) => (
         <span key={step.label} className="flex items-center gap-0.5">
           {i > 0 && <span className="mx-0.5 text-gray-300">&rarr;</span>}

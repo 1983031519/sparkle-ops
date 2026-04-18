@@ -44,8 +44,8 @@ export default function ResetPasswordPage() {
             alt="Sparkle Stone & Pavers"
             style={{ width: 160, height: 'auto', display: 'block', margin: '0 auto 20px' }}
           />
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#111827', letterSpacing: -0.3 }}>Reset your password</h1>
-          <p style={{ marginTop: 6, fontSize: 14, color: '#6B7280' }}>Enter a new password for your account</p>
+          <h1 className="text-display" style={{ color: '#111827', letterSpacing: -0.3 }}>Reset your password</h1>
+          <p className="text-body" style={{ marginTop: 6, color: '#6B7280' }}>Enter a new password for your account</p>
         </div>
 
         {success ? (
@@ -55,8 +55,8 @@ export default function ResetPasswordPage() {
             textAlign: 'center',
           }}>
             <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto mb-3" strokeWidth={1.5} />
-            <p style={{ fontSize: 16, fontWeight: 600, color: '#059669', marginBottom: 6 }}>Password updated!</p>
-            <p style={{ fontSize: 13, color: '#6B7280' }}>Redirecting to sign in…</p>
+            <p className="text-title" style={{ color: '#059669', marginBottom: 6 }}>Password updated!</p>
+            <p className="text-label" style={{ color: '#6B7280' }}>Redirecting to sign in…</p>
           </div>
         ) : (
           <form
@@ -69,7 +69,7 @@ export default function ResetPasswordPage() {
             }}
           >
             <div style={{ marginBottom: 18 }}>
-              <label htmlFor="new-password" style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
+              <label htmlFor="new-password" className="text-label" style={{ display: 'block', color: '#374151', marginBottom: 6 }}>
                 New Password
               </label>
               <input
@@ -81,6 +81,7 @@ export default function ResetPasswordPage() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Minimum 8 characters"
+                // exception: fontSize 16 keeps iOS Safari from zooming on focus
                 style={{
                   display: 'block', width: '100%', height: 42, borderRadius: 8,
                   border: '1px solid #E5E7EB', background: 'white', padding: '0 12px',
@@ -92,7 +93,7 @@ export default function ResetPasswordPage() {
             </div>
 
             <div style={{ marginBottom: 20 }}>
-              <label htmlFor="confirm-password" style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
+              <label htmlFor="confirm-password" className="text-label" style={{ display: 'block', color: '#374151', marginBottom: 6 }}>
                 Confirm Password
               </label>
               <input
@@ -104,6 +105,7 @@ export default function ResetPasswordPage() {
                 value={confirm}
                 onChange={e => setConfirm(e.target.value)}
                 placeholder="Re-enter your password"
+                // exception: fontSize 16 keeps iOS Safari from zooming on focus
                 style={{
                   display: 'block', width: '100%', height: 42, borderRadius: 8,
                   border: '1px solid #E5E7EB', background: 'white', padding: '0 12px',
@@ -116,18 +118,19 @@ export default function ResetPasswordPage() {
 
             {error && (
               <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '10px 14px', marginBottom: 18 }}>
-                <p style={{ fontSize: 13, color: '#DC2626', fontWeight: 500 }}>{error}</p>
+                <p className="text-label" style={{ color: '#DC2626' }}>{error}</p>
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
+              className="text-body font-semibold"
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 width: '100%', height: 42, borderRadius: 8, border: 'none',
                 background: '#4F6CF7', color: 'white',
-                fontSize: 14, fontWeight: 600, cursor: loading ? 'default' : 'pointer',
+                cursor: loading ? 'default' : 'pointer',
                 opacity: loading ? 0.7 : 1, transition: 'opacity 150ms',
               }}
             >
@@ -135,7 +138,7 @@ export default function ResetPasswordPage() {
             </button>
 
             <div style={{ textAlign: 'center', marginTop: 16 }}>
-              <a href="/login" style={{ fontSize: 13, color: '#4F6CF7', textDecoration: 'none', fontWeight: 500 }}>
+              <a href="/login" className="text-label" style={{ color: '#4F6CF7', textDecoration: 'none' }}>
                 Back to sign in
               </a>
             </div>

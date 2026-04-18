@@ -56,10 +56,10 @@ export default function GoogleCallbackPage() {
         color={color}
         style={status === 'working' ? { animation: 'spin 900ms linear infinite' } : undefined}
       />
-      <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginTop: 16 }}>
+      <h2 className="text-title font-bold" style={{ color: '#111827', marginTop: 16 }}>
         {status === 'working' ? 'Connecting…' : status === 'ok' ? 'Connected' : 'Failed'}
       </h2>
-      <p style={{ fontSize: 13, color: '#6B7280', marginTop: 6, maxWidth: 380 }}>{message}</p>
+      <p className="text-label" style={{ color: '#6B7280', marginTop: 6, maxWidth: 380 }}>{message}</p>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )

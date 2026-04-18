@@ -119,7 +119,7 @@ function TimePicker({ label, value, onChange, disabled }: {
 
   return (
     <div className="space-y-1.5">
-      <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151' }}>{label}</label>
+      <label className="text-label" style={{ display: 'block', color: '#374151' }}>{label}</label>
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
         <select
           value={parsed.h}
@@ -347,25 +347,13 @@ export default function SchedulePage() {
           {!checkingGoogle && (googleConnected ? (
             <button
               onClick={handleDisconnectGoogle}
-              title="Disconnect Google Calendar"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                height: 30, padding: '0 10px', borderRadius: 99,
-                background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0',
-                fontSize: 11, fontWeight: 600, cursor: 'pointer',
-              }}
+              title="Disconnect Google Calendar" className="text-micro font-semibold" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 10px', borderRadius: 99, background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0', cursor: 'pointer' }}
             >
               <CheckCircle2 className="h-4 w-4" strokeWidth={1.5} /> Google Calendar Connected
             </button>
           ) : (
             <button
-              onClick={handleConnectGoogle}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                height: 30, padding: '0 12px', borderRadius: 8,
-                background: 'white', color: '#374151', border: '1px solid #E5E7EB',
-                fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              }}
+              onClick={handleConnectGoogle} className="text-eyebrow" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 12px', borderRadius: 8, background: 'white', color: '#374151', border: '1px solid #E5E7EB', cursor: 'pointer' }}
             >
               <Link2 className="h-4 w-4" strokeWidth={1.5} /> Connect Google Calendar
             </button>
@@ -377,7 +365,7 @@ export default function SchedulePage() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 40, color: '#9CA3AF', fontSize: 13 }}>Loading…</div>
+        <div className="text-label" style={{ textAlign: 'center', padding: 40, color: '#9CA3AF' }}>Loading…</div>
       ) : view === 'calendar' ? (
         <CalendarView
           events={filteredEvents}
@@ -460,7 +448,7 @@ function CalendarView({
           <button onClick={onToday} style={{ ...navBtn, padding: '6px 12px', width: 'auto', fontSize: 12, fontWeight: 600 }}>Today</button>
           <button onClick={onNext} style={navBtn}><ChevronRight className="h-4 w-4" strokeWidth={1.5} /></button>
         </div>
-        <span style={{ fontSize: 16, fontWeight: 700, color: '#111827' }}>
+        <span className="text-title font-bold" style={{ color: '#111827' }}>
           {format(month, 'MMMM yyyy', { locale: enUS })}
         </span>
         <div style={{ width: isMobile ? 0 : 120 }} />
@@ -469,11 +457,7 @@ function CalendarView({
       {/* Day names */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: 4 }}>
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-          <div key={d} style={{
-            fontSize: 10, fontWeight: 600, color: '#9CA3AF',
-            textTransform: 'uppercase', letterSpacing: '0.05em',
-            padding: '6px 4px', textAlign: 'center',
-          }}>{d}</div>
+          <div key={d} className="text-micro font-semibold" style={{ color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '6px 4px', textAlign: 'center' }}>{d}</div>
         ))}
       </div>
 
@@ -538,7 +522,7 @@ function CalendarView({
                 )
               })}
               {dayEvents.length > maxShow && (
-                <div style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 500, paddingLeft: 2 }}>
+                <div className="text-micro" style={{ color: '#9CA3AF', paddingLeft: 2 }}>
                   +{dayEvents.length - maxShow} more
                 </div>
               )}
@@ -552,7 +536,7 @@ function CalendarView({
         {TYPE_OPTIONS.map(o => {
           const m = TYPE_META[o.value as EventType]
           return (
-            <div key={o.value} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#6B7280' }}>
+            <div key={o.value} className="text-micro" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6B7280' }}>
               <span style={{ width: 10, height: 10, borderRadius: 2, background: m.bg, border: `1px solid ${m.color}` }} />
               {m.label}
             </div>
@@ -590,10 +574,7 @@ function ListView({
 
   if (!events.length) {
     return (
-      <div style={{
-        background: 'white', borderRadius: 10, border: '1px solid #E5E7EB',
-        padding: 40, textAlign: 'center', color: '#9CA3AF', fontSize: 13,
-      }}>
+      <div className="text-label" style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', padding: 40, textAlign: 'center', color: '#9CA3AF' }}>
         No events. Click <strong>New Event</strong> to add one.
       </div>
     )
@@ -624,13 +605,13 @@ function ListView({
                 borderRadius: 6, border: isToday ? 'none' : '1px solid #E5E7EB',
               }}>
                 <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', opacity: 0.8 }}>{format(d, 'MMM')}</span>
-                <span style={{ fontSize: 16, fontWeight: 700, lineHeight: 1 }}>{format(d, 'd')}</span>
+                <span className="text-title font-bold" style={{ lineHeight: 1 }}>{format(d, 'd')}</span>
               </div>
               <div>
-                <p style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>
+                <p className="text-label font-semibold" style={{ color: '#111827' }}>
                   {isToday ? 'Today' : format(d, 'EEEE', { locale: enUS })}
                 </p>
-                <p style={{ fontSize: 11, color: '#6B7280' }}>{format(d, 'MMMM d, yyyy', { locale: enUS })} · {evs.length} event{evs.length > 1 ? 's' : ''}</p>
+                <p className="text-micro" style={{ color: '#6B7280' }}>{format(d, 'MMMM d, yyyy', { locale: enUS })} · {evs.length} event{evs.length > 1 ? 's' : ''}</p>
               </div>
             </div>
             {evs.map(ev => {
@@ -656,15 +637,12 @@ function ListView({
                   }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span className="text-label font-semibold" style={{ color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {ev.title}
                       </span>
-                      <span style={{
-                        fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4,
-                        background: meta.bg, color: meta.color, flexShrink: 0,
-                      }}>{meta.label}</span>
+                      <span className="text-micro font-semibold" style={{ padding: '2px 6px', borderRadius: 4, background: meta.bg, color: meta.color, flexShrink: 0 }}>{meta.label}</span>
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, fontSize: 11, color: '#6B7280' }}>
+                    <div className="text-micro" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, color: '#6B7280' }}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                         <Clock className="h-4 w-4" strokeWidth={1.5} />{timeRange(ev.time_start, ev.time_end)}
                       </span>
@@ -691,12 +669,7 @@ function ListView({
                     </div>
                   </div>
                   {who && (
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      padding: '4px 10px', borderRadius: 99,
-                      background: '#F3F4F6', fontSize: 11, fontWeight: 500, color: '#374151',
-                      flexShrink: 0,
-                    }}>
+                    <div className="text-micro" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 99, background: '#F3F4F6', color: '#374151', flexShrink: 0 }}>
                       <span style={{
                         width: 18, height: 18, borderRadius: '50%', background: '#4F6CF7',
                         color: 'white', display: 'inline-flex', alignItems: 'center',
@@ -751,19 +724,13 @@ function GuestsField({
 
   return (
     <div className="space-y-1.5">
-      <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151' }}>Guests</label>
+      <label className="text-label" style={{ display: 'block', color: '#374151' }}>Guests</label>
 
       {value.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
           {value.map(email => (
             <span
-              key={email}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                padding: '4px 8px 4px 10px', borderRadius: 99,
-                background: '#EEF1FE', color: '#3451D1',
-                fontSize: 12, fontWeight: 500,
-              }}
+              key={email} className="text-eyebrow font-medium" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 8px 4px 10px', borderRadius: 99, background: '#EEF1FE', color: '#3451D1' }}
             >
               {email}
               {!disabled && (
@@ -794,7 +761,7 @@ function GuestsField({
           }}
           placeholder="Add guest email and press Enter"
           disabled={disabled}
-          className="block w-full h-[40px] rounded-[8px] border border-gray-300 bg-white px-3 text-[14px] placeholder:text-gray-400 focus:border-[#4F6CF7] focus:outline-none focus:shadow-[0_0_0_3px_rgba(79,108,247,0.12)]"
+          className="block w-full h-[40px] rounded-[8px] border border-gray-300 bg-white px-3 text-body placeholder:text-gray-400 focus:border-[#4F6CF7] focus:outline-none focus:shadow-[0_0_0_3px_rgba(79,108,247,0.12)]"
         />
         <Button
           type="button"
@@ -1055,13 +1022,7 @@ function EventModal({
                 address: form.address,
               })}
               target="_blank"
-              rel="noreferrer"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                padding: '8px 14px', borderRadius: 8, border: '1px solid #E5E7EB',
-                background: 'white', color: '#374151', fontSize: 13, fontWeight: 600,
-                textDecoration: 'none',
-              }}
+              rel="noreferrer" className="text-label font-semibold" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 8, border: '1px solid #E5E7EB', background: 'white', color: '#374151', textDecoration: 'none' }}
             >
               <ExternalLink className="h-4 w-4" strokeWidth={1.5} /> Add to Google Calendar
             </a>

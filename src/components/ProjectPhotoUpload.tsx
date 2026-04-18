@@ -98,7 +98,7 @@ export function ProjectPhotoUpload({ folder, photos, onPhotosChange, persistTo, 
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <span style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280' }}>
+        <span className="text-eyebrow" style={{ textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280' }}>
           <ImageIcon className="inline mr-1 -mt-0.5 h-4 w-4" strokeWidth={1.5} />{label} ({photos.length}/{maxPhotos})
         </span>
         {photos.length < maxPhotos && (

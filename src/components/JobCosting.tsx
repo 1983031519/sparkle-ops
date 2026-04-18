@@ -93,23 +93,23 @@ export function JobCosting({ jobId, jobRevenue }: Props) {
   const grossProfit = jobRevenue - totalCost
   const margin = jobRevenue > 0 ? (grossProfit / jobRevenue) * 100 : 0
 
-  if (loading) return <p style={{ fontSize: 13, color: '#9CA3AF', padding: 12 }}>Loading costs...</p>
+  if (loading) return <p className="text-label font-normal text-gray-400" style={{ padding: 12 }}>Loading costs...</p>
 
   const inputStyle: React.CSSProperties = { height: 32, borderRadius: 6, border: '1px solid #E5E7EB', padding: '0 8px', fontSize: 13, outline: 'none', width: '100%' }
-  const labelStyle: React.CSSProperties = { fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9CA3AF', marginBottom: 2 }
+  const labelCn = 'text-micro uppercase font-semibold text-gray-400'
 
   return (
     <div style={{ border: '1px solid #E5E7EB', borderRadius: 12, padding: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
         <DollarSign className="h-4 w-4" strokeWidth={1.5} color="#4F6CF7" />
-        <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>Job Costing</span>
-        <span style={{ fontSize: 11, color: '#9CA3AF', fontStyle: 'italic' }}>Internal only</span>
+        <span className="text-label font-bold text-gray-900">Job Costing</span>
+        <span className="text-micro font-normal text-gray-400" style={{ fontStyle: 'italic' }}>Internal only</span>
       </div>
 
       {/* MATERIALS */}
       <div style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <p style={labelStyle}>Materials</p>
+          <p className={labelCn} style={{ marginBottom: 2 }}>Materials</p>
           <Button variant="ghost" size="sm" type="button" onClick={addMaterial}><Plus className="h-4 w-4" strokeWidth={1.5} /> Add</Button>
         </div>
         {materials.map(m => (
@@ -118,17 +118,17 @@ export function JobCosting({ jobId, jobRevenue }: Props) {
             <input style={inputStyle} type="number" value={m.quantity} onChange={e => updateMaterial(m.id, 'quantity', Number(e.target.value))} />
             <input style={inputStyle} value={m.unit} onChange={e => updateMaterial(m.id, 'unit', e.target.value)} />
             <input style={inputStyle} type="number" step="0.01" value={m.unit_cost} placeholder="$/unit" onChange={e => updateMaterial(m.id, 'unit_cost', Number(e.target.value))} />
-            <span style={{ fontSize: 12, fontWeight: 600, color: '#333', textAlign: 'right' }}>{fmtCurrency(m.quantity * m.unit_cost)}</span>
+            <span className="text-eyebrow" style={{ color: '#333', textAlign: 'right' }}>{fmtCurrency(m.quantity * m.unit_cost)}</span>
             <button type="button" onClick={() => deleteMaterial(m.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}><Trash2 className="h-4 w-4" strokeWidth={1.5} color="#DC2626" /></button>
           </div>
         ))}
-        {materials.length > 0 && <p style={{ textAlign: 'right', fontSize: 12, fontWeight: 600, color: '#333', marginTop: 4 }}>Materials: {fmtCurrency(totalMaterials)}</p>}
+        {materials.length > 0 && <p className="text-eyebrow" style={{ textAlign: 'right', color: '#333', marginTop: 4 }}>Materials: {fmtCurrency(totalMaterials)}</p>}
       </div>
 
       {/* LABOR */}
       <div style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <p style={labelStyle}>Labor</p>
+          <p className={labelCn} style={{ marginBottom: 2 }}>Labor</p>
           <Button variant="ghost" size="sm" type="button" onClick={addLabor}><Plus className="h-4 w-4" strokeWidth={1.5} /> Add</Button>
         </div>
         {labor.map(l => (
@@ -138,13 +138,13 @@ export function JobCosting({ jobId, jobRevenue }: Props) {
             <button type="button" onClick={() => deleteLabor(l.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}><Trash2 className="h-4 w-4" strokeWidth={1.5} color="#DC2626" /></button>
           </div>
         ))}
-        {labor.length > 0 && <p style={{ textAlign: 'right', fontSize: 12, fontWeight: 600, color: '#333', marginTop: 4 }}>Labor: {fmtCurrency(totalLabor)}</p>}
+        {labor.length > 0 && <p className="text-eyebrow" style={{ textAlign: 'right', color: '#333', marginTop: 4 }}>Labor: {fmtCurrency(totalLabor)}</p>}
       </div>
 
       {/* OTHER EXPENSES */}
       <div style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <p style={labelStyle}>Other Expenses</p>
+          <p className={labelCn} style={{ marginBottom: 2 }}>Other Expenses</p>
           <Button variant="ghost" size="sm" type="button" onClick={addOther}><Plus className="h-4 w-4" strokeWidth={1.5} /> Add</Button>
         </div>
         {other.map(o => (
@@ -154,24 +154,24 @@ export function JobCosting({ jobId, jobRevenue }: Props) {
             <button type="button" onClick={() => deleteOther(o.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}><Trash2 className="h-4 w-4" strokeWidth={1.5} color="#DC2626" /></button>
           </div>
         ))}
-        {other.length > 0 && <p style={{ textAlign: 'right', fontSize: 12, fontWeight: 600, color: '#333', marginTop: 4 }}>Other: {fmtCurrency(totalOther)}</p>}
+        {other.length > 0 && <p className="text-eyebrow" style={{ textAlign: 'right', color: '#333', marginTop: 4 }}>Other: {fmtCurrency(totalOther)}</p>}
       </div>
 
       {/* SUMMARY */}
       <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: 12, marginTop: 8 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 13 }}>
+        <div className="text-label font-normal" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           <div>
             <p style={{ color: '#6B7280' }}>Materials: <strong style={{ color: '#333' }}>{fmtCurrency(totalMaterials)}</strong></p>
             <p style={{ color: '#6B7280' }}>Labor: <strong style={{ color: '#333' }}>{fmtCurrency(totalLabor)}</strong></p>
             <p style={{ color: '#6B7280' }}>Other: <strong style={{ color: '#333' }}>{fmtCurrency(totalOther)}</strong></p>
-            <p style={{ fontWeight: 700, color: '#111827', marginTop: 4, fontSize: 14 }}>Total Cost: {fmtCurrency(totalCost)}</p>
+            <p className="text-body font-bold text-gray-900" style={{ marginTop: 4 }}>Total Cost: {fmtCurrency(totalCost)}</p>
           </div>
           <div style={{ textAlign: 'right' }}>
             <p style={{ color: '#6B7280' }}>Revenue: <strong style={{ color: '#333' }}>{fmtCurrency(jobRevenue)}</strong></p>
-            <p style={{ fontWeight: 700, fontSize: 16, color: grossProfit >= 0 ? '#059669' : '#DC2626', marginTop: 8 }}>
+            <p className="text-title" style={{ color: grossProfit >= 0 ? '#059669' : '#DC2626', marginTop: 8 }}>
               Profit: {fmtCurrency(grossProfit)}
             </p>
-            <p style={{ fontSize: 12, color: grossProfit >= 0 ? '#059669' : '#DC2626', fontWeight: 600 }}>
+            <p className="text-eyebrow" style={{ color: grossProfit >= 0 ? '#059669' : '#DC2626' }}>
               Margin: {margin.toFixed(1)}%
             </p>
           </div>

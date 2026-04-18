@@ -306,7 +306,7 @@ export default function EstimatesPage() {
                   { label: 'Invoice', status: hasInvoice ? 'done' : 'pending' },
                 ]} />
               }},
-              { key: 'viewed', header: '', render: e => viewedDocIds.has(e.id) ? <span style={{ fontSize: 10, fontWeight: 600, color: '#059669', background: '#f0fdf4', padding: '2px 7px', borderRadius: 10, border: '1px solid #bbf7d0', whiteSpace: 'nowrap' }}>Viewed</span> : null },
+              { key: 'viewed', header: '', render: e => viewedDocIds.has(e.id) ? <span className="text-micro font-semibold" style={{ color: '#059669', background: '#f0fdf4', padding: '2px 7px', borderRadius: 10, border: '1px solid #bbf7d0', whiteSpace: 'nowrap' }}>Viewed</span> : null },
               { key: 'actions', header: '', render: e => (
                 <div className="flex gap-2 items-center" onClick={ev => ev.stopPropagation()}>
                   {e.status === 'Sent' && (
@@ -414,7 +414,7 @@ export default function EstimatesPage() {
 
           {/* Payment Terms */}
           <div className="border rounded-lg border-gray-200 p-4 space-y-3">
-            <h3 className="text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500">Payment Terms</h3>
+            <h3 className="text-eyebrow font-semibold uppercase tracking-[0.5px] text-gray-500">Payment Terms</h3>
             <Select label="Payment Schedule" id="est-pterms" value={form.payment_terms} onChange={e => setForm(f => ({ ...f, payment_terms: e.target.value }))} options={[
               { value: '50% deposit + 50% on completion', label: '50% Deposit + 50% on Completion' },
               { value: '100% on completion', label: '100% on Completion' },
@@ -422,14 +422,14 @@ export default function EstimatesPage() {
               { value: 'Custom', label: 'Custom' },
             ]} />
             <div className="space-y-1.5">
-              <label className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500">Accepted Payment Methods</label>
+              <label className="block text-eyebrow font-semibold uppercase tracking-[0.5px] text-gray-500">Accepted Payment Methods</label>
               <div className="flex flex-wrap gap-4">
                 {['Check', 'ACH', 'Zelle', 'Cash'].map(m => (
                   <label key={m} className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={form.accepted_payment_methods.includes(m)} onChange={e => {
                       setForm(f => ({ ...f, accepted_payment_methods: e.target.checked ? [...f.accepted_payment_methods, m] : f.accepted_payment_methods.filter(x => x !== m) }))
                     }} className="accent-blue-600 rounded" />
-                    <span className="text-[13px]">{m}{m === 'Check' ? ` (payable to ${COMPANY.check_payable})` : m === 'Zelle' ? ` (${COMPANY.zelle})` : ''}</span>
+                    <span className="text-label">{m}{m === 'Check' ? ` (payable to ${COMPANY.check_payable})` : m === 'Zelle' ? ` (${COMPANY.zelle})` : ''}</span>
                   </label>
                 ))}
               </div>

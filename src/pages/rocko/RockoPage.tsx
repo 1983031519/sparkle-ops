@@ -69,10 +69,10 @@ export default function RockoPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #F3F4F6', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <img src="/rocko.png" alt="Rocko" style={{ width: 40, height: 40, borderRadius: 12, objectFit: 'contain' }} />
-          <p style={{ fontSize: 12, color: '#9CA3AF', margin: 0 }}>Sparkle AI Partner</p>
+          <p className="text-eyebrow" style={{ color: '#9CA3AF', margin: 0 }}>Sparkle AI Partner</p>
         </div>
         {messages.length > 0 && (
-          <button onClick={clearChat} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: '1px solid #E5E7EB', borderRadius: 8, padding: '6px 12px', fontSize: 12, color: '#6B7280', cursor: 'pointer' }}>
+          <button onClick={clearChat} className="text-eyebrow" style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: '1px solid #E5E7EB', borderRadius: 8, padding: '6px 12px', color: '#6B7280', cursor: 'pointer' }}>
             <Trash2 className="h-4 w-4" strokeWidth={1.5} /> Limpar
           </button>
         )}
@@ -86,8 +86,8 @@ export default function RockoPage() {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 20 }}>
             <img src="/rocko.png" alt="Rocko" style={{ width: 80, height: 80, objectFit: 'contain' }} />
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 4 }}>Oi Oscar! Rocko aqui.</p>
-              <p style={{ fontSize: 14, color: '#6B7280' }}>O que você precisa hoje?</p>
+              <p className="text-title font-bold" style={{ color: '#111827', marginBottom: 4 }}>Oi Oscar! Rocko aqui.</p>
+              <p className="text-body" style={{ color: '#6B7280' }}>O que você precisa hoje?</p>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 480 }}>
               {QUICK_ACTIONS.map(qa => {
@@ -127,7 +127,7 @@ export default function RockoPage() {
               borderBottomRightRadius: msg.role === 'user' ? 4 : 16,
               borderBottomLeftRadius: msg.role === 'assistant' ? 4 : 16,
             }}>
-              <div style={{ fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{msg.content}</div>
+              <div className="text-body" style={{ lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{msg.content}</div>
               <div style={{ fontSize: 10, marginTop: 6, opacity: 0.5, textAlign: msg.role === 'user' ? 'right' : 'left' }}>{msg.time}</div>
             </div>
           </div>

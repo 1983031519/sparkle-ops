@@ -29,7 +29,7 @@ export function SenderSelector({ value, onChange, disabled }: Props) {
               disabled={disabled}
               className="accent-[#4F6CF7]"
             />
-            <span className="text-[13px] text-gray-700">{sender.label}</span>
+            <span className="text-label text-gray-700">{sender.label}</span>
           </label>
         )
       })}

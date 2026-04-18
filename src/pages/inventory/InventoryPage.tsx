@@ -179,19 +179,19 @@ export default function InventoryPage() {
         <div className="border-b border-gray-200 px-4 py-3 flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input className="w-full rounded-[10px] border border-gray-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-gray-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search assets..." value={search} onChange={e => setSearch(e.target.value)} />
+            <input className="w-full rounded-[10px] border border-gray-200 py-2 pl-10 pr-3 text-label placeholder:text-gray-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search assets..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <div className="flex gap-1 flex-wrap">
             {['All', ...INVENTORY_CATEGORIES].map(c => (
               <button key={c} onClick={() => setCatFilter(c)}
-                className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${catFilter === c ? 'bg-[#4F6CF7] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                className={`rounded-full px-3 py-1 text-micro font-semibold transition-colors ${catFilter === c ? 'bg-[#4F6CF7] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
               >{c}</button>
             ))}
           </div>
           <div className="flex gap-1">
             {['All', ...ASSET_STATUSES].map(s => (
               <button key={s} onClick={() => setStatusFilter(s)}
-                className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${statusFilter === s ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                className={`rounded-full px-3 py-1 text-micro font-semibold transition-colors ${statusFilter === s ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
               >{s}</button>
             ))}
           </div>
@@ -209,8 +209,8 @@ export default function InventoryPage() {
                       <CatIcon className="h-4 w-4" strokeWidth={1.5} color={catColors[i.category] === 'orange' ? '#C2410C' : catColors[i.category] === 'blue' ? '#1E40AF' : catColors[i.category] === 'green' ? '#065F46' : '#374151'} />
                     </div>
                     <div style={{ minWidth: 0 }}>
-                      <p style={{ fontSize: 13, fontWeight: 500, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{i.name}</p>
-                      {i.brand_model && <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 1 }}>{i.brand_model}</p>}
+                      <p className="text-label" style={{ color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{i.name}</p>
+                      {i.brand_model && <p className="text-micro" style={{ color: '#9CA3AF', marginTop: 1 }}>{i.brand_model}</p>}
                     </div>
                   </div>
                 )
@@ -251,7 +251,7 @@ export default function InventoryPage() {
           {/* Materials & Stock: stock-specific fields */}
           {isMaterialsCategory && (
             <div className="border rounded-lg border-gray-200 p-4 space-y-3">
-              <h3 className="text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500">Stock Details</h3>
+              <h3 className="text-eyebrow font-semibold uppercase tracking-[0.5px] text-gray-500">Stock Details</h3>
               <div className="grid gap-3 sm:grid-cols-4">
                 <Input label="Quantity" id="inv-qty" type="number" value={form.quantity} onChange={e => setForm(f => ({ ...f, quantity: Number(e.target.value) }))} />
                 <Input label="Unit" id="inv-unit" value={form.unit} onChange={e => setForm(f => ({ ...f, unit: e.target.value }))} />
@@ -281,7 +281,7 @@ export default function InventoryPage() {
 function SummaryCard({ label, value, color, icon: Icon }: { label: string; value: string; color: string; icon?: typeof TrendingUp }) {
   return (
     <div style={{ background: 'white', borderRadius: 10, padding: '16px 20px', border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-      <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6B7280', marginBottom: 6 }}>{label}</p>
+      <p className="text-micro font-semibold" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6B7280', marginBottom: 6 }}>{label}</p>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         {Icon && <Icon className="h-4 w-4" strokeWidth={1.5} color={color} />}
         <p style={{ fontSize: 22, fontWeight: 700, color, fontVariantNumeric: 'tabular-nums', lineHeight: 1.1 }}>{value}</p>

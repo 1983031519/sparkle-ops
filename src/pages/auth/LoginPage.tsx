@@ -45,8 +45,8 @@ export default function LoginPage() {
             alt="Sparkle Stone & Pavers"
             style={{ width: 160, height: 'auto', display: 'block', margin: '0 auto 20px' }}
           />
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#111827', letterSpacing: -0.3 }}>Welcome back</h1>
-          <p style={{ marginTop: 6, fontSize: 14, color: '#6B7280' }}>Sign in to your operations portal</p>
+          <h1 className="text-display" style={{ color: '#111827', letterSpacing: -0.3 }}>Welcome back</h1>
+          <p className="text-body" style={{ marginTop: 6, color: '#6B7280' }}>Sign in to your operations portal</p>
         </div>
 
         <form
@@ -60,7 +60,7 @@ export default function LoginPage() {
           }}
         >
           <div style={{ marginBottom: 18 }}>
-            <label htmlFor="email" style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>Email</label>
+            <label htmlFor="email" className="text-label" style={{ display: 'block', color: '#374151', marginBottom: 6 }}>Email</label>
             <input
               id="email"
               name="email"
@@ -74,6 +74,7 @@ export default function LoginPage() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               placeholder="you@example.com"
+              // exception: fontSize 16 keeps iOS Safari from zooming on focus
               style={{
                 display: 'block', width: '100%', height: 42, borderRadius: 8,
                 border: '1px solid #E5E7EB', background: 'white', padding: '0 12px',
@@ -86,7 +87,7 @@ export default function LoginPage() {
           </div>
 
           <div style={{ marginBottom: 20 }}>
-            <label htmlFor="password" style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>Password</label>
+            <label htmlFor="password" className="text-label" style={{ display: 'block', color: '#374151', marginBottom: 6 }}>Password</label>
             <input
               id="password"
               name="password"
@@ -97,6 +98,7 @@ export default function LoginPage() {
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="Your password"
+              // exception: fontSize 16 keeps iOS Safari from zooming on focus
               style={{
                 display: 'block', width: '100%', height: 42, borderRadius: 8,
                 border: '1px solid #E5E7EB', background: 'white', padding: '0 12px',
@@ -110,7 +112,7 @@ export default function LoginPage() {
 
           {error && (
             <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '10px 14px', marginBottom: 18 }}>
-              <p style={{ fontSize: 13, color: '#DC2626', fontWeight: 500 }}>{error}</p>
+              <p className="text-label" style={{ color: '#DC2626' }}>{error}</p>
             </div>
           )}
 

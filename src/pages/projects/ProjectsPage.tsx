@@ -218,11 +218,11 @@ export default function ProjectsPage() {
         <div className="border-b border-gray-100 px-4 py-3 flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input className="w-full rounded-[10px] border border-gray-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-gray-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search projects..." value={search} onChange={e => setSearch(e.target.value)} />
+            <input className="w-full rounded-[10px] border border-gray-200 py-2 pl-10 pr-3 text-label placeholder:text-gray-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search projects..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <div className="flex gap-1 flex-wrap">
             {['All', ...STATUSES].map(s => (
-              <button key={s} onClick={() => setStatusFilter(s)} className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${statusFilter === s ? 'bg-[#4F6CF7] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{s}</button>
+              <button key={s} onClick={() => setStatusFilter(s)} className={`rounded-full px-3 py-1 text-micro font-semibold transition-colors ${statusFilter === s ? 'bg-[#4F6CF7] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{s}</button>
             ))}
           </div>
         </div>
@@ -234,7 +234,7 @@ export default function ProjectsPage() {
             { key: 'division', header: 'Div', render: p => <Badge color={p.division === 'Stone' ? 'blue' : 'orange'}>{p.division ?? '-'}</Badge> },
             { key: 'status', header: 'Status', render: p => <Badge color={statusColor(p.status)}>{p.status}</Badge> },
             { key: 'total', header: 'Value', render: p => fmtCurrency(p.total_value) },
-            { key: 'viewed', header: '', render: p => viewedDocIds.has(p.id) ? <span style={{ fontSize: 10, fontWeight: 600, color: '#059669', background: '#f0fdf4', padding: '2px 7px', borderRadius: 10, border: '1px solid #bbf7d0', whiteSpace: 'nowrap' }}>Viewed</span> : null },
+            { key: 'viewed', header: '', render: p => viewedDocIds.has(p.id) ? <span className="text-micro font-semibold" style={{ color: '#059669', background: '#f0fdf4', padding: '2px 7px', borderRadius: 10, border: '1px solid #bbf7d0', whiteSpace: 'nowrap' }}>Viewed</span> : null },
             { key: 'actions', header: '', render: p => (
               <div className="flex gap-2" onClick={ev => ev.stopPropagation()}>
                 {p.status === 'Approved' && <Button variant="gold" size="sm" onClick={() => convertToJob(p)}><ArrowRight className="h-4 w-4" strokeWidth={1.5} /> Job</Button>}
@@ -276,16 +276,16 @@ export default function ProjectsPage() {
               />
             </div>
           )}
-          {!editing && <p style={{ fontSize: 12, color: '#9CA3AF', fontStyle: 'italic' }}>Save the project first to upload site photos.</p>}
+          {!editing && <p className="text-eyebrow" style={{ color: '#9CA3AF', fontStyle: 'italic' }}>Save the project first to upload site photos.</p>}
 
           {/* PHASES */}
           <div>
-            <p style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280', marginBottom: 12 }}>Project Phases</p>
+            <p className="text-eyebrow" style={{ textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280', marginBottom: 12 }}>Project Phases</p>
             <div className="space-y-3">
               {phases.map((ph, i) => (
                 <div key={i} className="rounded-[12px] border border-gray-200 bg-gray-50/50 p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#111827' }}>Phase {ph.order_num}</span>
+                    <span className="text-eyebrow font-bold" style={{ color: '#111827' }}>Phase {ph.order_num}</span>
                     <div className="flex gap-1">
                       <button type="button" onClick={() => movePhase(i, -1)} disabled={i === 0} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronUp className="h-4 w-4" strokeWidth={1.5} /></button>
                       <button type="button" onClick={() => movePhase(i, 1)} disabled={i === phases.length - 1} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronDown className="h-4 w-4" strokeWidth={1.5} /></button>
@@ -299,7 +299,7 @@ export default function ProjectsPage() {
                     <div>
                       <label className="flex items-center gap-2 mb-1.5">
                         <input type="checkbox" checked={ph.show_value} onChange={e => updatePhase(i, 'show_value', e.target.checked)} className="accent-blue-600 rounded" />
-                        <span style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280' }}>Show Value</span>
+                        <span className="text-eyebrow" style={{ textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280' }}>Show Value</span>
                       </label>
                       {ph.show_value && <Input id={`ph-val-${i}`} type="number" step="0.01" value={ph.value} onChange={e => updatePhase(i, 'value', e.target.value)} placeholder="$0.00" />}
                     </div>
@@ -324,7 +324,7 @@ export default function ProjectsPage() {
 
           {/* FINANCIAL */}
           <div className="border rounded-[12px] border-gray-200 p-4 space-y-3">
-            <p style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280' }}>Financial</p>
+            <p className="text-eyebrow" style={{ textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280' }}>Financial</p>
             <Input label="Total Project Value ($)" id="p-total" type="number" step="0.01" value={form.total_value} onChange={e => setForm(f => ({ ...f, total_value: e.target.value }))} />
             <Select label="Payment Schedule" id="p-sched" value={form.payment_schedule} onChange={e => setForm(f => ({ ...f, payment_schedule: e.target.value }))} options={PAY_SCHEDULES.map(s => ({ value: s, label: s }))} />
             {form.payment_schedule === '30% / 40% / 30%' || form.payment_schedule === 'Custom' ? (
@@ -342,12 +342,12 @@ export default function ProjectsPage() {
               </div>
             )}
             <div className="space-y-1.5">
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280' }}>Payment Methods</label>
+              <label className="text-eyebrow" style={{ display: 'block', textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280' }}>Payment Methods</label>
               <div className="flex flex-wrap gap-4">
                 {['Check', 'ACH', 'Zelle', 'Cash'].map(m => (
                   <label key={m} className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={form.accepted_payment_methods.includes(m)} onChange={e => setForm(f => ({ ...f, accepted_payment_methods: e.target.checked ? [...f.accepted_payment_methods, m] : f.accepted_payment_methods.filter(x => x !== m) }))} className="accent-blue-600 rounded" />
-                    <span className="text-[13px]">{m}</span>
+                    <span className="text-label">{m}</span>
                   </label>
                 ))}
               </div>
@@ -542,7 +542,7 @@ function ProjectPreview({ project: p, phases, client, onSent }: { project: Proje
         {/* Phases */}
         {phases.map(ph => (
           <div key={ph.id} className="phase-section" style={{ borderTop: '1px solid #ebebeb', paddingTop: 16, marginTop: 8 }}>
-            <h5 style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 8 }}>PHASE {ph.order_num} — {ph.title}</h5>
+            <h5 className="text-body font-bold" style={{ color: '#111827', marginBottom: 8 }}>PHASE {ph.order_num} — {ph.title}</h5>
             {ph.description && <p style={{ color: '#444', whiteSpace: 'pre-wrap', marginBottom: 8 }}>{ph.description}</p>}
             {(phasePhotos[ph.id] ?? (ph.photos as string[]))?.length > 0 && (
               <div style={{ marginBottom: 8 }}>
@@ -561,7 +561,7 @@ function ProjectPreview({ project: p, phases, client, onSent }: { project: Proje
 
         {/* Financial */}
         <div className="financial-summary" style={{ borderTop: '1px solid #e0e0e0', paddingTop: 20, marginTop: 16 }}>
-          <h5 style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 12 }}>Financial Summary</h5>
+          <h5 className="text-body font-bold" style={{ color: '#111827', marginBottom: 12 }}>Financial Summary</h5>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#111827', color: 'white', padding: '10px 16px', borderRadius: 4, fontWeight: 700, fontSize: 15, marginBottom: 12 }}>
             <span>Total Project Value</span><span>{fmtCurrency(p.total_value)}</span>
           </div>

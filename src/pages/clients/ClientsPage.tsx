@@ -87,18 +87,13 @@ function ClientDetailPanel({ client, contacts, onEdit, onClose, isMobile }: {
         )}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <h2 className="text-title font-bold" style={{ margin: 0, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {client.name}
             </h2>
             <Badge color={rc as never}>{client.type}</Badge>
           </div>
         </div>
-        <button onClick={onEdit} style={{
-          display: 'flex', alignItems: 'center', gap: 4, padding: '5px 12px',
-          borderRadius: 6, border: '1px solid #E5E7EB', background: 'white',
-          fontSize: 12, fontWeight: 500, color: '#374151', cursor: 'pointer',
-          flexShrink: 0,
-        }}>
+        <button onClick={onEdit} className="text-eyebrow font-medium" style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 12px', borderRadius: 6, border: '1px solid #E5E7EB', background: 'white', color: '#374151', cursor: 'pointer', flexShrink: 0 }}>
           <Edit2 className="h-4 w-4" strokeWidth={1.5} /> Edit
         </button>
         {!isMobile && (
@@ -115,38 +110,38 @@ function ClientDetailPanel({ client, contacts, onEdit, onClose, isMobile }: {
           {client.email && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <Mail className="h-4 w-4 text-gray-400" strokeWidth={1.5} />
-              <a href={`mailto:${client.email}`} style={{ fontSize: 13, color: '#4F6CF7', textDecoration: 'none' }}>{client.email}</a>
+              <a href={`mailto:${client.email}`} className="text-label" style={{ color: '#4F6CF7', textDecoration: 'none' }}>{client.email}</a>
             </div>
           )}
           {client.phone && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <Phone className="h-4 w-4 text-gray-400" strokeWidth={1.5} />
-              <a href={`tel:${client.phone}`} style={{ fontSize: 13, color: '#374151', textDecoration: 'none' }}>{client.phone}</a>
+              <a href={`tel:${client.phone}`} className="text-label" style={{ color: '#374151', textDecoration: 'none' }}>{client.phone}</a>
             </div>
           )}
           {client.address && (
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
               <MapPin className="h-4 w-4 text-gray-400 shrink-0" strokeWidth={1.5} style={{ marginTop: 2 }} />
-              <span style={{ fontSize: 13, color: '#374151' }}>{client.address}</span>
+              <span className="text-label" style={{ color: '#374151' }}>{client.address}</span>
             </div>
           )}
           {!client.email && !client.phone && !client.address && (
-            <p style={{ fontSize: 13, color: '#9CA3AF', fontStyle: 'italic' }}>No contact info on file</p>
+            <p className="text-label" style={{ color: '#9CA3AF', fontStyle: 'italic' }}>No contact info on file</p>
           )}
         </div>
 
         {/* Contacts */}
         {contacts.length > 0 && (
           <div style={{ marginBottom: 20 }}>
-            <h4 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9CA3AF', marginBottom: 8 }}>Contacts</h4>
+            <h4 className="text-micro font-semibold" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9CA3AF', marginBottom: 8 }}>Contacts</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {contacts.map(c => (
                 <div key={c.id} style={{ padding: '8px 10px', background: '#F9FAFB', borderRadius: 8, border: '1px solid #F3F4F6' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{c.name}</span>
-                    {c.role && <Badge color="gray" className="text-[10px]">{c.role}</Badge>}
+                    <span className="text-label font-semibold" style={{ color: '#111827' }}>{c.name}</span>
+                    {c.role && <Badge color="gray" className="text-micro">{c.role}</Badge>}
                   </div>
-                  <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#6B7280' }}>
+                  <div className="text-eyebrow" style={{ display: 'flex', gap: 12, color: '#6B7280' }}>
                     {c.phone && <span>{c.phone}</span>}
                     {c.email && <span>{c.email}</span>}
                   </div>
@@ -158,7 +153,7 @@ function ClientDetailPanel({ client, contacts, onEdit, onClose, isMobile }: {
 
         {/* Linked records */}
         {linked.loading ? (
-          <p style={{ fontSize: 13, color: '#9CA3AF', textAlign: 'center', padding: 20 }}>Loading records…</p>
+          <p className="text-label" style={{ color: '#9CA3AF', textAlign: 'center', padding: 20 }}>Loading records…</p>
         ) : (
           <>
             {/* Invoices */}
@@ -170,9 +165,9 @@ function ClientDetailPanel({ client, contacts, onEdit, onClose, isMobile }: {
             >
               {linked.invoices.map(inv => (
                 <LinkedRow key={inv.id} onClick={() => navigate('/invoices')}>
-                  <span style={{ fontFamily: 'monospace', fontSize: 12 }}>{inv.number}</span>
+                  <span className="text-eyebrow" style={{ fontFamily: 'monospace' }}>{inv.number}</span>
                   <Badge color={statusColor(inv.status)}>{inv.status}</Badge>
-                  <span style={{ marginLeft: 'auto', fontSize: 13, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(inv.total)}</span>
+                  <span className="text-label font-semibold" style={{ marginLeft: 'auto', fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(inv.total)}</span>
                 </LinkedRow>
               ))}
             </LinkedSection>
@@ -186,9 +181,9 @@ function ClientDetailPanel({ client, contacts, onEdit, onClose, isMobile }: {
             >
               {linked.estimates.map(est => (
                 <LinkedRow key={est.id} onClick={() => navigate('/estimates')}>
-                  <span style={{ fontFamily: 'monospace', fontSize: 12 }}>{est.number}</span>
+                  <span className="text-eyebrow" style={{ fontFamily: 'monospace' }}>{est.number}</span>
                   <Badge color={statusColor(est.status)}>{est.status}</Badge>
-                  <span style={{ marginLeft: 'auto', fontSize: 13, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(est.total)}</span>
+                  <span className="text-label font-semibold" style={{ marginLeft: 'auto', fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(est.total)}</span>
                 </LinkedRow>
               ))}
             </LinkedSection>
@@ -202,7 +197,7 @@ function ClientDetailPanel({ client, contacts, onEdit, onClose, isMobile }: {
             >
               {linked.jobs.map(job => (
                 <LinkedRow key={job.id} onClick={() => navigate('/jobs')}>
-                  <span style={{ fontSize: 12, fontWeight: 500, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{job.title}</span>
+                  <span className="text-eyebrow font-medium" style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{job.title}</span>
                   <Badge color={statusColor(job.status)}>{job.status}</Badge>
                 </LinkedRow>
               ))}
@@ -222,20 +217,17 @@ function LinkedSection({ icon: Icon, title, count, children, onViewAll }: {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <Icon className="h-4 w-4 text-gray-500" strokeWidth={1.5} />
-          <h4 style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#374151' }}>{title}</h4>
-          <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 500 }}>({count})</span>
+          <h4 className="text-label font-semibold" style={{ margin: 0, color: '#374151' }}>{title}</h4>
+          <span className="text-micro" style={{ color: '#9CA3AF' }}>({count})</span>
         </div>
         {count > 0 && (
-          <button onClick={onViewAll} style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            fontSize: 11, fontWeight: 500, color: '#4F6CF7', display: 'flex', alignItems: 'center', gap: 2,
-          }}>
+          <button onClick={onViewAll} className="text-micro" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4F6CF7', display: 'flex', alignItems: 'center', gap: 2 }}>
             View all <ChevronRight className="h-4 w-4" strokeWidth={1.5} />
           </button>
         )}
       </div>
       {count === 0 ? (
-        <p style={{ fontSize: 12, color: '#9CA3AF', fontStyle: 'italic', paddingLeft: 20 }}>None</p>
+        <p className="text-eyebrow" style={{ color: '#9CA3AF', fontStyle: 'italic', paddingLeft: 20 }}>None</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{children}</div>
       )}
@@ -524,10 +516,10 @@ export default function ClientsPage() {
                           {cc.slice(0, 3).map(contact => (
                             <div key={contact.id} className="flex items-center gap-1.5 text-xs">
                               <span className="font-medium">{contact.name}</span>
-                              {contact.role && <Badge color="gray" className="text-[10px]">{contact.role}</Badge>}
+                              {contact.role && <Badge color="gray" className="text-micro">{contact.role}</Badge>}
                             </div>
                           ))}
-                          {cc.length > 3 && <span className="text-[10px] text-gray-400">+{cc.length - 3} more</span>}
+                          {cc.length > 3 && <span className="text-micro text-gray-400">+{cc.length - 3} more</span>}
                         </div>
                       )
                     }},

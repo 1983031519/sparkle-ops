@@ -165,20 +165,20 @@ export default function ReportsPage() {
         return (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
             <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid #E5E7EB' }}>
-              <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Total Invoiced</p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: '#111827' }}>{fmtCurrency(totalInvoiced)}</p>
+              <p className="text-micro font-semibold" style={{ textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Total Invoiced</p>
+              <p className="text-display" style={{ color: '#111827' }}>{fmtCurrency(totalInvoiced)}</p>
             </div>
             <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid #E5E7EB' }}>
-              <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Total Collected</p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: '#059669' }}>{fmtCurrency(totalCollected)}</p>
+              <p className="text-micro font-semibold" style={{ textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Total Collected</p>
+              <p className="text-display" style={{ color: '#059669' }}>{fmtCurrency(totalCollected)}</p>
             </div>
             <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid #E5E7EB' }}>
-              <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Outstanding</p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: totalOutstanding > 0 ? '#D97706' : '#059669' }}>{fmtCurrency(totalOutstanding)}</p>
+              <p className="text-micro font-semibold" style={{ textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Outstanding</p>
+              <p className="text-display" style={{ color: totalOutstanding > 0 ? '#D97706' : '#059669' }}>{fmtCurrency(totalOutstanding)}</p>
             </div>
             <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid #E5E7EB' }}>
-              <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Collection Rate</p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: '#111827' }}>{collectionRate.toFixed(1)}%</p>
+              <p className="text-micro font-semibold" style={{ textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Collection Rate</p>
+              <p className="text-display" style={{ color: '#111827' }}>{collectionRate.toFixed(1)}%</p>
             </div>
           </div>
         )
@@ -306,7 +306,7 @@ export default function ReportsPage() {
                     <Bar dataKey="clients" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
-                <p style={{ fontSize: 11, color: '#9CA3AF', fontStyle: 'italic', marginTop: 8 }}>* Legacy clients imported Apr 2026 — historical distribution may be skewed</p>
+                <p className="text-micro" style={{ color: '#9CA3AF', fontStyle: 'italic', marginTop: 8 }}>* Legacy clients imported Apr 2026 — historical distribution may be skewed</p>
               </>
             )}
           </CardBody>

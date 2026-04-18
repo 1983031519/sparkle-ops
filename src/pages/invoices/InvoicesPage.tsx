@@ -259,7 +259,7 @@ export default function InvoicesPage() {
         <div className="border-b border-gray-100 px-4 py-3">
           <div className="relative max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input className="w-full rounded-[10px] border border-gray-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-gray-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search invoices..." value={search} onChange={e => setSearch(e.target.value)} />
+            <input className="w-full rounded-[10px] border border-gray-200 py-2 pl-10 pr-3 text-label placeholder:text-gray-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search invoices..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
         {loading ? <p className="p-6 text-sm text-gray-500">Loading...</p> : (
@@ -276,7 +276,7 @@ export default function InvoicesPage() {
                 return bal > 0 && i.status !== 'Paid' ? <span className="font-semibold text-danger-600">{fmtCurrency(bal)}</span> : <span className="text-gray-400">-</span>
               }},
               { key: 'due', header: 'Due Date', render: i => fmtDateShort(i.due_date) },
-              { key: 'viewed', header: '', render: i => viewedDocIds.has(i.id) ? <span style={{ fontSize: 10, fontWeight: 600, color: '#059669', background: '#f0fdf4', padding: '2px 7px', borderRadius: 10, border: '1px solid #bbf7d0', whiteSpace: 'nowrap' }}>Viewed</span> : null },
+              { key: 'viewed', header: '', render: i => viewedDocIds.has(i.id) ? <span className="text-micro font-semibold" style={{ color: '#059669', background: '#f0fdf4', padding: '2px 7px', borderRadius: 10, border: '1px solid #bbf7d0', whiteSpace: 'nowrap' }}>Viewed</span> : null },
               { key: 'actions', header: '', render: i => (
                 <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                   {i.status !== 'Paid' && <Button variant="ghost" size="sm" onClick={() => openMarkPaid(i)} title="Mark Paid"><CheckCircle className="h-4 w-4 text-green-600" /></Button>}
@@ -318,15 +318,15 @@ export default function InvoicesPage() {
 
           {/* Line Items */}
           <div>
-            <label className="mb-2 block text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500">Line Items</label>
+            <label className="mb-2 block text-eyebrow font-semibold uppercase tracking-[0.5px] text-gray-500">Line Items</label>
             <div className="space-y-2">
               {form.line_items.map((line, i) => (
                 <div key={i} className="grid grid-cols-12 gap-2 items-end">
-                  <div className="col-span-5"><input className="w-full h-[36px] rounded-[10px] border border-gray-200 px-2 text-[13px]" placeholder="Description" value={line.description} onChange={e => updateLine(i, 'description', e.target.value)} /></div>
-                  <div className="col-span-2"><input className="w-full h-[36px] rounded-[10px] border border-gray-200 px-2 text-[13px]" type="number" placeholder="Qty" value={line.qty} onChange={e => updateLine(i, 'qty', Number(e.target.value))} /></div>
-                  <div className="col-span-1"><input className="w-full h-[36px] rounded-[10px] border border-gray-200 px-2 text-[13px]" placeholder="Unit" value={line.unit} onChange={e => updateLine(i, 'unit', e.target.value)} /></div>
-                  <div className="col-span-2"><input className="w-full h-[36px] rounded-[10px] border border-gray-200 px-2 text-[13px]" type="number" step="0.01" placeholder="Price" value={line.unit_price} onChange={e => updateLine(i, 'unit_price', Number(e.target.value))} /></div>
-                  <div className="col-span-1 text-right text-[13px] font-medium">${(line.qty * line.unit_price).toFixed(2)}</div>
+                  <div className="col-span-5"><input className="w-full h-[36px] rounded-[10px] border border-gray-200 px-2 text-label" placeholder="Description" value={line.description} onChange={e => updateLine(i, 'description', e.target.value)} /></div>
+                  <div className="col-span-2"><input className="w-full h-[36px] rounded-[10px] border border-gray-200 px-2 text-label" type="number" placeholder="Qty" value={line.qty} onChange={e => updateLine(i, 'qty', Number(e.target.value))} /></div>
+                  <div className="col-span-1"><input className="w-full h-[36px] rounded-[10px] border border-gray-200 px-2 text-label" placeholder="Unit" value={line.unit} onChange={e => updateLine(i, 'unit', e.target.value)} /></div>
+                  <div className="col-span-2"><input className="w-full h-[36px] rounded-[10px] border border-gray-200 px-2 text-label" type="number" step="0.01" placeholder="Price" value={line.unit_price} onChange={e => updateLine(i, 'unit_price', Number(e.target.value))} /></div>
+                  <div className="col-span-1 text-right text-label font-medium">${(line.qty * line.unit_price).toFixed(2)}</div>
                   <div className="col-span-1">{form.line_items.length > 1 && <button type="button" onClick={() => removeLine(i)} className="text-red-500 text-xs hover:underline">X</button>}</div>
                 </div>
               ))}
@@ -343,16 +343,16 @@ export default function InvoicesPage() {
 
           {/* Payment Agreement */}
           <div className="border rounded-lg border-gray-200 p-4 space-y-4">
-            <h3 className="text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500">Payment Agreement</h3>
+            <h3 className="text-eyebrow font-semibold uppercase tracking-[0.5px] text-gray-500">Payment Agreement</h3>
 
             {/* Payment Method */}
             <div className="space-y-1.5">
-              <label className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500">Payment Method</label>
+              <label className="block text-eyebrow font-semibold uppercase tracking-[0.5px] text-gray-500">Payment Method</label>
               <div className="space-y-1.5">
                 {PAYMENT_METHOD_OPTIONS.map(m => (
                   <label key={m} className="flex items-center gap-2.5 cursor-pointer">
                     <input type="radio" name="payment_method" value={m} checked={form.payment_method_used === m} onChange={() => setForm(f => ({ ...f, payment_method_used: m, payment_method_custom: m === 'Multiple' ? f.payment_method_custom : '' }))} className="accent-blue-600" />
-                    <span className="text-[13px]">
+                    <span className="text-label">
                       {m === 'Check' && `Check (payable to ${COMPANY.check_payable})`}
                       {m === 'ACH / Bank Transfer' && 'ACH / Bank Transfer'}
                       {m === 'Zelle' && `Zelle (${COMPANY.zelle})`}
@@ -380,14 +380,14 @@ export default function InvoicesPage() {
                     deposit_received: checked && f.deposit_received === 0 ? Math.round(total * 50) / 100 : checked ? f.deposit_received : 0,
                   }))
                 }} className="accent-blue-600 rounded" />
-                <span className="text-[13px] font-medium">Deposit received</span>
+                <span className="text-label font-medium">Deposit received</span>
               </label>
               {form.has_deposit && (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Input label="Deposit Amount ($)" id="inv-deposit" type="number" step="0.01" value={form.deposit_received} onChange={e => setForm(f => ({ ...f, deposit_received: Number(e.target.value) }))} />
                   <div className="space-y-1.5">
-                    <label className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500">Balance Due</label>
-                    <p className="h-[40px] flex items-center text-[18px] font-bold text-gray-900">{fmtCurrency(total - form.deposit_received)}</p>
+                    <label className="block text-eyebrow font-semibold uppercase tracking-[0.5px] text-gray-500">Balance Due</label>
+                    <p className="h-[40px] flex items-center text-title font-bold text-gray-900">{fmtCurrency(total - form.deposit_received)}</p>
                   </div>
                 </div>
               )}
@@ -433,18 +433,18 @@ export default function InvoicesPage() {
           <DateInput label="Payment Date" id="paid-date" value={markPaidDate} onChange={v => setMarkPaidDate(v)} />
 
           <div>
-            <p className="text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500 mb-2">Payment Method</p>
+            <p className="text-eyebrow font-semibold uppercase tracking-[0.5px] text-gray-500 mb-2">Payment Method</p>
             <div className="space-y-1.5">
               {['Check', 'Zelle', 'Cash', 'ACH', 'Other'].map(m => (
                 <label key={m} className="flex items-center gap-2.5 cursor-pointer">
                   <input type="radio" name="paid-method" value={m} checked={markPaidMethod === m} onChange={() => setMarkPaidMethod(m)} className="accent-blue-600" />
-                  <span className="text-[13px]">{m}</span>
+                  <span className="text-label">{m}</span>
                 </label>
               ))}
             </div>
           </div>
 
-          <div className="rounded-lg bg-gray-50 border border-gray-200 p-3 text-[13px]">
+          <div className="rounded-lg bg-gray-50 border border-gray-200 p-3 text-label">
             <div className="flex justify-between"><span className="text-gray-500">Invoice Total</span><span className="font-semibold text-gray-900">{fmtCurrency(markPaidTarget?.total ?? 0)}</span></div>
           </div>
 

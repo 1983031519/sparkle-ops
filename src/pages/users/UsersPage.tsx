@@ -117,7 +117,7 @@ export default function UsersPage() {
     <div style={{ padding: '24px 28px', maxWidth: 960 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-        <p style={{ fontSize: 13, color: '#6B7280' }}>Manage team access and roles</p>
+        <p className="text-label" style={{ color: '#6B7280' }}>Manage team access and roles</p>
         <Button onClick={() => setShowInvite(true)} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <UserPlus className="h-4 w-4" strokeWidth={1.5} />
           Invite User
@@ -129,9 +129,9 @@ export default function UsersPage() {
         {ROLES.map(r => {
           const cfg = ROLE_CONFIG[r]
           return (
-            <div key={r} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#6B7280' }}>
+            <div key={r} className="text-eyebrow" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6B7280' }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: cfg.color }} />
-              <span style={{ fontWeight: 500 }}>{cfg.label}</span>
+              <span className="font-medium">{cfg.label}</span>
             </div>
           )
         })}
@@ -140,12 +140,7 @@ export default function UsersPage() {
       {/* Users List */}
       <div style={{ background: 'white', borderRadius: 16, border: '1px solid #E5E7EB', overflow: 'hidden' }}>
         {/* Table header */}
-        <div style={{
-          display: 'grid', gridTemplateColumns: '1fr 1fr 140px 100px 80px',
-          gap: 12, padding: '12px 20px', fontSize: 11, fontWeight: 600,
-          textTransform: 'uppercase', letterSpacing: 0.5, color: '#9CA3AF',
-          borderBottom: '1px solid #F3F4F6',
-        }}>
+        <div className="text-micro font-semibold" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 140px 100px 80px', gap: 12, padding: '12px 20px', textTransform: 'uppercase', letterSpacing: 0.5, color: '#9CA3AF', borderBottom: '1px solid #F3F4F6' }}>
           <span>Name</span>
           <span>Email</span>
           <span>Role</span>
@@ -174,13 +169,13 @@ export default function UsersPage() {
                 }}>
                   <RoleIcon className="h-4 w-4" strokeWidth={1.5} color={cfg.color} />
                 </div>
-                <span style={{ fontSize: 14, fontWeight: 500, color: '#111827' }}>
+                <span className="text-body font-medium" style={{ color: '#111827' }}>
                   {p.full_name || 'No name'}
                 </span>
               </div>
 
               {/* Email */}
-              <span style={{ fontSize: 13, color: '#6B7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span className="text-label" style={{ color: '#6B7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {p.email}
               </span>
 
@@ -188,8 +183,9 @@ export default function UsersPage() {
               <select
                 value={p.role}
                 onChange={e => handleRoleChange(p.id, e.target.value as UserRole)}
+                className="text-label"
                 style={{
-                  fontSize: 13, fontWeight: 500, color: cfg.color,
+                  color: cfg.color,
                   background: cfg.bg, border: `1px solid ${cfg.color}22`,
                   borderRadius: 8, padding: '4px 8px', cursor: 'pointer',
                   outline: 'none',
@@ -203,11 +199,11 @@ export default function UsersPage() {
               {/* Active Status */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {p.active ? (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 500, color: '#059669' }}>
+                  <span className="text-eyebrow font-medium" style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#059669' }}>
                     <Check className="h-4 w-4" strokeWidth={1.5} /> Active
                   </span>
                 ) : (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 500, color: '#9CA3AF' }}>
+                  <span className="text-eyebrow font-medium" style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#9CA3AF' }}>
                     <X className="h-4 w-4" strokeWidth={2} /> Inactive
                   </span>
                 )}
@@ -216,8 +212,9 @@ export default function UsersPage() {
               {/* Toggle Button */}
               <button
                 onClick={() => handleToggleActive(p.id, p.active)}
+                className="text-eyebrow font-medium"
                 style={{
-                  fontSize: 12, fontWeight: 500, padding: '4px 10px',
+                  padding: '4px 10px',
                   borderRadius: 6, border: '1px solid #E5E7EB', cursor: 'pointer',
                   background: 'white', color: p.active ? '#DC2626' : '#059669',
                   transition: 'all 150ms',
@@ -230,7 +227,7 @@ export default function UsersPage() {
         })}
 
         {profiles.length === 0 && (
-          <div style={{ padding: 40, textAlign: 'center', color: '#9CA3AF', fontSize: 14 }}>
+          <div className="text-body" style={{ padding: 40, textAlign: 'center', color: '#9CA3AF' }}>
             No users yet. Invite your first team member.
           </div>
         )}
@@ -240,22 +237,23 @@ export default function UsersPage() {
       <Modal open={showInvite} onClose={() => setShowInvite(false)} title="Invite User">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280', marginBottom: 6 }}>
+            <label className="text-eyebrow" style={{ display: 'block', textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280', marginBottom: 6 }}>
               Full Name
             </label>
             <input
               value={inviteName}
               onChange={e => setInviteName(e.target.value)}
               placeholder="John Smith"
+              className="text-body"
               style={{
                 display: 'block', width: '100%', height: 40, borderRadius: 10,
-                border: '1px solid #E5E7EB', padding: '0 12px', fontSize: 14, outline: 'none',
+                border: '1px solid #E5E7EB', padding: '0 12px', outline: 'none',
               }}
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280', marginBottom: 6 }}>
+            <label className="text-eyebrow" style={{ display: 'block', textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280', marginBottom: 6 }}>
               Email *
             </label>
             <input
@@ -263,23 +261,25 @@ export default function UsersPage() {
               value={inviteEmail}
               onChange={e => setInviteEmail(e.target.value)}
               placeholder="john@sparkle.com"
+              className="text-body"
               style={{
                 display: 'block', width: '100%', height: 40, borderRadius: 10,
-                border: '1px solid #E5E7EB', padding: '0 12px', fontSize: 14, outline: 'none',
+                border: '1px solid #E5E7EB', padding: '0 12px', outline: 'none',
               }}
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280', marginBottom: 6 }}>
+            <label className="text-eyebrow" style={{ display: 'block', textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280', marginBottom: 6 }}>
               Role
             </label>
             <select
               value={inviteRole}
               onChange={e => setInviteRole(e.target.value as UserRole)}
+              className="text-body"
               style={{
                 display: 'block', width: '100%', height: 40, borderRadius: 10,
-                border: '1px solid #E5E7EB', padding: '0 12px', fontSize: 14, outline: 'none',
+                border: '1px solid #E5E7EB', padding: '0 12px', outline: 'none',
                 cursor: 'pointer',
               }}
             >

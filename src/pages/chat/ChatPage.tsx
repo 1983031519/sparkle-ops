@@ -74,7 +74,7 @@ function DateSeparator({ label }: { label: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '10px 0' }}>
       <div style={{ flex: 1, height: 1, background: '#E5E7EB' }} />
-      <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 500, whiteSpace: 'nowrap' }}>{label}</span>
+      <span className="text-micro" style={{ color: '#9CA3AF', whiteSpace: 'nowrap' }}>{label}</span>
       <div style={{ flex: 1, height: 1, background: '#E5E7EB' }} />
     </div>
   )
@@ -104,16 +104,16 @@ function ConversationList({
       height: '100%',
     }}>
       <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid #E5E7EB' }}>
-        <p style={{ margin: 0, fontSize: 12, color: '#9CA3AF' }}>
+        <p className="text-eyebrow" style={{ margin: 0, color: '#9CA3AF' }}>
           {sortedMembers.length} team member{sortedMembers.length === 1 ? '' : 's'}
         </p>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '6px 0' }}>
         {loading ? (
-          <div style={{ padding: 20, fontSize: 13, color: '#9CA3AF', textAlign: 'center' }}>Loading…</div>
+          <div className="text-label" style={{ padding: 20, color: '#9CA3AF', textAlign: 'center' }}>Loading…</div>
         ) : sortedMembers.length === 0 ? (
-          <div style={{ padding: 20, fontSize: 13, color: '#9CA3AF', textAlign: 'center' }}>
+          <div className="text-label" style={{ padding: 20, color: '#9CA3AF', textAlign: 'center' }}>
             No team members yet
           </div>
         ) : (
@@ -174,19 +174,14 @@ function ConversationList({
                       {preview}
                     </span>
                     {lastMsg && (
-                      <span style={{ fontSize: 10, color: '#9CA3AF', flexShrink: 0 }}>
+                      <span className="text-micro" style={{ color: '#9CA3AF', flexShrink: 0 }}>
                         {formatPreviewTime(lastMsg.created_at)}
                       </span>
                     )}
                   </div>
                 </div>
                 {unread > 0 && (
-                  <span style={{
-                    background: '#4F6CF7', color: 'white',
-                    fontSize: 10, fontWeight: 700, lineHeight: 1,
-                    padding: '4px 7px', borderRadius: 99, minWidth: 20, textAlign: 'center',
-                    flexShrink: 0,
-                  }}>
+                  <span className="text-micro font-bold" style={{ background: '#4F6CF7', color: 'white', lineHeight: 1, padding: '4px 7px', borderRadius: 99, minWidth: 20, textAlign: 'center', flexShrink: 0 }}>
                     {unread > 99 ? '99+' : unread}
                   </span>
                 )}
@@ -230,20 +225,14 @@ function ChatPanel({
       }}>
         {isMobile && (
           <button
-            onClick={onBack}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 4,
-              background: 'none', border: 'none', cursor: 'pointer',
-              padding: '4px 0', marginRight: 4, color: '#4F6CF7',
-              fontSize: 13, fontWeight: 600, flexShrink: 0,
-            }}
+            onClick={onBack} className="text-label font-semibold" style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', marginRight: 4, color: '#4F6CF7', flexShrink: 0 }}
           >
             <ArrowLeft className="h-5 w-5" strokeWidth={1.5} />
           </button>
         )}
         <Avatar member={activeMember} size={isMobile ? 36 : 40} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: '#111827' }}>
+          <h2 className="text-body font-semibold" style={{ margin: 0, color: '#111827' }}>
             {activeMember.full_name || activeMember.email}
           </h2>
           <span style={{
@@ -269,7 +258,7 @@ function ChatPanel({
         {conversation.length === 0 ? (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8 }}>
             <MessageSquare className="h-12 w-12 text-gray-300" strokeWidth={1.5} />
-            <span style={{ fontSize: 14, color: '#9CA3AF' }}>
+            <span className="text-body" style={{ color: '#9CA3AF' }}>
               No messages yet. Say hello to {activeMember.full_name || activeMember.email}!
             </span>
           </div>
@@ -290,7 +279,7 @@ function ChatPanel({
                 }}
               >
                 {showSender && (
-                  <span style={{ fontSize: 12, fontWeight: 600, color: '#111827', marginBottom: 3, paddingLeft: 4 }}>
+                  <span className="text-eyebrow" style={{ color: '#111827', marginBottom: 3, paddingLeft: 4 }}>
                     {msg.sender_name}
                   </span>
                 )}
@@ -557,7 +546,7 @@ export default function ChatPage() {
             alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24,
           }}>
             <MessagesSquare className="h-12 w-12 text-gray-300" strokeWidth={1.5} />
-            <p style={{ margin: 0, fontSize: 15, color: '#6B7280', textAlign: 'center', maxWidth: 320 }}>
+            <p className="text-body" style={{ margin: 0, color: '#6B7280', textAlign: 'center', maxWidth: 320 }}>
               Select a team member to start a conversation
             </p>
           </div>
