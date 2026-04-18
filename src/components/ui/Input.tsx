@@ -1,7 +1,7 @@
 import { clsx } from 'clsx'
 import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
 
-const inputBase = 'block w-full h-[40px] rounded-[8px] border border-[#D1D5DB] bg-white px-3 text-[14px] shadow-none placeholder:text-[#9CA3AF] transition-all duration-150 ease-out focus:border-[#4F6CF7] focus:outline-none focus:shadow-[0_0_0_3px_rgba(79,108,247,0.12)]'
+const inputBase = 'block w-full h-[40px] rounded-[8px] border border-gray-300 bg-white px-3 text-[14px] shadow-none placeholder:text-gray-400 transition-all duration-150 ease-out focus:border-[#4F6CF7] focus:outline-none focus:shadow-[0_0_0_3px_rgba(79,108,247,0.12)]'
 
 const labelStyle = { display: 'block', fontSize: 13, fontWeight: 500, color: '#374151' } as const
 
@@ -48,7 +48,7 @@ export function Textarea({ label, className, id, ...props }: TextareaProps) {
       <textarea
         id={id}
         className={clsx(
-          'block w-full rounded-[8px] border border-[#D1D5DB] bg-white px-3 py-2.5 text-[14px] shadow-none placeholder:text-[#9CA3AF] transition-all duration-150 ease-out focus:border-[#4F6CF7] focus:outline-none focus:shadow-[0_0_0_3px_rgba(79,108,247,0.12)]',
+          'block w-full rounded-[8px] border border-gray-300 bg-white px-3 py-2.5 text-[14px] shadow-none placeholder:text-gray-400 transition-all duration-150 ease-out focus:border-[#4F6CF7] focus:outline-none focus:shadow-[0_0_0_3px_rgba(79,108,247,0.12)]',
           className,
         )}
         rows={3}

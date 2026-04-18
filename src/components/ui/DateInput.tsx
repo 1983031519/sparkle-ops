@@ -115,7 +115,7 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
 
   return (
     <div className="space-y-1" ref={ref}>
-      {label && <label htmlFor={id} className="block text-[13px] font-medium text-[#374151]">{label}</label>}
+      {label && <label htmlFor={id} className="block text-[13px] font-medium text-gray-700">{label}</label>}
       <div className="relative">
         <input
           id={id}
@@ -127,33 +127,33 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
           onBlur={handleInputBlur}
           onFocus={() => setOpen(true)}
           required={required}
-          className="block w-full h-[40px] rounded-[8px] border border-[#D1D5DB] bg-white px-3 pr-10 text-[14px] placeholder:text-[#9CA3AF] transition-all duration-150 focus:border-[#4F6CF7] focus:outline-none focus:shadow-[0_0_0_3px_rgba(79,108,247,0.12)]"
+          className="block w-full h-[40px] rounded-[8px] border border-gray-300 bg-white px-3 pr-10 text-[14px] placeholder:text-gray-400 transition-all duration-150 focus:border-[#4F6CF7] focus:outline-none focus:shadow-[0_0_0_3px_rgba(79,108,247,0.12)]"
           autoComplete="off"
         />
         <button
           type="button"
           tabIndex={-1}
           onClick={() => setOpen(o => !o)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-[#9CA3AF] hover:text-[#6B7280]"
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-gray-400 hover:text-gray-500"
         >
           <Calendar className="h-4 w-4" strokeWidth={1.5} />
         </button>
 
         {open && (
-          <div className="absolute left-0 top-full z-50 mt-1 w-[280px] rounded-[10px] border border-[#E5E7EB] bg-white p-3 shadow-[0_8px_24px_rgba(0,0,0,0.10)]">
+          <div className="absolute left-0 top-full z-50 mt-1 w-[280px] rounded-[10px] border border-gray-200 bg-white p-3 shadow-[0_8px_24px_rgba(0,0,0,0.10)]">
             {/* Header */}
             <div className="mb-2 flex items-center justify-between">
-              <button type="button" onClick={prevMonth} className="rounded p-1 hover:bg-[#F3F4F6]">
+              <button type="button" onClick={prevMonth} className="rounded p-1 hover:bg-gray-100">
                 <ChevronLeft className="h-4 w-4" strokeWidth={1.5} />
               </button>
-              <span className="text-sm font-semibold text-[#111827]">{MONTHS[viewMonth]} {viewYear}</span>
-              <button type="button" onClick={nextMonth} className="rounded p-1 hover:bg-[#F3F4F6]">
+              <span className="text-sm font-semibold text-gray-900">{MONTHS[viewMonth]} {viewYear}</span>
+              <button type="button" onClick={nextMonth} className="rounded p-1 hover:bg-gray-100">
                 <ChevronRight className="h-4 w-4" strokeWidth={1.5} />
               </button>
             </div>
 
             {/* Day names */}
-            <div className="grid grid-cols-7 text-center text-[11px] font-medium text-[#9CA3AF]">
+            <div className="grid grid-cols-7 text-center text-[11px] font-medium text-gray-400">
               {DAYS.map(d => <div key={d} className="py-1">{d}</div>)}
             </div>
 
@@ -173,7 +173,7 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
                       'mx-auto flex h-8 w-8 items-center justify-center rounded-full text-xs transition-colors',
                       isSelected && 'bg-[#4F6CF7] text-white font-bold',
                       !isSelected && isToday && 'ring-1 ring-[#4F6CF7] text-[#4F6CF7] font-medium',
-                      !isSelected && !isToday && 'hover:bg-[#F3F4F6] text-[#374151]',
+                      !isSelected && !isToday && 'hover:bg-gray-100 text-gray-700',
                     )}
                   >
                     {day}
@@ -183,7 +183,7 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
             </div>
 
             {/* Today shortcut */}
-            <div className="mt-2 border-t border-[#F3F4F6] pt-2 text-center">
+            <div className="mt-2 border-t border-gray-100 pt-2 text-center">
               <button
                 type="button"
                 onClick={() => {

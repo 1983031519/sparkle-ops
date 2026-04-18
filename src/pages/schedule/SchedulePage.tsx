@@ -794,7 +794,7 @@ function GuestsField({
           }}
           placeholder="Add guest email and press Enter"
           disabled={disabled}
-          className="block w-full h-[40px] rounded-[8px] border border-[#D1D5DB] bg-white px-3 text-[14px] placeholder:text-[#9CA3AF] focus:border-[#4F6CF7] focus:outline-none focus:shadow-[0_0_0_3px_rgba(79,108,247,0.12)]"
+          className="block w-full h-[40px] rounded-[8px] border border-gray-300 bg-white px-3 text-[14px] placeholder:text-gray-400 focus:border-[#4F6CF7] focus:outline-none focus:shadow-[0_0_0_3px_rgba(79,108,247,0.12)]"
         />
         <Button
           type="button"

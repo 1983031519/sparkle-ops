@@ -51,7 +51,7 @@ export function NewEntityDropdown({ compact = false }: { compact?: boolean }) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-[calc(100%+6px)] z-50 min-w-[200px] overflow-hidden rounded-[10px] border border-[#E5E7EB] bg-white py-1 shadow-[0_8px_24px_rgba(0,0,0,0.10)]"
+          className="absolute right-0 top-[calc(100%+6px)] z-50 min-w-[200px] overflow-hidden rounded-[10px] border border-gray-200 bg-white py-1 shadow-[0_8px_24px_rgba(0,0,0,0.10)]"
         >
           {OPTIONS.map(opt => {
             const OptIcon = opt.icon
@@ -61,7 +61,7 @@ export function NewEntityDropdown({ compact = false }: { compact?: boolean }) {
                 type="button"
                 role="menuitem"
                 onClick={() => choose(opt.to)}
-                className="flex w-full items-center gap-3 px-3 py-2 text-left text-[13px] font-medium text-[#374151] transition-colors hover:bg-gray-50"
+                className="flex w-full items-center gap-3 px-3 py-2 text-left text-[13px] font-medium text-gray-700 transition-colors hover:bg-gray-50"
               >
                 <OptIcon className="h-4 w-4 text-gray-500" strokeWidth={1.5} />
                 {opt.label}

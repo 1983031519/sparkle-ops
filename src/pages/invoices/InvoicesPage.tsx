@@ -387,7 +387,7 @@ export default function InvoicesPage() {
                   <Input label="Deposit Amount ($)" id="inv-deposit" type="number" step="0.01" value={form.deposit_received} onChange={e => setForm(f => ({ ...f, deposit_received: Number(e.target.value) }))} />
                   <div className="space-y-1.5">
                     <label className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500">Balance Due</label>
-                    <p className="h-[40px] flex items-center text-[18px] font-bold text-[#111827]">{fmtCurrency(total - form.deposit_received)}</p>
+                    <p className="h-[40px] flex items-center text-[18px] font-bold text-gray-900">{fmtCurrency(total - form.deposit_received)}</p>
                   </div>
                 </div>
               )}
@@ -445,7 +445,7 @@ export default function InvoicesPage() {
           </div>
 
           <div className="rounded-lg bg-gray-50 border border-gray-200 p-3 text-[13px]">
-            <div className="flex justify-between"><span className="text-gray-500">Invoice Total</span><span className="font-semibold text-[#111827]">{fmtCurrency(markPaidTarget?.total ?? 0)}</span></div>
+            <div className="flex justify-between"><span className="text-gray-500">Invoice Total</span><span className="font-semibold text-gray-900">{fmtCurrency(markPaidTarget?.total ?? 0)}</span></div>
           </div>
 
           <div className="flex justify-end gap-2 border-t border-gray-200 pt-4">

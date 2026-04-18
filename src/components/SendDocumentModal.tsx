@@ -141,7 +141,7 @@ export function SendDocumentModal({ open, onClose, type, documentId, clientEmail
         <div>
           <p className="text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500 mb-1.5">Send to</p>
           {hasEmail ? (
-            <p className="text-[14px] text-[#111827] break-all">{clientEmail}</p>
+            <p className="text-[14px] text-gray-900 break-all">{clientEmail}</p>
           ) : (
             <p className="text-[13px] text-red-600">No email on file for this client. Add one to the client record first.</p>
           )}
@@ -161,9 +161,9 @@ export function SendDocumentModal({ open, onClose, type, documentId, clientEmail
 
         {/* Summary */}
         <div className="rounded-lg bg-gray-50 border border-gray-200 p-3 text-[12px] text-gray-600 space-y-1">
-          <div className="flex justify-between"><span>{label} #</span><span className="font-mono text-[#111827]">{documentData.number}</span></div>
-          <div className="flex justify-between"><span>Client</span><span className="text-[#111827]">{documentData.clientName || '—'}</span></div>
-          <div className="flex justify-between"><span>Total</span><span className="font-semibold text-[#111827]">${documentData.total.toFixed(2)}</span></div>
+          <div className="flex justify-between"><span>{label} #</span><span className="font-mono text-gray-900">{documentData.number}</span></div>
+          <div className="flex justify-between"><span>Client</span><span className="text-gray-900">{documentData.clientName || '—'}</span></div>
+          <div className="flex justify-between"><span>Total</span><span className="font-semibold text-gray-900">${documentData.total.toFixed(2)}</span></div>
         </div>
 
         {/* Actions */}
