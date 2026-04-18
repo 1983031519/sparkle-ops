@@ -1,15 +1,15 @@
 import { clsx } from 'clsx'
 
 const colors: Record<string, { bg: string; text: string; dot: string }> = {
-  green:  { bg: '#D1FAE5', text: '#065F46', dot: '#10B981' },
+  green:  { bg: '#D1FAE5', text: '#065F46', dot: '#059669' },
   blue:   { bg: '#DBEAFE', text: '#1E40AF', dot: '#3B82F6' },
   yellow: { bg: '#FEF9C3', text: '#854D0E', dot: '#EAB308' },
-  red:    { bg: '#FEE2E2', text: '#991B1B', dot: '#EF4444' },
+  red:    { bg: '#FEE2E2', text: '#991B1B', dot: '#DC2626' },
   gray:   { bg: '#F3F4F6', text: '#374151', dot: '#9CA3AF' },
   purple: { bg: '#EDE9FE', text: '#5B21B6', dot: '#7C3AED' },
   orange: { bg: '#FFEDD5', text: '#C2410C', dot: '#F97316' },
   teal:   { bg: '#CCFBF1', text: '#0F766E', dot: '#14B8A6' },
-  gold:   { bg: '#FEF3C7', text: '#92400E', dot: '#F59E0B' },
+  gold:   { bg: '#FEF3C7', text: '#92400E', dot: '#D97706' },
 }
 
 interface Props {

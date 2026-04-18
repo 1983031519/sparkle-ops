@@ -160,11 +160,11 @@ export default function InventoryPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
         <SummaryCard label="Total Assets" value={String(summary.totalAssets)} color="#4F6CF7" />
         <SummaryCard label="Purchase Value" value={fmtCurrency(summary.totalPurchase)} color="#6B7280" />
-        <SummaryCard label="Current Value" value={fmtCurrency(summary.totalCurrent)} color="#10B981" />
+        <SummaryCard label="Current Value" value={fmtCurrency(summary.totalCurrent)} color="#059669" />
         <SummaryCard
           label="Gain / Loss"
           value={`${summary.diff >= 0 ? '+' : ''}${fmtCurrency(summary.diff)}`}
-          color={summary.diff >= 0 ? '#10B981' : '#EF4444'}
+          color={summary.diff >= 0 ? '#059669' : '#DC2626'}
           icon={summary.diff >= 0 ? TrendingUp : TrendingDown}
         />
       </div>

@@ -306,7 +306,7 @@ export default function EstimatesPage() {
                   { label: 'Invoice', status: hasInvoice ? 'done' : 'pending' },
                 ]} />
               }},
-              { key: 'viewed', header: '', render: e => viewedDocIds.has(e.id) ? <span style={{ fontSize: 10, fontWeight: 600, color: '#16a34a', background: '#f0fdf4', padding: '2px 7px', borderRadius: 10, border: '1px solid #bbf7d0', whiteSpace: 'nowrap' }}>Viewed</span> : null },
+              { key: 'viewed', header: '', render: e => viewedDocIds.has(e.id) ? <span style={{ fontSize: 10, fontWeight: 600, color: '#059669', background: '#f0fdf4', padding: '2px 7px', borderRadius: 10, border: '1px solid #bbf7d0', whiteSpace: 'nowrap' }}>Viewed</span> : null },
               { key: 'actions', header: '', render: e => (
                 <div className="flex gap-2 items-center" onClick={ev => ev.stopPropagation()}>
                   {e.status === 'Sent' && (

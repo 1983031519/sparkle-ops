@@ -234,7 +234,7 @@ export default function ProjectsPage() {
             { key: 'division', header: 'Div', render: p => <Badge color={p.division === 'Stone' ? 'blue' : 'orange'}>{p.division ?? '-'}</Badge> },
             { key: 'status', header: 'Status', render: p => <Badge color={statusColor(p.status)}>{p.status}</Badge> },
             { key: 'total', header: 'Value', render: p => fmtCurrency(p.total_value) },
-            { key: 'viewed', header: '', render: p => viewedDocIds.has(p.id) ? <span style={{ fontSize: 10, fontWeight: 600, color: '#16a34a', background: '#f0fdf4', padding: '2px 7px', borderRadius: 10, border: '1px solid #bbf7d0', whiteSpace: 'nowrap' }}>Viewed</span> : null },
+            { key: 'viewed', header: '', render: p => viewedDocIds.has(p.id) ? <span style={{ fontSize: 10, fontWeight: 600, color: '#059669', background: '#f0fdf4', padding: '2px 7px', borderRadius: 10, border: '1px solid #bbf7d0', whiteSpace: 'nowrap' }}>Viewed</span> : null },
             { key: 'actions', header: '', render: p => (
               <div className="flex gap-2" onClick={ev => ev.stopPropagation()}>
                 {p.status === 'Approved' && <Button variant="gold" size="sm" onClick={() => convertToJob(p)}><ArrowRight className="h-4 w-4" strokeWidth={1.5} /> Job</Button>}

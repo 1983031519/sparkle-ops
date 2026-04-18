@@ -168,10 +168,10 @@ export function JobCosting({ jobId, jobRevenue }: Props) {
           </div>
           <div style={{ textAlign: 'right' }}>
             <p style={{ color: '#6B7280' }}>Revenue: <strong style={{ color: '#333' }}>{fmtCurrency(jobRevenue)}</strong></p>
-            <p style={{ fontWeight: 700, fontSize: 16, color: grossProfit >= 0 ? '#16A34A' : '#DC2626', marginTop: 8 }}>
+            <p style={{ fontWeight: 700, fontSize: 16, color: grossProfit >= 0 ? '#059669' : '#DC2626', marginTop: 8 }}>
               Profit: {fmtCurrency(grossProfit)}
             </p>
-            <p style={{ fontSize: 12, color: grossProfit >= 0 ? '#16A34A' : '#DC2626', fontWeight: 600 }}>
+            <p style={{ fontSize: 12, color: grossProfit >= 0 ? '#059669' : '#DC2626', fontWeight: 600 }}>
               Margin: {margin.toFixed(1)}%
             </p>
           </div>

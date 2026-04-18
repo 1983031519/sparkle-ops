@@ -8,7 +8,7 @@ import { enUS } from 'date-fns/locale'
 import { fmtCurrency, fmtDateShort } from '@/lib/constants'
 import type { Invoice, Estimate, Job, Client } from '@/lib/database.types'
 
-const COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316']
+const COLORS = ['#22c55e', '#3b82f6', '#D97706', '#DC2626', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316']
 const RANGE_OPTIONS = [
   { value: 'this_month', label: 'This Month' },
   { value: 'last_month', label: 'Last Month' },
@@ -170,11 +170,11 @@ export default function ReportsPage() {
             </div>
             <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid #E5E7EB' }}>
               <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Total Collected</p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: '#16A34A' }}>{fmtCurrency(totalCollected)}</p>
+              <p style={{ fontSize: 24, fontWeight: 700, color: '#059669' }}>{fmtCurrency(totalCollected)}</p>
             </div>
             <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid #E5E7EB' }}>
               <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Outstanding</p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: totalOutstanding > 0 ? '#F59E0B' : '#16A34A' }}>{fmtCurrency(totalOutstanding)}</p>
+              <p style={{ fontSize: 24, fontWeight: 700, color: totalOutstanding > 0 ? '#D97706' : '#059669' }}>{fmtCurrency(totalOutstanding)}</p>
             </div>
             <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid #E5E7EB' }}>
               <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#9CA3AF', marginBottom: 4 }}>Collection Rate</p>
@@ -262,7 +262,7 @@ export default function ReportsPage() {
                   <Tooltip />
                   <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                     {jobsByStatus.map((entry, i) => {
-                      const colorMap: Record<string, string> = { Lead: '#3b82f6', Scheduled: '#8b5cf6', 'In Progress': '#f59e0b', Completed: '#22c55e', Cancelled: '#a8a29e' }
+                      const colorMap: Record<string, string> = { Lead: '#3b82f6', Scheduled: '#8b5cf6', 'In Progress': '#D97706', Completed: '#22c55e', Cancelled: '#a8a29e' }
                       return <Cell key={i} fill={colorMap[entry.name] ?? COLORS[i]} />
                     })}
                   </Bar>

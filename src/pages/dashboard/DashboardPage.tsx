@@ -317,7 +317,7 @@ export default function DashboardPage() {
               padding: '12px 20px', borderBottom: '1px solid #F9FAFB', textDecoration: 'none',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                <div style={{ width: 7, height: 7, borderRadius: '50%', background: inv.status === 'Overdue' ? '#EF4444' : '#F59E0B', flexShrink: 0 }} />
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: inv.status === 'Overdue' ? '#DC2626' : '#D97706', flexShrink: 0 }} />
                 <div style={{ minWidth: 0 }}>
                   <p style={{ fontSize: 13, fontWeight: 500, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{clientMap[inv.client_id] ?? 'Unknown'}</p>
                   <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 1 }}>{inv.number} · due {fmtDateShort(inv.due_date)}</p>
@@ -405,7 +405,7 @@ export default function DashboardPage() {
         {/* Low stock alert */}
         {lowStock.length > 0 && (
           <div style={{ margin: '0 16px 16px', background: '#FFFBEB', borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #FDE68A' }}>
-            <AlertTriangle className="h-4 w-4 shrink-0" strokeWidth={2} color="#F59E0B" />
+            <AlertTriangle className="h-4 w-4 shrink-0" strokeWidth={2} color="#D97706" />
             <p style={{ fontSize: 12, color: '#92400E' }}><strong>Low stock:</strong> {lowStock.length} item{lowStock.length > 1 ? 's' : ''}</p>
           </div>
         )}
@@ -444,7 +444,7 @@ export default function DashboardPage() {
       {/* Low stock alert */}
       {lowStock.length > 0 && (
         <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 10, padding: '12px 16px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <AlertTriangle className="h-4 w-4 shrink-0" strokeWidth={2} color="#F59E0B" />
+          <AlertTriangle className="h-4 w-4 shrink-0" strokeWidth={2} color="#D97706" />
           <p style={{ fontSize: 13, color: '#92400E' }}><strong>Low stock alert:</strong> {lowStock.map(i => `${i.name} (${i.quantity} left)`).join(' · ')}</p>
         </div>
       )}

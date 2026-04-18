@@ -14,8 +14,8 @@ export function Input({ label, error, className, id, ...props }: InputProps) {
   return (
     <div className="space-y-1.5">
       {label && <label htmlFor={id} style={labelStyle}>{label}</label>}
-      <input id={id} className={clsx(inputBase, error && 'border-[#EF4444]', className)} {...props} />
-      {error && <p className="text-[12px] text-[#EF4444]">{error}</p>}
+      <input id={id} className={clsx(inputBase, error && 'border-[#DC2626]', className)} {...props} />
+      {error && <p className="text-[12px] text-[#DC2626]">{error}</p>}
     </div>
   )
 }

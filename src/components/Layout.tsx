@@ -178,7 +178,7 @@ function NavItem({ to, icon: Icon, label, isChat, chatBadge, canAccess }: {
           <span style={{ flex: 1 }}>{label}</span>
           {chatBadge > 0 && (
             <span style={{
-              background: '#EF4444', color: 'white',
+              background: '#DC2626', color: 'white',
               fontSize: 10, fontWeight: 700, lineHeight: 1,
               padding: '3px 6px', borderRadius: 99, minWidth: 18, textAlign: 'center',
             }}>
@@ -258,7 +258,7 @@ export function Layout() {
                   {isChatTab && chatBadge > 0 && (
                     <span style={{
                       position: 'absolute', top: -5, right: -10,
-                      background: '#EF4444', color: 'white',
+                      background: '#DC2626', color: 'white',
                       fontSize: 9, fontWeight: 700, lineHeight: 1,
                       padding: '2px 5px', borderRadius: 99, minWidth: 16, textAlign: 'center',
                     }}>
@@ -320,7 +320,7 @@ export function Layout() {
                             <>
                               <span style={{ flex: 1 }}>{label}</span>
                               {chatBadge > 0 && (
-                                <span style={{ background: '#EF4444', color: 'white', fontSize: 10, fontWeight: 700, padding: '3px 6px', borderRadius: 99 }}>
+                                <span style={{ background: '#DC2626', color: 'white', fontSize: 10, fontWeight: 700, padding: '3px 6px', borderRadius: 99 }}>
                                   {chatBadge > 99 ? '99+' : chatBadge}
                                 </span>
                               )}

@@ -43,7 +43,7 @@ export default function GoogleCallbackPage() {
   }, [navigate, toast])
 
   const Icon = status === 'working' ? Loader2 : status === 'ok' ? CheckCircle2 : XCircle
-  const color = status === 'working' ? '#4F6CF7' : status === 'ok' ? '#10B981' : '#EF4444'
+  const color = status === 'working' ? '#4F6CF7' : status === 'ok' ? '#059669' : '#DC2626'
 
   return (
     <div style={{

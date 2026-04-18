@@ -5,7 +5,7 @@ const variants = {
   primary: 'bg-[#4F6CF7] text-white hover:bg-[#3451D1] active:scale-[0.99] focus:ring-[#4F6CF7]/30',
   gold: 'bg-[#4F6CF7] text-white hover:bg-[#3451D1] active:scale-[0.99] focus:ring-[#4F6CF7]/30',
   secondary: 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 active:scale-[0.99] focus:ring-gray-300',
-  danger: 'bg-[#EF4444] text-white hover:bg-[#DC2626] active:scale-[0.99] focus:ring-red-500/30',
+  danger: 'bg-[#DC2626] text-white hover:bg-[#DC2626] active:scale-[0.99] focus:ring-red-500/30',
   ghost: 'text-gray-500 border border-gray-200 hover:bg-gray-50 hover:text-gray-700 active:scale-[0.99] focus:ring-gray-300',
 }
 

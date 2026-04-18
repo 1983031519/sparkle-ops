@@ -22,9 +22,9 @@
   --color-border-subtle: #F3F4F6;
 
   /* ── Status ── */
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-danger: #EF4444;
+  --color-success: #059669;
+  --color-warning: #D97706;
+  --color-danger: #DC2626;
 
   /* ── Legacy aliases kept for logo/brand only ── */
   --color-navy-900: #0D1B3D;

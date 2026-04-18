@@ -276,7 +276,7 @@ export default function InvoicesPage() {
                 return bal > 0 && i.status !== 'Paid' ? <span className="font-semibold text-danger-600">{fmtCurrency(bal)}</span> : <span className="text-gray-400">-</span>
               }},
               { key: 'due', header: 'Due Date', render: i => fmtDateShort(i.due_date) },
-              { key: 'viewed', header: '', render: i => viewedDocIds.has(i.id) ? <span style={{ fontSize: 10, fontWeight: 600, color: '#16a34a', background: '#f0fdf4', padding: '2px 7px', borderRadius: 10, border: '1px solid #bbf7d0', whiteSpace: 'nowrap' }}>Viewed</span> : null },
+              { key: 'viewed', header: '', render: i => viewedDocIds.has(i.id) ? <span style={{ fontSize: 10, fontWeight: 600, color: '#059669', background: '#f0fdf4', padding: '2px 7px', borderRadius: 10, border: '1px solid #bbf7d0', whiteSpace: 'nowrap' }}>Viewed</span> : null },
               { key: 'actions', header: '', render: i => (
                 <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                   {i.status !== 'Paid' && <Button variant="ghost" size="sm" onClick={() => openMarkPaid(i)} title="Mark Paid"><CheckCircle className="h-4 w-4 text-green-600" /></Button>}
@@ -539,7 +539,7 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
             <p style={{ fontFamily: 'monospace', fontSize: 13, color: '#555', margin: '4px 0' }}>{inv.number}</p>
             <p style={{ fontSize: 12, color: '#666' }}>Date: {fmtDate(inv.date ?? isoDatePart(inv.created_at))}</p>
             {inv.due_date && <p style={{ fontSize: 12, color: '#666' }}>Due: {fmtDate(inv.due_date)}</p>}
-            <span style={{ display: 'inline-block', marginTop: 4, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: inv.status === 'Paid' ? '#f0fdf4' : inv.status === 'Overdue' ? '#fff1f2' : '#fffbeb', color: inv.status === 'Paid' ? '#16a34a' : inv.status === 'Overdue' ? '#e11d48' : '#d97706', border: `1px solid ${inv.status === 'Paid' ? '#bbf7d0' : inv.status === 'Overdue' ? '#fecdd3' : '#fde68a'}` }}>{inv.status}</span>
+            <span style={{ display: 'inline-block', marginTop: 4, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: inv.status === 'Paid' ? '#f0fdf4' : inv.status === 'Overdue' ? '#fff1f2' : '#fffbeb', color: inv.status === 'Paid' ? '#059669' : inv.status === 'Overdue' ? '#e11d48' : '#d97706', border: `1px solid ${inv.status === 'Paid' ? '#bbf7d0' : inv.status === 'Overdue' ? '#fecdd3' : '#fde68a'}` }}>{inv.status}</span>
           </div>
         </div>
 
@@ -577,7 +577,7 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}><span>Subtotal</span><span>${inv.subtotal.toFixed(2)}</span></div>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}><span>Tax (0%)</span><span>$0.00</span></div>
           <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #111827', paddingTop: 4, marginTop: 4, fontSize: 15, fontWeight: 700, color: '#111827' }}><span>Total</span><span>${inv.total.toFixed(2)}</span></div>
-          {depositAmt > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', color: '#16a34a' }}><span>Deposit Received</span><span>-${depositAmt.toFixed(2)}</span></div>}
+          {depositAmt > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', color: '#059669' }}><span>Deposit Received</span><span>-${depositAmt.toFixed(2)}</span></div>}
           {depositAmt > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #111827', paddingTop: 4, marginTop: 4, fontSize: 17, fontWeight: 700, color: '#111827' }}><span>Balance Due</span><span>${balanceDue.toFixed(2)}</span></div>}
         </div>
 
