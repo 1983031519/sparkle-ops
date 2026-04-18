@@ -51,7 +51,8 @@ export default function GoogleCallbackPage() {
       minHeight: '60vh', padding: 24, textAlign: 'center',
     }}>
       <Icon
-        size={42}
+        className="h-12 w-12"
+        strokeWidth={1.5}
         color={color}
         style={status === 'working' ? { animation: 'spin 900ms linear infinite' } : undefined}
       />

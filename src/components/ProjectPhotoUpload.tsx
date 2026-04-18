@@ -99,11 +99,11 @@ export function ProjectPhotoUpload({ folder, photos, onPhotosChange, persistTo, 
     <div>
       <div className="flex items-center justify-between mb-2">
         <span style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280' }}>
-          <ImageIcon size={14} strokeWidth={1.5} className="inline mr-1 -mt-0.5" />{label} ({photos.length}/{maxPhotos})
+          <ImageIcon className="inline mr-1 -mt-0.5 h-4 w-4" strokeWidth={1.5} />{label} ({photos.length}/{maxPhotos})
         </span>
         {photos.length < maxPhotos && (
           <Button variant="ghost" size="sm" type="button" onClick={() => fileRef.current?.click()} disabled={uploading}>
-            {uploading ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} strokeWidth={1.5} />}
+            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" strokeWidth={1.5} />}
             {uploading ? 'Uploading...' : 'Upload'}
           </Button>
         )}
@@ -125,7 +125,7 @@ export function ProjectPhotoUpload({ folder, photos, onPhotosChange, persistTo, 
             <div key={i} className="group" style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 8, overflow: 'hidden', background: '#F3F4F6' }}>
               <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
               <button type="button" onClick={() => handleRemove(url)} style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: 12, padding: 3, cursor: 'pointer', opacity: 0, transition: 'opacity 150ms' }} className="group-hover:!opacity-100">
-                <X size={12} color="white" />
+                <X className="h-4 w-4 text-white" strokeWidth={2} />
               </button>
             </div>
           ))}

@@ -119,7 +119,7 @@ export default function UsersPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <p style={{ fontSize: 13, color: '#6B7280' }}>Manage team access and roles</p>
         <Button onClick={() => setShowInvite(true)} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <UserPlus size={16} strokeWidth={1.5} />
+          <UserPlus className="h-4 w-4" strokeWidth={1.5} />
           Invite User
         </Button>
       </div>
@@ -172,7 +172,7 @@ export default function UsersPage() {
                   width: 32, height: 32, borderRadius: '50%',
                   background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <RoleIcon size={15} color={cfg.color} strokeWidth={1.5} />
+                  <RoleIcon className="h-4 w-4" strokeWidth={1.5} color={cfg.color} />
                 </div>
                 <span style={{ fontSize: 14, fontWeight: 500, color: '#111827' }}>
                   {p.full_name || 'No name'}
@@ -204,11 +204,11 @@ export default function UsersPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {p.active ? (
                   <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 500, color: '#059669' }}>
-                    <Check size={14} /> Active
+                    <Check className="h-4 w-4" strokeWidth={1.5} /> Active
                   </span>
                 ) : (
                   <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 500, color: '#9CA3AF' }}>
-                    <X size={14} /> Inactive
+                    <X className="h-4 w-4" strokeWidth={2} /> Inactive
                   </span>
                 )}
               </div>

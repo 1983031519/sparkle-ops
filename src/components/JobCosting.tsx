@@ -101,7 +101,7 @@ export function JobCosting({ jobId, jobRevenue }: Props) {
   return (
     <div style={{ border: '1px solid #E5E7EB', borderRadius: 12, padding: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-        <DollarSign size={16} strokeWidth={1.5} color="#4F6CF7" />
+        <DollarSign className="h-4 w-4" strokeWidth={1.5} color="#4F6CF7" />
         <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>Job Costing</span>
         <span style={{ fontSize: 11, color: '#9CA3AF', fontStyle: 'italic' }}>Internal only</span>
       </div>
@@ -110,7 +110,7 @@ export function JobCosting({ jobId, jobRevenue }: Props) {
       <div style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <p style={labelStyle}>Materials</p>
-          <Button variant="ghost" size="sm" type="button" onClick={addMaterial}><Plus size={12} /> Add</Button>
+          <Button variant="ghost" size="sm" type="button" onClick={addMaterial}><Plus className="h-4 w-4" strokeWidth={1.5} /> Add</Button>
         </div>
         {materials.map(m => (
           <div key={m.id} style={{ display: 'grid', gridTemplateColumns: '2fr 60px 60px 80px 80px 24px', gap: 4, marginBottom: 4, alignItems: 'center' }}>
@@ -119,7 +119,7 @@ export function JobCosting({ jobId, jobRevenue }: Props) {
             <input style={inputStyle} value={m.unit} onChange={e => updateMaterial(m.id, 'unit', e.target.value)} />
             <input style={inputStyle} type="number" step="0.01" value={m.unit_cost} placeholder="$/unit" onChange={e => updateMaterial(m.id, 'unit_cost', Number(e.target.value))} />
             <span style={{ fontSize: 12, fontWeight: 600, color: '#333', textAlign: 'right' }}>{fmtCurrency(m.quantity * m.unit_cost)}</span>
-            <button type="button" onClick={() => deleteMaterial(m.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}><Trash2 size={12} color="#DC2626" /></button>
+            <button type="button" onClick={() => deleteMaterial(m.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}><Trash2 className="h-4 w-4" strokeWidth={1.5} color="#DC2626" /></button>
           </div>
         ))}
         {materials.length > 0 && <p style={{ textAlign: 'right', fontSize: 12, fontWeight: 600, color: '#333', marginTop: 4 }}>Materials: {fmtCurrency(totalMaterials)}</p>}
@@ -129,13 +129,13 @@ export function JobCosting({ jobId, jobRevenue }: Props) {
       <div style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <p style={labelStyle}>Labor</p>
-          <Button variant="ghost" size="sm" type="button" onClick={addLabor}><Plus size={12} /> Add</Button>
+          <Button variant="ghost" size="sm" type="button" onClick={addLabor}><Plus className="h-4 w-4" strokeWidth={1.5} /> Add</Button>
         </div>
         {labor.map(l => (
           <div key={l.id} style={{ display: 'grid', gridTemplateColumns: '3fr 100px 24px', gap: 4, marginBottom: 4, alignItems: 'center' }}>
             <input style={inputStyle} value={l.description} placeholder="e.g. Install crew — 3 days" onChange={e => updateLabor(l.id, 'description', e.target.value)} />
             <input style={inputStyle} type="number" step="0.01" value={l.total_amount} placeholder="$" onChange={e => updateLabor(l.id, 'total_amount', Number(e.target.value))} />
-            <button type="button" onClick={() => deleteLabor(l.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}><Trash2 size={12} color="#DC2626" /></button>
+            <button type="button" onClick={() => deleteLabor(l.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}><Trash2 className="h-4 w-4" strokeWidth={1.5} color="#DC2626" /></button>
           </div>
         ))}
         {labor.length > 0 && <p style={{ textAlign: 'right', fontSize: 12, fontWeight: 600, color: '#333', marginTop: 4 }}>Labor: {fmtCurrency(totalLabor)}</p>}
@@ -145,13 +145,13 @@ export function JobCosting({ jobId, jobRevenue }: Props) {
       <div style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <p style={labelStyle}>Other Expenses</p>
-          <Button variant="ghost" size="sm" type="button" onClick={addOther}><Plus size={12} /> Add</Button>
+          <Button variant="ghost" size="sm" type="button" onClick={addOther}><Plus className="h-4 w-4" strokeWidth={1.5} /> Add</Button>
         </div>
         {other.map(o => (
           <div key={o.id} style={{ display: 'grid', gridTemplateColumns: '3fr 100px 24px', gap: 4, marginBottom: 4, alignItems: 'center' }}>
             <input style={inputStyle} value={o.description} placeholder="e.g. Dump fee, diesel, rental" onChange={e => updateOther(o.id, 'description', e.target.value)} />
             <input style={inputStyle} type="number" step="0.01" value={o.amount} placeholder="$" onChange={e => updateOther(o.id, 'amount', Number(e.target.value))} />
-            <button type="button" onClick={() => deleteOther(o.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}><Trash2 size={12} color="#DC2626" /></button>
+            <button type="button" onClick={() => deleteOther(o.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}><Trash2 className="h-4 w-4" strokeWidth={1.5} color="#DC2626" /></button>
           </div>
         ))}
         {other.length > 0 && <p style={{ textAlign: 'right', fontSize: 12, fontWeight: 600, color: '#333', marginTop: 4 }}>Other: {fmtCurrency(totalOther)}</p>}

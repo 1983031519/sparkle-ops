@@ -302,7 +302,7 @@ export default function SchedulePage() {
                 boxShadow: view === 'calendar' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
               }}
             >
-              <CalendarIcon size={14} /> Calendar
+              <CalendarIcon className="h-4 w-4" strokeWidth={1.5} /> Calendar
             </button>
             <button
               onClick={() => setView('list')}
@@ -315,7 +315,7 @@ export default function SchedulePage() {
                 boxShadow: view === 'list' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
               }}
             >
-              <ListIcon size={14} /> List
+              <ListIcon className="h-4 w-4" strokeWidth={1.5} /> List
             </button>
           </div>
         </div>
@@ -355,7 +355,7 @@ export default function SchedulePage() {
                 fontSize: 11, fontWeight: 600, cursor: 'pointer',
               }}
             >
-              <CheckCircle2 size={12} /> Google Calendar Connected
+              <CheckCircle2 className="h-4 w-4" strokeWidth={1.5} /> Google Calendar Connected
             </button>
           ) : (
             <button
@@ -367,11 +367,11 @@ export default function SchedulePage() {
                 fontSize: 12, fontWeight: 600, cursor: 'pointer',
               }}
             >
-              <Link2 size={12} /> Connect Google Calendar
+              <Link2 className="h-4 w-4" strokeWidth={1.5} /> Connect Google Calendar
             </button>
           ))}
           <Button size="sm" onClick={openNew}>
-            <Plus size={14} strokeWidth={2} /> New Event
+            <Plus className="h-4 w-4" strokeWidth={1.5} /> New Event
           </Button>
         </div>
       </div>
@@ -456,9 +456,9 @@ function CalendarView({
       {/* Month header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button onClick={onPrev} style={navBtn}><ChevronLeft size={16} /></button>
+          <button onClick={onPrev} style={navBtn}><ChevronLeft className="h-4 w-4" strokeWidth={1.5} /></button>
           <button onClick={onToday} style={{ ...navBtn, padding: '6px 12px', width: 'auto', fontSize: 12, fontWeight: 600 }}>Today</button>
-          <button onClick={onNext} style={navBtn}><ChevronRight size={16} /></button>
+          <button onClick={onNext} style={navBtn}><ChevronRight className="h-4 w-4" strokeWidth={1.5} /></button>
         </div>
         <span style={{ fontSize: 16, fontWeight: 700, color: '#111827' }}>
           {format(month, 'MMMM yyyy', { locale: enUS })}
@@ -666,26 +666,26 @@ function ListView({
                     </div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, fontSize: 11, color: '#6B7280' }}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                        <Clock size={11} />{timeRange(ev.time_start, ev.time_end)}
+                        <Clock className="h-4 w-4" strokeWidth={1.5} />{timeRange(ev.time_start, ev.time_end)}
                       </span>
                       {client && (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                          <UserIcon size={11} />{client.name}
+                          <UserIcon className="h-4 w-4" strokeWidth={1.5} />{client.name}
                         </span>
                       )}
                       {vendor && (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: '#7C3AED' }}>
-                          <Building2 size={11} />{vendor.name}
+                          <Building2 className="h-4 w-4" strokeWidth={1.5} />{vendor.name}
                         </span>
                       )}
                       {ev.guests && ev.guests.length > 0 && (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }} title={ev.guests.join(', ')}>
-                          <UserIcon size={11} />{ev.guests.length} guest{ev.guests.length > 1 ? 's' : ''}
+                          <UserIcon className="h-4 w-4" strokeWidth={1.5} />{ev.guests.length} guest{ev.guests.length > 1 ? 's' : ''}
                         </span>
                       )}
                       {ev.address && (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 260 }}>
-                          <MapPin size={11} />{ev.address}
+                          <MapPin className="h-4 w-4" strokeWidth={1.5} />{ev.address}
                         </span>
                       )}
                     </div>
@@ -773,7 +773,7 @@ function GuestsField({
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3451D1', display: 'inline-flex', padding: 0 }}
                   title="Remove"
                 >
-                  <X size={12} strokeWidth={2.5} />
+                  <X className="h-4 w-4" strokeWidth={2} />
                 </button>
               )}
             </span>
@@ -1039,7 +1039,7 @@ function EventModal({
         <div>
           {isEdit && canEdit && onDelete && (
             <Button variant="danger" size="sm" onClick={onDelete}>
-              <Trash2 size={14} /> Delete
+              <Trash2 className="h-4 w-4" strokeWidth={1.5} /> Delete
             </Button>
           )}
         </div>
@@ -1063,11 +1063,11 @@ function EventModal({
                 textDecoration: 'none',
               }}
             >
-              <ExternalLink size={13} /> Add to Google Calendar
+              <ExternalLink className="h-4 w-4" strokeWidth={1.5} /> Add to Google Calendar
             </a>
           )}
           <Button variant="secondary" size="md" onClick={onClose}>
-            <X size={14} /> Cancel
+            <X className="h-4 w-4" strokeWidth={2} /> Cancel
           </Button>
           {canEdit && (
             <Button onClick={save} disabled={saving}>

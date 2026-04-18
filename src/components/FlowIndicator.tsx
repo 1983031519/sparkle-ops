@@ -16,9 +16,9 @@ export function FlowIndicator({ steps }: { steps: Step[] }) {
             step.status === 'active' ? 'bg-[#EEF1FE] text-[#4F6CF7] border-[#4F6CF7]/20' :
                                        'bg-[#F3F4F6] text-[#9CA3AF] border-[#E5E7EB]'
           }`}>
-            {step.status === 'done'    ? <CheckCircle size={12} strokeWidth={1.5} /> :
-             step.status === 'active'  ? <Circle size={12} strokeWidth={1.5} /> :
-                                         <Clock size={12} strokeWidth={1.5} />}
+            {step.status === 'done'    ? <CheckCircle className="h-4 w-4" strokeWidth={1.5} /> :
+             step.status === 'active'  ? <Circle className="h-4 w-4" strokeWidth={1.5} /> :
+                                         <Clock className="h-4 w-4" strokeWidth={1.5} />}
             {step.label}
           </span>
         </span>
