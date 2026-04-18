@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { Send, ArrowLeft } from 'lucide-react'
+import { Send, ArrowLeft, MessageSquare, MessagesSquare } from 'lucide-react'
 import { useChatContext, type DirectMessage, type TeamMember } from '@/contexts/ChatContext'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -238,7 +238,7 @@ function ChatPanel({
               fontSize: 13, fontWeight: 600, flexShrink: 0,
             }}
           >
-            <ArrowLeft size={18} strokeWidth={2} />
+            <ArrowLeft className="h-5 w-5" strokeWidth={1.5} />
           </button>
         )}
         <Avatar member={activeMember} size={isMobile ? 36 : 40} />
@@ -268,7 +268,7 @@ function ChatPanel({
       >
         {conversation.length === 0 ? (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8 }}>
-            <span style={{ fontSize: 32 }}>👋</span>
+            <MessageSquare className="h-12 w-12 text-gray-300" strokeWidth={1.5} />
             <span style={{ fontSize: 14, color: '#9CA3AF' }}>
               No messages yet. Say hello to {activeMember.full_name || activeMember.email}!
             </span>
@@ -364,7 +364,7 @@ function ChatPanel({
             transition: 'background-color 150ms',
           }}
         >
-          <Send size={16} strokeWidth={1.5} color={input.trim() && !sending ? 'white' : '#9CA3AF'} />
+          <Send className="h-4 w-4" strokeWidth={1.5} color={input.trim() && !sending ? 'white' : '#9CA3AF'} />
         </button>
       </div>
     </div>
@@ -556,7 +556,7 @@ export default function ChatPage() {
             flex: 1, display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24,
           }}>
-            <span style={{ fontSize: 48 }}>💬</span>
+            <MessagesSquare className="h-12 w-12 text-gray-300" strokeWidth={1.5} />
             <p style={{ margin: 0, fontSize: 15, color: '#6B7280', textAlign: 'center', maxWidth: 320 }}>
               Select a team member to start a conversation
             </p>

@@ -166,7 +166,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '12px 14px' : '16px 20px', borderBottom: '1px solid #F3F4F6' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <CalendarIcon size={isMobile ? 13 : 14} color="#4F6CF7" strokeWidth={2} />
+          <CalendarIcon className="h-4 w-4" strokeWidth={1.5} color="#4F6CF7" />
           <p style={{ fontSize: isMobile ? 13 : 14, fontWeight: 600, color: '#111827' }}>Schedule</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 10 }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#6B7280' }}>
@@ -178,7 +178,7 @@ export default function DashboardPage() {
           </div>
         </div>
         <Link to="/schedule" style={{ fontSize: isMobile ? 11 : 12, fontWeight: 500, color: '#4F6CF7', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
-          See all <ArrowRight size={12} />
+          See all <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
         </Link>
       </div>
 
@@ -216,7 +216,7 @@ export default function DashboardPage() {
                   </div>
                   {item.kind === 'event' && item.time_start && (
                     <p style={{ fontSize: isMobile ? 10 : 11, color: '#6B7280', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                      <Clock size={10} /> {fmtEventTime(item.time_start)}
+                      <Clock className="h-4 w-4" strokeWidth={1.5} /> {fmtEventTime(item.time_start)}
                     </p>
                   )}
                 </div>
@@ -229,8 +229,8 @@ export default function DashboardPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '12px 14px 6px' : '14px 20px 6px', borderTop: '1px solid #F3F4F6' }}>
         <span style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{format(currentMonth, 'MMMM yyyy', { locale: enUS })}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <button onClick={() => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() - 1))} style={{ background: 'none', border: '1px solid #E5E7EB', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: '#6B7280', display: 'flex', alignItems: 'center' }}><ChevronLeft style={{ width: 14, height: 14 }} /></button>
-          <button onClick={() => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() + 1))} style={{ background: 'none', border: '1px solid #E5E7EB', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: '#6B7280', display: 'flex', alignItems: 'center' }}><ChevronRight style={{ width: 14, height: 14 }} /></button>
+          <button onClick={() => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() - 1))} style={{ background: 'none', border: '1px solid #E5E7EB', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: '#6B7280', display: 'flex', alignItems: 'center' }}><ChevronLeft className="h-4 w-4" strokeWidth={1.5} /></button>
+          <button onClick={() => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() + 1))} style={{ background: 'none', border: '1px solid #E5E7EB', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: '#6B7280', display: 'flex', alignItems: 'center' }}><ChevronRight className="h-4 w-4" strokeWidth={1.5} /></button>
         </div>
       </div>
       <div style={{ padding: isMobile ? '0 10px 12px' : '0 20px 20px' }}>
@@ -285,22 +285,25 @@ export default function DashboardPage() {
   /* ─── MOBILE ─── */
   if (isMobile) {
     const today = format(new Date(), 'EEEE, MMMM d', { locale: enUS })
-    const modules = [
+    const modules: Array<{
+      icon: typeof FileText; label: string; value: string | null; sub: string;
+      to: string; color: string; badge?: boolean
+    }> = [
       { icon: FileText,  label: 'Estimates',     value: String(pendingEstimates), sub: 'pending',   to: '/estimates', color: '#4F6CF7' },
       { icon: Briefcase, label: 'Jobs',           value: String(activeJobs),      sub: 'active',    to: '/jobs',      color: '#7C3AED' },
       { icon: DollarSign,label: 'Invoices',       value: fmtCurrency(outstanding),sub: 'unpaid',    to: '/invoices',  color: '#F59E0B' },
       { icon: FolderOpen,label: 'Projects',       value: String(activeProjects),  sub: 'active',    to: '/projects',  color: '#0EA5E9' },
       { icon: Users,     label: 'Clients',        value: String(clientCount),     sub: 'total',     to: '/clients',   color: '#6B7280' },
       { icon: UserCheck, label: 'Vendors & Team', value: String(activeVendors),   sub: 'active',    to: '/vendors',   color: '#10B981' },
-      { icon: Package,   label: 'Inventory',      value: lowStock.length > 0 ? String(lowStock.length) : '✓', sub: lowStock.length > 0 ? 'low stock' : 'all good', to: '/inventory', color: lowStock.length > 0 ? '#EF4444' : '#10B981' },
-      { icon: MessageSquare, label: 'Chat', value: unreadCount > 0 ? String(unreadCount) : '✓', sub: unreadCount > 0 ? 'unread messages' : 'all caught up', to: '/chat', color: '#0891B2', badge: unreadCount > 0 },
+      { icon: Package,   label: 'Inventory',      value: lowStock.length > 0 ? String(lowStock.length) : null, sub: lowStock.length > 0 ? 'low stock' : 'No low stock', to: '/inventory', color: lowStock.length > 0 ? '#EF4444' : '#10B981' },
+      { icon: MessageSquare, label: 'Chat', value: unreadCount > 0 ? String(unreadCount) : null, sub: unreadCount > 0 ? 'unread messages' : 'All caught up', to: '/chat', color: '#0891B2', badge: unreadCount > 0 },
     ]
 
     return (
       <div style={{ background: '#F8F9FC', minHeight: '100vh' }}>
         <div style={{ background: 'white', borderBottom: '1px solid #E5E7EB', padding: '20px 20px 24px' }}>
           <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{today}</p>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 16 }}>{new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'}, {firstName} 👋</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 16 }}>{new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'}, {firstName}.</h1>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
             {[
               { label: 'Faturamento', value: fmtCurrency(revenue) },
@@ -319,7 +322,7 @@ export default function DashboardPage() {
 
         {lowStock.length > 0 && (
           <div style={{ margin: '0 16px', background: '#FFFBEB', borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #FDE68A' }}>
-            <AlertTriangle size={14} strokeWidth={2} color="#F59E0B" />
+            <AlertTriangle className="h-4 w-4" strokeWidth={2} color="#F59E0B" />
             <p style={{ fontSize: 12, color: '#92400E' }}><strong>Low stock:</strong> {lowStock.length} item{lowStock.length > 1 ? 's' : ''}</p>
           </div>
         )}
@@ -336,15 +339,17 @@ export default function DashboardPage() {
               }}
             >
               <div style={{ position: 'relative', width: 36, height: 36, borderRadius: 8, background: mod.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <mod.icon size={18} strokeWidth={1.75} color={mod.color} />
+                <mod.icon className="h-5 w-5" strokeWidth={1.5} color={mod.color} />
                 {'badge' in mod && mod.badge && (
                   <div style={{ position: 'absolute', top: -3, right: -3, width: 10, height: 10, borderRadius: '50%', background: '#4F6CF7', border: '2px solid white' }} />
                 )}
               </div>
               <div>
                 <p style={{ fontSize: 12, fontWeight: 500, color: '#6B7280' }}>{mod.label}</p>
-                <p style={{ fontSize: 18, fontWeight: 700, color: '#111827', fontVariantNumeric: 'tabular-nums', marginTop: 2 }}>{mod.value}</p>
-                <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 1 }}>{mod.sub}</p>
+                {mod.value !== null && (
+                  <p style={{ fontSize: 18, fontWeight: 700, color: '#111827', fontVariantNumeric: 'tabular-nums', marginTop: 2 }}>{mod.value}</p>
+                )}
+                <p style={{ fontSize: 11, color: mod.value === null ? '#9CA3AF' : '#9CA3AF', marginTop: mod.value === null ? 6 : 1 }}>{mod.sub}</p>
               </div>
             </button>
           ))}
@@ -380,7 +385,7 @@ export default function DashboardPage() {
     <div style={{ padding: '28px 32px', maxWidth: 1280, margin: '0 auto' }}>
       {/* Greeting */}
       <div style={{ marginBottom: 20 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: '#111827' }}>{greeting}, {firstName} 👋</h2>
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: '#111827' }}>{greeting}, {firstName}.</h2>
         <p style={{ fontSize: 14, color: '#6B7280', marginTop: 4 }}>Here's what's happening with your business today.</p>
       </div>
 
@@ -400,14 +405,14 @@ export default function DashboardPage() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                 <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6B7280' }}>{kpi.label}</p>
                 <div style={{ width: 34, height: 34, borderRadius: 8, background: kpi.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <KpiIcon size={16} strokeWidth={2} color={kpi.iconColor} />
+                  <KpiIcon className="h-4 w-4" strokeWidth={1.5} color={kpi.iconColor} />
                 </div>
               </div>
               <p style={{ fontSize: 28, fontWeight: 700, color: '#111827', lineHeight: 1.1, fontVariantNumeric: 'tabular-nums', marginBottom: 8 }}>{kpi.value}</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 {positive
-                  ? <TrendingUp size={13} color="#10B981" />
-                  : <TrendingDown size={13} color="#EF4444" />
+                  ? <TrendingUp className="h-4 w-4" strokeWidth={1.5} color="#10B981" />
+                  : <TrendingDown className="h-4 w-4" strokeWidth={1.5} color="#EF4444" />
                 }
                 <span style={{ fontSize: 12, fontWeight: 600, color: positive ? '#059669' : '#DC2626' }}>
                   {kpi.pct > 0 ? '+' : ''}{kpi.pct}%
@@ -422,7 +427,7 @@ export default function DashboardPage() {
       {/* Low stock alert */}
       {lowStock.length > 0 && (
         <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 10, padding: '12px 16px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <AlertTriangle style={{ width: 16, height: 16, color: '#F59E0B', flexShrink: 0 }} />
+          <AlertTriangle className="h-4 w-4 shrink-0" strokeWidth={2} color="#F59E0B" />
           <p style={{ fontSize: 13, color: '#92400E' }}><strong>Low stock alert:</strong> {lowStock.map(i => `${i.name} (${i.quantity} left)`).join(' · ')}</p>
         </div>
       )}
@@ -434,7 +439,7 @@ export default function DashboardPage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #F3F4F6' }}>
             <p style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Recent Jobs</p>
             <Link to="/jobs" style={{ fontSize: 12, fontWeight: 500, color: '#4F6CF7', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
-              See all <ArrowRight size={12} />
+              See all <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
             </Link>
           </div>
           {jobs.length === 0
@@ -459,7 +464,7 @@ export default function DashboardPage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #F3F4F6' }}>
             <p style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Recent Invoices</p>
             <Link to="/invoices" style={{ fontSize: 12, fontWeight: 500, color: '#4F6CF7', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
-              See all <ArrowRight size={12} />
+              See all <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
             </Link>
           </div>
           {invoices.length === 0

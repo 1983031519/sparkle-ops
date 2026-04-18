@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Send, Trash2 } from 'lucide-react'
+import { Send, Trash2, BarChart3, DollarSign, TrendingUp, Flame, Plus } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { askAi } from '@/lib/ai'
 import { useRockoContext } from '@/hooks/useRockoContext'
 import { format } from 'date-fns'
@@ -11,12 +12,12 @@ interface Msg {
   time: string
 }
 
-const QUICK_ACTIONS = [
-  { emoji: '📊', label: 'Resumo do dia', message: 'Me dê um resumo completo do dia de hoje — jobs, invoices, o que preciso resolver.' },
-  { emoji: '💰', label: 'Invoices em aberto', message: 'Quais invoices estão em aberto? Liste com valores e quem deve.' },
-  { emoji: '📈', label: 'Margem do mês', message: 'Qual minha margem de lucro este mês? Compare com o mês passado.' },
-  { emoji: '🔥', label: 'Insights do mercado', message: 'Me dê insights sobre o mercado de pavers e stone na região de Sarasota/Bradenton agora. O que devo prestar atenção?' },
-  { emoji: '➕', label: 'Novo job / proposta', message: 'Quero criar um novo job ou proposta. Me ajude a pensar no escopo e preço.' },
+const QUICK_ACTIONS: Array<{ icon: LucideIcon; label: string; message: string }> = [
+  { icon: BarChart3,  label: 'Resumo do dia',        message: 'Me dê um resumo completo do dia de hoje — jobs, invoices, o que preciso resolver.' },
+  { icon: DollarSign, label: 'Invoices em aberto',   message: 'Quais invoices estão em aberto? Liste com valores e quem deve.' },
+  { icon: TrendingUp, label: 'Margem do mês',        message: 'Qual minha margem de lucro este mês? Compare com o mês passado.' },
+  { icon: Flame,      label: 'Insights do mercado',  message: 'Me dê insights sobre o mercado de pavers e stone na região de Sarasota/Bradenton agora. O que devo prestar atenção?' },
+  { icon: Plus,       label: 'Novo job / proposta',  message: 'Quero criar um novo job ou proposta. Me ajude a pensar no escopo e preço.' },
 ]
 
 function timestamp() {
@@ -72,7 +73,7 @@ export default function RockoPage() {
         </div>
         {messages.length > 0 && (
           <button onClick={clearChat} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: '1px solid #E5E7EB', borderRadius: 8, padding: '6px 12px', fontSize: 12, color: '#6B7280', cursor: 'pointer' }}>
-            <Trash2 size={13} strokeWidth={1.5} /> Limpar
+            <Trash2 className="h-4 w-4" strokeWidth={1.5} /> Limpar
           </button>
         )}
       </div>
@@ -89,23 +90,26 @@ export default function RockoPage() {
               <p style={{ fontSize: 14, color: '#6B7280' }}>O que você precisa hoje?</p>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 480 }}>
-              {QUICK_ACTIONS.map(qa => (
-                <button
-                  key={qa.label}
-                  onClick={() => sendMessage(qa.message)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    padding: '10px 16px', borderRadius: 12,
-                    border: '1px solid #E5E7EB', background: 'white',
-                    fontSize: 13, fontWeight: 500, color: '#333',
-                    cursor: 'pointer', transition: 'all 150ms',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#4F6CF7'; e.currentTarget.style.background = '#F8F9FC' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E7EB'; e.currentTarget.style.background = 'white' }}
-                >
-                  <span>{qa.emoji}</span> {qa.label}
-                </button>
-              ))}
+              {QUICK_ACTIONS.map(qa => {
+                const QAIcon = qa.icon
+                return (
+                  <button
+                    key={qa.label}
+                    onClick={() => sendMessage(qa.message)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '10px 16px', borderRadius: 12,
+                      border: '1px solid #E5E7EB', background: 'white',
+                      fontSize: 13, fontWeight: 500, color: '#333',
+                      cursor: 'pointer', transition: 'all 150ms',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#4F6CF7'; e.currentTarget.style.background = '#F8F9FC' }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E7EB'; e.currentTarget.style.background = 'white' }}
+                  >
+                    <QAIcon className="h-4 w-4 text-[#4F6CF7]" strokeWidth={1.5} /> {qa.label}
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}
@@ -174,7 +178,7 @@ export default function RockoPage() {
               transition: 'all 150ms',
             }}
           >
-            <Send size={18} strokeWidth={1.5} />
+            <Send className="h-5 w-5" strokeWidth={1.5} />
           </button>
         </form>
       </div>

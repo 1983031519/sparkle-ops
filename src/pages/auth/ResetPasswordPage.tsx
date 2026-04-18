@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { CheckCircle2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 export default function ResetPasswordPage() {
@@ -53,7 +54,7 @@ export default function ResetPasswordPage() {
             border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
             textAlign: 'center',
           }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>✓</div>
+            <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto mb-3" strokeWidth={1.5} />
             <p style={{ fontSize: 16, fontWeight: 600, color: '#059669', marginBottom: 6 }}>Password updated!</p>
             <p style={{ fontSize: 13, color: '#6B7280' }}>Redirecting to sign in…</p>
           </div>
