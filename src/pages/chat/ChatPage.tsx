@@ -346,7 +346,7 @@ function ChatPanel({
             padding: '10px 14px',
             fontSize: 16, fontFamily: 'inherit', lineHeight: 1.5,
             outline: 'none', maxHeight: 120, overflowY: 'auto',
-            backgroundColor: '#F8F9FC', color: '#111827',
+            backgroundColor: '#F9FAFB', color: '#111827',
             transition: 'border-color 150ms',
           }}
           onFocus={e => { e.currentTarget.style.borderColor = '#4F6CF7' }}
@@ -497,7 +497,7 @@ export default function ChatPage() {
     // Show chat panel full-screen when a conversation is selected
     if (showChat && activeMember) {
       return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#F8F9FC' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#F9FAFB' }}>
           <ChatPanel
             activeMember={activeMember}
             conversation={conversation}
@@ -538,7 +538,7 @@ export default function ChatPage() {
 
   /* ─── DESKTOP ─── */
   return (
-    <div style={{ display: 'flex', height: '100%', background: '#F8F9FC' }}>
+    <div style={{ display: 'flex', height: '100%', background: '#F9FAFB' }}>
       <ConversationList
         loading={loading}
         sortedMembers={sortedMembers}

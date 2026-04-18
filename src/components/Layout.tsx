@@ -229,7 +229,7 @@ export function Layout() {
           </div>
         </header>
 
-        <main style={{ flex: 1, background: '#F8F9FC', paddingBottom: 70, overflowX: 'hidden' }}>
+        <main style={{ flex: 1, background: '#F9FAFB', paddingBottom: 70, overflowX: 'hidden' }}>
           <Outlet />
         </main>
 
@@ -408,7 +408,7 @@ export function Layout() {
           </div>
         </header>
 
-        <main style={{ flex: 1, overflow: 'auto', background: '#F8F9FC' }}>
+        <main style={{ flex: 1, overflow: 'auto', background: '#F9FAFB' }}>
           <Outlet />
         </main>
       </div>

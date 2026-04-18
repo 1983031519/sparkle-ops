@@ -8,9 +8,9 @@
 
   /* ── Surfaces ── */
   --color-sidebar-bg: #FFFFFF;
-  --color-page-bg: #F8F9FC;
+  --color-page-bg: #F9FAFB;
   --color-card-bg: #FFFFFF;
-  --color-surface: #F8F9FC;
+  --color-surface: #F9FAFB;
 
   /* ── Text ── */
   --color-text-primary: #111827;
@@ -68,7 +68,7 @@
 
 @layer base {
   body {
-    background: #F8F9FC;
+    background: #F9FAFB;
     color: #111827;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     font-variant-numeric: tabular-nums;

@@ -380,7 +380,7 @@ export default function DashboardPage() {
   /* ─── MOBILE ─── */
   if (isMobile) {
     return (
-      <div style={{ background: '#F8F9FC', minHeight: '100vh' }}>
+      <div style={{ background: '#F9FAFB', minHeight: '100vh' }}>
         {/* Header */}
         <div style={{ background: 'white', borderBottom: '1px solid #E5E7EB', padding: '20px 16px 20px' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>

@@ -103,7 +103,7 @@ export default function RockoPage() {
                       fontSize: 13, fontWeight: 500, color: '#333',
                       cursor: 'pointer', transition: 'all 150ms',
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#4F6CF7'; e.currentTarget.style.background = '#F8F9FC' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#4F6CF7'; e.currentTarget.style.background = '#F9FAFB' }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E7EB'; e.currentTarget.style.background = 'white' }}
                   >
                     <QAIcon className="h-4 w-4 text-[#4F6CF7]" strokeWidth={1.5} /> {qa.label}
