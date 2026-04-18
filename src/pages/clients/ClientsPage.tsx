@@ -82,7 +82,7 @@ function ClientDetailPanel({ client, contacts, onEdit, onClose, isMobile }: {
       }}>
         {isMobile && (
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#4F6CF7', flexShrink: 0 }}>
-            <ArrowLeft size={18} strokeWidth={2} />
+            <ArrowLeft className="h-5 w-5" strokeWidth={1.5} />
           </button>
         )}
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -99,11 +99,11 @@ function ClientDetailPanel({ client, contacts, onEdit, onClose, isMobile }: {
           fontSize: 12, fontWeight: 500, color: '#374151', cursor: 'pointer',
           flexShrink: 0,
         }}>
-          <Edit2 size={12} strokeWidth={2} /> Edit
+          <Edit2 className="h-4 w-4" strokeWidth={1.5} /> Edit
         </button>
         {!isMobile && (
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#9CA3AF' }}>
-            <X size={16} strokeWidth={2} />
+            <X className="h-4 w-4" strokeWidth={2} />
           </button>
         )}
       </div>
@@ -114,19 +114,19 @@ function ClientDetailPanel({ client, contacts, onEdit, onClose, isMobile }: {
         <div style={{ marginBottom: 20 }}>
           {client.email && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <Mail size={14} color="#9CA3AF" strokeWidth={1.5} />
+              <Mail className="h-4 w-4 text-gray-400" strokeWidth={1.5} />
               <a href={`mailto:${client.email}`} style={{ fontSize: 13, color: '#4F6CF7', textDecoration: 'none' }}>{client.email}</a>
             </div>
           )}
           {client.phone && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <Phone size={14} color="#9CA3AF" strokeWidth={1.5} />
+              <Phone className="h-4 w-4 text-gray-400" strokeWidth={1.5} />
               <a href={`tel:${client.phone}`} style={{ fontSize: 13, color: '#374151', textDecoration: 'none' }}>{client.phone}</a>
             </div>
           )}
           {client.address && (
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-              <MapPin size={14} color="#9CA3AF" strokeWidth={1.5} style={{ marginTop: 2, flexShrink: 0 }} />
+              <MapPin className="h-4 w-4 text-gray-400 shrink-0" strokeWidth={1.5} style={{ marginTop: 2 }} />
               <span style={{ fontSize: 13, color: '#374151' }}>{client.address}</span>
             </div>
           )}
@@ -221,7 +221,7 @@ function LinkedSection({ icon: Icon, title, count, children, onViewAll }: {
     <div style={{ marginBottom: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Icon size={14} color="#6B7280" strokeWidth={1.5} />
+          <Icon className="h-4 w-4 text-gray-500" strokeWidth={1.5} />
           <h4 style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#374151' }}>{title}</h4>
           <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 500 }}>({count})</span>
         </div>
@@ -230,7 +230,7 @@ function LinkedSection({ icon: Icon, title, count, children, onViewAll }: {
             background: 'none', border: 'none', cursor: 'pointer',
             fontSize: 11, fontWeight: 500, color: '#4F6CF7', display: 'flex', alignItems: 'center', gap: 2,
           }}>
-            View all <ChevronRight size={12} />
+            View all <ChevronRight className="h-4 w-4" strokeWidth={1.5} />
           </button>
         )}
       </div>

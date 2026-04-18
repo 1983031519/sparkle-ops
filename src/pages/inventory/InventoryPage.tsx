@@ -206,7 +206,7 @@ export default function InventoryPage() {
                 return (
                   <div className="flex items-center gap-2.5">
                     <div style={{ width: 30, height: 30, borderRadius: 7, background: `${catColors[i.category] === 'orange' ? '#FFEDD5' : catColors[i.category] === 'blue' ? '#DBEAFE' : catColors[i.category] === 'green' ? '#D1FAE5' : '#F3F4F6'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <CatIcon size={14} strokeWidth={1.75} color={catColors[i.category] === 'orange' ? '#C2410C' : catColors[i.category] === 'blue' ? '#1E40AF' : catColors[i.category] === 'green' ? '#065F46' : '#374151'} />
+                      <CatIcon className="h-4 w-4" strokeWidth={1.5} color={catColors[i.category] === 'orange' ? '#C2410C' : catColors[i.category] === 'blue' ? '#1E40AF' : catColors[i.category] === 'green' ? '#065F46' : '#374151'} />
                     </div>
                     <div style={{ minWidth: 0 }}>
                       <p style={{ fontSize: 13, fontWeight: 500, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{i.name}</p>
@@ -283,7 +283,7 @@ function SummaryCard({ label, value, color, icon: Icon }: { label: string; value
     <div style={{ background: 'white', borderRadius: 10, padding: '16px 20px', border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
       <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6B7280', marginBottom: 6 }}>{label}</p>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        {Icon && <Icon size={16} strokeWidth={2} color={color} />}
+        {Icon && <Icon className="h-4 w-4" strokeWidth={1.5} color={color} />}
         <p style={{ fontSize: 22, fontWeight: 700, color, fontVariantNumeric: 'tabular-nums', lineHeight: 1.1 }}>{value}</p>
       </div>
     </div>

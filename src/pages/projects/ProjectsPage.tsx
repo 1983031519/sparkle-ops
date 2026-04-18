@@ -211,7 +211,7 @@ export default function ProjectsPage() {
   return (
     <div className="space-y-6 p-4 sm:p-6">
       <div className="flex items-center justify-end">
-        <Button onClick={openNew}><Plus size={16} strokeWidth={1.5} /> New Project</Button>
+        <Button onClick={openNew}><Plus className="h-4 w-4" strokeWidth={1.5} /> New Project</Button>
       </div>
 
       <Card>
@@ -237,8 +237,8 @@ export default function ProjectsPage() {
             { key: 'viewed', header: '', render: p => viewedDocIds.has(p.id) ? <span style={{ fontSize: 10, fontWeight: 600, color: '#16a34a', background: '#f0fdf4', padding: '2px 7px', borderRadius: 10, border: '1px solid #bbf7d0', whiteSpace: 'nowrap' }}>Viewed</span> : null },
             { key: 'actions', header: '', render: p => (
               <div className="flex gap-2" onClick={ev => ev.stopPropagation()}>
-                {p.status === 'Approved' && <Button variant="gold" size="sm" onClick={() => convertToJob(p)}><ArrowRight size={14} strokeWidth={1.5} /> Job</Button>}
-                <Button variant="ghost" size="sm" onClick={() => openPreview(p)}><Printer size={14} strokeWidth={1.5} /></Button>
+                {p.status === 'Approved' && <Button variant="gold" size="sm" onClick={() => convertToJob(p)}><ArrowRight className="h-4 w-4" strokeWidth={1.5} /> Job</Button>}
+                <Button variant="ghost" size="sm" onClick={() => openPreview(p)}><Printer className="h-4 w-4" strokeWidth={1.5} /></Button>
               </div>
             )},
           ]} />
@@ -287,9 +287,9 @@ export default function ProjectsPage() {
                   <div className="flex items-center justify-between">
                     <span style={{ fontSize: 12, fontWeight: 700, color: '#111827' }}>Phase {ph.order_num}</span>
                     <div className="flex gap-1">
-                      <button type="button" onClick={() => movePhase(i, -1)} disabled={i === 0} className="p-1 text-stone-400 hover:text-stone-600 disabled:opacity-30"><ChevronUp size={14} /></button>
-                      <button type="button" onClick={() => movePhase(i, 1)} disabled={i === phases.length - 1} className="p-1 text-stone-400 hover:text-stone-600 disabled:opacity-30"><ChevronDown size={14} /></button>
-                      {phases.length > 1 && <button type="button" onClick={() => removePhase(i)} className="p-1 text-red-400 hover:text-red-600"><Trash2 size={14} /></button>}
+                      <button type="button" onClick={() => movePhase(i, -1)} disabled={i === 0} className="p-1 text-stone-400 hover:text-stone-600 disabled:opacity-30"><ChevronUp className="h-4 w-4" strokeWidth={1.5} /></button>
+                      <button type="button" onClick={() => movePhase(i, 1)} disabled={i === phases.length - 1} className="p-1 text-stone-400 hover:text-stone-600 disabled:opacity-30"><ChevronDown className="h-4 w-4" strokeWidth={1.5} /></button>
+                      {phases.length > 1 && <button type="button" onClick={() => removePhase(i)} className="p-1 text-red-400 hover:text-red-600"><Trash2 className="h-4 w-4" strokeWidth={1.5} /></button>}
                     </div>
                   </div>
                   <Input label="Phase Title" id={`ph-title-${i}`} value={ph.title} onChange={e => updatePhase(i, 'title', e.target.value)} placeholder="e.g. Demolition & Site Prep" />
@@ -360,7 +360,7 @@ export default function ProjectsPage() {
           <div className="flex justify-between border-t border-stone-200 pt-4">
             {editing && <Button variant="danger" onClick={handleDelete} type="button">Delete</Button>}
             <div className="ml-auto flex gap-2">
-              {editing && editing.status === 'Approved' && <Button variant="gold" onClick={() => { convertToJob(editing); setModalOpen(false) }} type="button"><ArrowRight size={14} /> Convert to Job</Button>}
+              {editing && editing.status === 'Approved' && <Button variant="gold" onClick={() => { convertToJob(editing); setModalOpen(false) }} type="button"><ArrowRight className="h-4 w-4" strokeWidth={1.5} /> Convert to Job</Button>}
               <Button variant="secondary" onClick={() => setModalOpen(false)} type="button">Cancel</Button>
               <Button onClick={handleSave} type="button" disabled={saving}>{saving ? 'Saving...' : editing ? 'Update' : 'Create'}</Button>
             </div>
@@ -475,10 +475,10 @@ function ProjectPreview({ project: p, phases, client, onSent }: { project: Proje
     <>
       <div className="mb-4 no-print flex items-center gap-3">
         <Button onClick={handlePrint} disabled={hasPhotos && !imagesReady}>
-          <Printer size={14} strokeWidth={1.5} /> {hasPhotos && !imagesReady ? 'Preparing images...' : 'Download PDF'}
+          <Printer className="h-4 w-4" strokeWidth={1.5} /> {hasPhotos && !imagesReady ? 'Preparing images...' : 'Download PDF'}
         </Button>
         <Button variant="gold" type="button" onClick={handleSendClick} disabled={generatingPdf || (hasPhotos && !imagesReady)}>
-          <Mail size={14} strokeWidth={1.5} /> {generatingPdf ? 'Preparing...' : 'Send to Client'}
+          <Mail className="h-4 w-4" strokeWidth={1.5} /> {generatingPdf ? 'Preparing...' : 'Send to Client'}
         </Button>
       </div>
       <SendDocumentModal
