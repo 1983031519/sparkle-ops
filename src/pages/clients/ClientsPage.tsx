@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Plus, Search, UserPlus, Trash2, Phone, Mail, X, ArrowLeft, Edit2, FileText, Briefcase, Receipt, MapPin, ChevronRight } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTable } from '@/hooks/useSupabase'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
@@ -300,6 +300,16 @@ export default function ClientsPage() {
     setContacts([{ ...emptyContact }])
     setModalOpen(true)
   }
+
+  // Open modal when navigated with ?new=true (from Dashboard "+ New" dropdown).
+  const [searchParams, setSearchParams] = useSearchParams()
+  useEffect(() => {
+    if (searchParams.get('new') === 'true') {
+      openNew()
+      setSearchParams({}, { replace: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   function selectClient(client: Client) {
     setSelectedClient(client)

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Plus, Search, ArrowRight, CheckSquare, Square, Trash2, PlusCircle, ImageIcon } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
@@ -85,6 +86,16 @@ export default function JobsPage() {
   ), [jobs, debouncedSearch])
 
   function openNew() { setEditing(null); setForm(emptyForm); setChecklist([]); setChangeOrders([]); setPhotos([]); setModalOpen(true) }
+
+  // Open modal when navigated with ?new=true (from Dashboard "+ New" dropdown).
+  const [searchParams, setSearchParams] = useSearchParams()
+  useEffect(() => {
+    if (searchParams.get('new') === 'true') {
+      openNew()
+      setSearchParams({}, { replace: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   async function openEdit(job: Job) {
     setEditing(job)

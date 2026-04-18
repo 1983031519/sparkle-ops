@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Plus, Search, Printer, CheckCircle, Mail, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
@@ -112,6 +113,16 @@ export default function InvoicesPage() {
   }
 
   function openNew() { setEditing(null); setForm({ ...emptyForm, invoice_date: todayISO(), due_date: addDays(todayISO(), 14) }); setModalOpen(true) }
+
+  // Open modal when navigated with ?new=true (from Dashboard "+ New" dropdown).
+  const [searchParams, setSearchParams] = useSearchParams()
+  useEffect(() => {
+    if (searchParams.get('new') === 'true') {
+      openNew()
+      setSearchParams({}, { replace: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   function openEdit(inv: Invoice) {
     setEditing(inv)
