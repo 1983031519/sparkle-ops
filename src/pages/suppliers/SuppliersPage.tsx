@@ -77,17 +77,17 @@ export default function SuppliersPage() {
       <Card>
         <div className="border-b border-[#E5E7EB] px-4 py-3">
           <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-            <input className="w-full rounded-[10px] border border-stone-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-stone-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search suppliers..." value={search} onChange={e => setSearch(e.target.value)} />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input className="w-full rounded-[10px] border border-gray-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-gray-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search suppliers..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
-        {loading ? <p className="p-6 text-sm text-stone-500">Loading...</p> : (
+        {loading ? <p className="p-6 text-sm text-gray-500">Loading...</p> : (
           <Table
             data={filtered}
             onRowClick={openEdit}
             columns={[
               { key: 'name', header: 'Company', render: s => <span className="font-medium">{s.name}</span> },
-              { key: 'category', header: 'Category', render: s => s.category ? <Badge color={(catColors[s.category] ?? 'gray') as never}>{s.category}</Badge> : <span className="text-stone-400">-</span> },
+              { key: 'category', header: 'Category', render: s => s.category ? <Badge color={(catColors[s.category] ?? 'gray') as never}>{s.category}</Badge> : <span className="text-gray-400">-</span> },
               { key: 'contact', header: 'Contact', render: s => s.contact_name ?? '-' },
               { key: 'email', header: 'Email', render: s => s.email ?? '-' },
               { key: 'phone', header: 'Phone', render: s => s.phone ?? '-' },

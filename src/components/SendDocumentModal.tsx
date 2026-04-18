@@ -133,13 +133,13 @@ export function SendDocumentModal({ open, onClose, type, documentId, clientEmail
       <div className="space-y-5">
         {/* Send from */}
         <div>
-          <p className="text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500 mb-1.5">Send from</p>
+          <p className="text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500 mb-1.5">Send from</p>
           <SenderSelector value={senderId} onChange={setSenderId} disabled={sending} />
         </div>
 
         {/* Send to */}
         <div>
-          <p className="text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500 mb-1.5">Send to</p>
+          <p className="text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500 mb-1.5">Send to</p>
           {hasEmail ? (
             <p className="text-[14px] text-[#111827] break-all">{clientEmail}</p>
           ) : (
@@ -149,25 +149,25 @@ export function SendDocumentModal({ open, onClose, type, documentId, clientEmail
 
         {/* Personal message */}
         <div>
-          <p className="text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500 mb-1.5">Message</p>
+          <p className="text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500 mb-1.5">Message</p>
           <textarea
             rows={4}
             value={personalMessage}
             onChange={e => setPersonalMessage(e.target.value)}
             placeholder="Add a personal message to your client..."
-            className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-[13px] text-stone-700 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#4F6CF7]/20 focus:border-[#4F6CF7] resize-y"
+            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4F6CF7]/20 focus:border-[#4F6CF7] resize-y"
           />
         </div>
 
         {/* Summary */}
-        <div className="rounded-lg bg-stone-50 border border-stone-200 p-3 text-[12px] text-stone-600 space-y-1">
+        <div className="rounded-lg bg-gray-50 border border-gray-200 p-3 text-[12px] text-gray-600 space-y-1">
           <div className="flex justify-between"><span>{label} #</span><span className="font-mono text-[#111827]">{documentData.number}</span></div>
           <div className="flex justify-between"><span>Client</span><span className="text-[#111827]">{documentData.clientName || '—'}</span></div>
           <div className="flex justify-between"><span>Total</span><span className="font-semibold text-[#111827]">${documentData.total.toFixed(2)}</span></div>
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-2 border-t border-stone-200 pt-4">
+        <div className="flex justify-end gap-2 border-t border-gray-200 pt-4">
           <Button variant="secondary" type="button" onClick={onClose} disabled={sending}>Cancel</Button>
           <Button type="button" onClick={handleSend} disabled={sending || !hasEmail}>
             <Mail className="h-4 w-4" />

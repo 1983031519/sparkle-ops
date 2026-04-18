@@ -110,7 +110,7 @@ export default function UsersPage() {
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64 text-stone-400">Loading users...</div>
+    return <div className="flex items-center justify-center h-64 text-gray-400">Loading users...</div>
   }
 
   return (

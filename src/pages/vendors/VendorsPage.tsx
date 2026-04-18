@@ -139,23 +139,23 @@ export default function VendorsPage() {
       </div>
 
       <Card>
-        <div className="border-b border-stone-100 px-4 py-3 flex flex-wrap items-center gap-3">
+        <div className="border-b border-gray-100 px-4 py-3 flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-            <input className="w-full rounded-[10px] border border-stone-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-stone-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search vendors & team..." value={search} onChange={e => setSearch(e.target.value)} />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input className="w-full rounded-[10px] border border-gray-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-gray-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search vendors & team..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <div className="flex gap-1">
             {['All', ...ROLES].map(r => (
-              <button key={r} onClick={() => setRoleFilter(r)} className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${roleFilter === r ? 'bg-[#4F6CF7] text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}>{r}</button>
+              <button key={r} onClick={() => setRoleFilter(r)} className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${roleFilter === r ? 'bg-[#4F6CF7] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{r}</button>
             ))}
           </div>
           <div className="flex gap-1">
             {['Active', 'Inactive', 'All'].map(s => (
-              <button key={s} onClick={() => setStatusFilter(s)} className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${statusFilter === s ? 'bg-[#4F6CF7] text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}>{s}</button>
+              <button key={s} onClick={() => setStatusFilter(s)} className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${statusFilter === s ? 'bg-[#4F6CF7] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{s}</button>
             ))}
           </div>
         </div>
-        {loading ? <p className="p-6 text-sm text-stone-500">Loading...</p> : (
+        {loading ? <p className="p-6 text-sm text-gray-500">Loading...</p> : (
           <Table
             data={filtered}
             onRowClick={openEdit}
@@ -163,7 +163,7 @@ export default function VendorsPage() {
               { key: 'name', header: 'Name', render: v => (
                 <div>
                   <span className="font-medium">{displayName(v)}</span>
-                  <span className="ml-1.5 text-[10px] text-stone-400">{v.record_type === 'Individual' ? 'Individual' : 'Company'}</span>
+                  <span className="ml-1.5 text-[10px] text-gray-400">{v.record_type === 'Individual' ? 'Individual' : 'Company'}</span>
                 </div>
               )},
               { key: 'roles', header: 'Roles', render: v => (
@@ -186,7 +186,7 @@ export default function VendorsPage() {
 
           {/* Record Type */}
           <div className="space-y-1.5">
-            <label className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">Record Type</label>
+            <label className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500">Record Type</label>
             <div className="flex gap-4">
               {['Company', 'Individual'].map(t => (
                 <label key={t} className="flex items-center gap-2 cursor-pointer">
@@ -199,7 +199,7 @@ export default function VendorsPage() {
 
           {/* Roles */}
           <div className="space-y-1.5">
-            <label className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">Roles (select all that apply)</label>
+            <label className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500">Roles (select all that apply)</label>
             <div className="flex gap-4">
               {ROLES.map(r => (
                 <label key={r} className="flex items-center gap-2 cursor-pointer">
@@ -284,7 +284,7 @@ export default function VendorsPage() {
 
           <Textarea label="Notes" id="v-notes" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
 
-          <div className="flex justify-between border-t border-stone-200 pt-4">
+          <div className="flex justify-between border-t border-gray-200 pt-4">
             {editing && <Button variant="danger" onClick={handleDelete}>Delete</Button>}
             <div className="ml-auto flex gap-2">
               <Button variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>

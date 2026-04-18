@@ -178,25 +178,25 @@ export default function InventoryPage() {
       <Card>
         <div className="border-b border-[#E5E7EB] px-4 py-3 flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-            <input className="w-full rounded-[10px] border border-stone-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-stone-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search assets..." value={search} onChange={e => setSearch(e.target.value)} />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input className="w-full rounded-[10px] border border-gray-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-gray-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search assets..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <div className="flex gap-1 flex-wrap">
             {['All', ...INVENTORY_CATEGORIES].map(c => (
               <button key={c} onClick={() => setCatFilter(c)}
-                className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${catFilter === c ? 'bg-[#4F6CF7] text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}
+                className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${catFilter === c ? 'bg-[#4F6CF7] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
               >{c}</button>
             ))}
           </div>
           <div className="flex gap-1">
             {['All', ...ASSET_STATUSES].map(s => (
               <button key={s} onClick={() => setStatusFilter(s)}
-                className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${statusFilter === s ? 'bg-[#111827] text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}
+                className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${statusFilter === s ? 'bg-[#111827] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
               >{s}</button>
             ))}
           </div>
         </div>
-        {loading ? <p className="p-6 text-sm text-stone-500">Loading...</p> : (
+        {loading ? <p className="p-6 text-sm text-gray-500">Loading...</p> : (
           <Table
             data={filtered}
             onRowClick={openEdit}
@@ -250,8 +250,8 @@ export default function InventoryPage() {
 
           {/* Materials & Stock: stock-specific fields */}
           {isMaterialsCategory && (
-            <div className="border rounded-lg border-stone-200 p-4 space-y-3">
-              <h3 className="text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">Stock Details</h3>
+            <div className="border rounded-lg border-gray-200 p-4 space-y-3">
+              <h3 className="text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500">Stock Details</h3>
               <div className="grid gap-3 sm:grid-cols-4">
                 <Input label="Quantity" id="inv-qty" type="number" value={form.quantity} onChange={e => setForm(f => ({ ...f, quantity: Number(e.target.value) }))} />
                 <Input label="Unit" id="inv-unit" value={form.unit} onChange={e => setForm(f => ({ ...f, unit: e.target.value }))} />
@@ -264,7 +264,7 @@ export default function InventoryPage() {
           <Select label="Supplier" id="inv-sup" value={form.supplier_id} onChange={e => setForm(f => ({ ...f, supplier_id: e.target.value }))} options={[{ value: '', label: '— None —' }, ...suppliers.map(s => ({ value: s.id, label: s.name }))]} />
           <Textarea label="Notes" id="inv-notes" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
 
-          <div className="flex justify-between border-t border-stone-200 pt-4">
+          <div className="flex justify-between border-t border-gray-200 pt-4">
             {editing && <Button variant="danger" onClick={handleDelete}>Delete</Button>}
             <div className="ml-auto flex gap-2">
               <Button variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>

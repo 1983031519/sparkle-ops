@@ -24,7 +24,7 @@ import ChatPage from '@/pages/chat/ChatPage'
 
 function ProtectedRoutes() {
   const { user, loading } = useAuth()
-  if (loading) return <div className="flex h-screen items-center justify-center text-stone-500">Loading...</div>
+  if (loading) return <div className="flex h-screen items-center justify-center text-gray-500">Loading...</div>
   if (!user) return <Navigate to="/login" replace />
   return (
     <ChatProvider>

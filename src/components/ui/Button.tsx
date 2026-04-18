@@ -4,9 +4,9 @@ import type { ButtonHTMLAttributes } from 'react'
 const variants = {
   primary: 'bg-[#4F6CF7] text-white hover:bg-[#3451D1] active:scale-[0.99] focus:ring-[#4F6CF7]/30',
   gold: 'bg-[#4F6CF7] text-white hover:bg-[#3451D1] active:scale-[0.99] focus:ring-[#4F6CF7]/30',
-  secondary: 'bg-white text-[#374151] border border-[#E5E7EB] hover:bg-[#F9FAFB] active:scale-[0.99] focus:ring-stone-300',
+  secondary: 'bg-white text-[#374151] border border-[#E5E7EB] hover:bg-[#F9FAFB] active:scale-[0.99] focus:ring-gray-300',
   danger: 'bg-[#EF4444] text-white hover:bg-[#DC2626] active:scale-[0.99] focus:ring-red-500/30',
-  ghost: 'text-[#6B7280] border border-[#E5E7EB] hover:bg-[#F9FAFB] hover:text-[#374151] active:scale-[0.99] focus:ring-stone-300',
+  ghost: 'text-[#6B7280] border border-[#E5E7EB] hover:bg-[#F9FAFB] hover:text-[#374151] active:scale-[0.99] focus:ring-gray-300',
 }
 
 const sizes = {

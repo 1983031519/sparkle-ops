@@ -215,18 +215,18 @@ export default function ProjectsPage() {
       </div>
 
       <Card>
-        <div className="border-b border-stone-100 px-4 py-3 flex flex-wrap items-center gap-3">
+        <div className="border-b border-gray-100 px-4 py-3 flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-            <input className="w-full rounded-[10px] border border-stone-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-stone-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search projects..." value={search} onChange={e => setSearch(e.target.value)} />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input className="w-full rounded-[10px] border border-gray-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-gray-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search projects..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <div className="flex gap-1 flex-wrap">
             {['All', ...STATUSES].map(s => (
-              <button key={s} onClick={() => setStatusFilter(s)} className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${statusFilter === s ? 'bg-[#4F6CF7] text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}>{s}</button>
+              <button key={s} onClick={() => setStatusFilter(s)} className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${statusFilter === s ? 'bg-[#4F6CF7] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{s}</button>
             ))}
           </div>
         </div>
-        {loading ? <p className="p-6 text-sm text-stone-500">Loading...</p> : (
+        {loading ? <p className="p-6 text-sm text-gray-500">Loading...</p> : (
           <Table data={filtered} onRowClick={openEdit} columns={[
             { key: 'number', header: '#', render: p => <span className="font-mono text-xs">{p.number}</span> },
             { key: 'client', header: 'Client', render: p => p.client_name ?? '-' },
@@ -265,7 +265,7 @@ export default function ProjectsPage() {
 
           {/* PROJECT PHOTOS */}
           {editing && (
-            <div className="border rounded-[12px] border-stone-200 p-4">
+            <div className="border rounded-[12px] border-gray-200 p-4">
               <ProjectPhotoUpload
                 folder={editing.id}
                 photos={form.project_photos}
@@ -283,12 +283,12 @@ export default function ProjectsPage() {
             <p style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280', marginBottom: 12 }}>Project Phases</p>
             <div className="space-y-3">
               {phases.map((ph, i) => (
-                <div key={i} className="rounded-[12px] border border-stone-200 bg-stone-50/50 p-4 space-y-3">
+                <div key={i} className="rounded-[12px] border border-gray-200 bg-gray-50/50 p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <span style={{ fontSize: 12, fontWeight: 700, color: '#111827' }}>Phase {ph.order_num}</span>
                     <div className="flex gap-1">
-                      <button type="button" onClick={() => movePhase(i, -1)} disabled={i === 0} className="p-1 text-stone-400 hover:text-stone-600 disabled:opacity-30"><ChevronUp className="h-4 w-4" strokeWidth={1.5} /></button>
-                      <button type="button" onClick={() => movePhase(i, 1)} disabled={i === phases.length - 1} className="p-1 text-stone-400 hover:text-stone-600 disabled:opacity-30"><ChevronDown className="h-4 w-4" strokeWidth={1.5} /></button>
+                      <button type="button" onClick={() => movePhase(i, -1)} disabled={i === 0} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronUp className="h-4 w-4" strokeWidth={1.5} /></button>
+                      <button type="button" onClick={() => movePhase(i, 1)} disabled={i === phases.length - 1} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronDown className="h-4 w-4" strokeWidth={1.5} /></button>
                       {phases.length > 1 && <button type="button" onClick={() => removePhase(i)} className="p-1 text-red-400 hover:text-red-600"><Trash2 className="h-4 w-4" strokeWidth={1.5} /></button>}
                     </div>
                   </div>
@@ -323,7 +323,7 @@ export default function ProjectsPage() {
           </div>
 
           {/* FINANCIAL */}
-          <div className="border rounded-[12px] border-stone-200 p-4 space-y-3">
+          <div className="border rounded-[12px] border-gray-200 p-4 space-y-3">
             <p style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: '#6B7280' }}>Financial</p>
             <Input label="Total Project Value ($)" id="p-total" type="number" step="0.01" value={form.total_value} onChange={e => setForm(f => ({ ...f, total_value: e.target.value }))} />
             <Select label="Payment Schedule" id="p-sched" value={form.payment_schedule} onChange={e => setForm(f => ({ ...f, payment_schedule: e.target.value }))} options={PAY_SCHEDULES.map(s => ({ value: s, label: s }))} />
@@ -335,7 +335,7 @@ export default function ProjectsPage() {
               </div>
             ) : null}
             {tv > 0 && (
-              <div className="rounded-lg bg-stone-50 p-3 text-sm space-y-1">
+              <div className="rounded-lg bg-gray-50 p-3 text-sm space-y-1">
                 <p>Deposit: <strong>{fmtCurrency(dep)}</strong></p>
                 <p>Mid-project: <strong>{fmtCurrency(mid)}</strong></p>
                 <p>Final: <strong>{fmtCurrency(fin)}</strong></p>
@@ -357,7 +357,7 @@ export default function ProjectsPage() {
           <Textarea label="Warranty" id="p-warranty" value={form.warranty} onChange={e => setForm(f => ({ ...f, warranty: e.target.value }))} />
           <Textarea label="Notes" id="p-notes" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
 
-          <div className="flex justify-between border-t border-stone-200 pt-4">
+          <div className="flex justify-between border-t border-gray-200 pt-4">
             {editing && <Button variant="danger" onClick={handleDelete} type="button">Delete</Button>}
             <div className="ml-auto flex gap-2">
               {editing && editing.status === 'Approved' && <Button variant="gold" onClick={() => { convertToJob(editing); setModalOpen(false) }} type="button"><ArrowRight className="h-4 w-4" strokeWidth={1.5} /> Convert to Job</Button>}

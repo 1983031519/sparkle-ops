@@ -115,9 +115,9 @@ export function PhotoUpload({ jobId, photos, onPhotosChange }: Props) {
   }
 
   return (
-    <div className="border rounded-lg border-stone-200 p-4">
+    <div className="border rounded-lg border-gray-200 p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-stone-700 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
           <ImageIcon className="h-4 w-4" />
           Photos
           {photos.length > 0 && (
@@ -148,7 +148,7 @@ export function PhotoUpload({ jobId, photos, onPhotosChange }: Props) {
 
       {photos.length === 0 ? (
         <div
-          className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-stone-200 py-8 text-stone-400 cursor-pointer hover:border-stone-300 hover:text-stone-500 transition-colors"
+          className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-200 py-8 text-gray-400 cursor-pointer hover:border-gray-300 hover:text-gray-500 transition-colors"
           onClick={() => fileRef.current?.click()}
         >
           <ImageIcon className="h-8 w-8 mb-2" />
@@ -159,7 +159,7 @@ export function PhotoUpload({ jobId, photos, onPhotosChange }: Props) {
         <div className="space-y-2">
           <div className="grid grid-cols-3 gap-2">
             {photos.map((url, i) => (
-              <div key={i} className="group relative aspect-square rounded-lg overflow-hidden bg-stone-100">
+              <div key={i} className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100">
                 <img
                   src={url}
                   alt={`Job photo ${i + 1}`}
@@ -177,7 +177,7 @@ export function PhotoUpload({ jobId, photos, onPhotosChange }: Props) {
             ))}
             {/* Add more button */}
             <div
-              className="flex items-center justify-center aspect-square rounded-lg border-2 border-dashed border-stone-200 cursor-pointer hover:border-stone-300 text-stone-400 hover:text-stone-500 transition-colors"
+              className="flex items-center justify-center aspect-square rounded-lg border-2 border-dashed border-gray-200 cursor-pointer hover:border-gray-300 text-gray-400 hover:text-gray-500 transition-colors"
               onClick={() => fileRef.current?.click()}
             >
               <Upload className="h-5 w-5" />

@@ -269,11 +269,11 @@ export default function JobsPage() {
       <Card>
         <div className="border-b border-[#E5E7EB] px-4 py-3">
           <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-            <input className="w-full rounded-lg border border-stone-300 py-2 pl-10 pr-3 text-sm placeholder:text-stone-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-1 focus:ring-[#4F6CF7]/20" placeholder="Search jobs..." value={search} onChange={e => setSearch(e.target.value)} />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-3 text-sm placeholder:text-gray-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-1 focus:ring-[#4F6CF7]/20" placeholder="Search jobs..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
-        {loading ? <p className="p-6 text-sm text-stone-500">Loading...</p> : (
+        {loading ? <p className="p-6 text-sm text-gray-500">Loading...</p> : (
           <Table
             data={filtered}
             onRowClick={openEdit}
@@ -284,7 +284,7 @@ export default function JobsPage() {
               { key: 'status', header: 'Status', render: j => <Badge color={statusColor(j.status)}>{j.status}</Badge> },
               { key: 'photos', header: 'Photos', render: j => {
                 const count = (j.photos as string[])?.length ?? 0
-                return count > 0 ? <span className="inline-flex items-center gap-1 text-xs text-stone-500"><ImageIcon className="h-3 w-3" />{count}</span> : <span className="text-stone-300">-</span>
+                return count > 0 ? <span className="inline-flex items-center gap-1 text-xs text-gray-500"><ImageIcon className="h-3 w-3" />{count}</span> : <span className="text-gray-300">-</span>
               }},
               { key: 'date', header: 'Scheduled', render: j => fmtDateShort(j.start_date) },
               { key: 'amount', header: 'Amount', render: j => fmtCurrency(j.total) },
@@ -316,7 +316,7 @@ export default function JobsPage() {
         <div className="space-y-5 max-h-[80vh] overflow-y-auto pr-1">
           {/* Flow indicator at top */}
           {editing && (
-            <div className="rounded-lg bg-stone-50 p-3 flex items-center justify-between">
+            <div className="rounded-lg bg-gray-50 p-3 flex items-center justify-between">
               <FlowIndicator steps={[
                 { label: 'Estimate', status: editing.estimate_id ? 'done' : 'none' },
                 { label: 'Job', status: editing.status === 'Completed' ? 'done' : 'active' },
@@ -353,39 +353,39 @@ export default function JobsPage() {
           <Textarea label="Materials Used" id="materials_used" value={form.materials_used} onChange={e => setForm(f => ({ ...f, materials_used: e.target.value }))} />
 
           {/* Checklist */}
-          <div className="border rounded-lg border-stone-200 p-4">
-            <h3 className="text-sm font-semibold text-stone-700 mb-2">Checklist</h3>
+          <div className="border rounded-lg border-gray-200 p-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">Checklist</h3>
             <div className="space-y-1">
               {checklist.map((item, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm">
                   <button type="button" onClick={() => toggleCheckItem(i)}>
-                    {item.done ? <CheckSquare className="h-4 w-4 text-green-600" /> : <Square className="h-4 w-4 text-stone-400" />}
+                    {item.done ? <CheckSquare className="h-4 w-4 text-green-600" /> : <Square className="h-4 w-4 text-gray-400" />}
                   </button>
-                  <span className={item.done ? 'line-through text-stone-400' : ''}>{item.text}</span>
+                  <span className={item.done ? 'line-through text-gray-400' : ''}>{item.text}</span>
                   <button type="button" onClick={() => removeCheckItem(i)} className="ml-auto"><Trash2 className="h-3 w-3 text-red-400" /></button>
                 </div>
               ))}
             </div>
             <div className="flex gap-2 mt-2">
-              <input className="flex-1 rounded-lg border border-stone-300 px-2 py-1.5 text-sm" placeholder="Add checklist item..." value={newCheckItem} onChange={e => setNewCheckItem(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCheckItem())} />
+              <input className="flex-1 rounded-lg border border-gray-300 px-2 py-1.5 text-sm" placeholder="Add checklist item..." value={newCheckItem} onChange={e => setNewCheckItem(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCheckItem())} />
               <Button variant="ghost" size="sm" type="button" onClick={addCheckItem}><PlusCircle className="h-4 w-4" /></Button>
             </div>
           </div>
 
           {/* Change Orders (only when editing) */}
           {editing && (
-            <div className="border rounded-lg border-stone-200 p-4">
+            <div className="border rounded-lg border-gray-200 p-4">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-stone-700">Change Orders</h3>
+                <h3 className="text-sm font-semibold text-gray-700">Change Orders</h3>
                 <Button variant="ghost" size="sm" type="button" onClick={() => { setCoForm(emptyCO); setCoModalOpen(true) }}><Plus className="h-3 w-3" /> Add Change Order</Button>
               </div>
-              {changeOrders.length === 0 ? <p className="text-xs text-stone-400">No change orders.</p> : (
+              {changeOrders.length === 0 ? <p className="text-xs text-gray-400">No change orders.</p> : (
                 <div className="space-y-2">
                   {changeOrders.map((co, i) => (
-                    <div key={co.id} className="flex items-center justify-between rounded-lg bg-stone-50 px-3 py-2 text-sm">
+                    <div key={co.id} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm">
                       <div>
                         <span className="font-medium">CO #{i + 1}</span> — {co.description}
-                        <span className="ml-2 text-xs text-stone-500">({co.reason})</span>
+                        <span className="ml-2 text-xs text-gray-500">({co.reason})</span>
                         <span className="ml-2 font-medium">${co.total.toFixed(2)}</span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -409,11 +409,11 @@ export default function JobsPage() {
           {editing ? (
             <PhotoUpload jobId={editing.id} photos={photos} onPhotosChange={setPhotos} />
           ) : (
-            <div className="border rounded-lg border-stone-200 p-4">
-              <h3 className="text-sm font-semibold text-stone-700 flex items-center gap-2 mb-2">
+            <div className="border rounded-lg border-gray-200 p-4">
+              <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
                 <ImageIcon className="h-4 w-4" /> Photos
               </h3>
-              <p className="text-xs text-stone-400 italic">Save the job first, then you can upload photos.</p>
+              <p className="text-xs text-gray-400 italic">Save the job first, then you can upload photos.</p>
             </div>
           )}
 
@@ -425,7 +425,7 @@ export default function JobsPage() {
             />
           )}
 
-          <div className="flex justify-between border-t border-stone-200 pt-4">
+          <div className="flex justify-between border-t border-gray-200 pt-4">
             {editing && <Button variant="danger" onClick={handleDeleteClick} type="button"><Trash2 className="h-4 w-4" /> Delete</Button>}
             <div className="ml-auto flex gap-2">
               <Button variant="secondary" onClick={() => setModalOpen(false)} type="button">Cancel</Button>

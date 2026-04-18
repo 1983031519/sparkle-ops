@@ -17,7 +17,7 @@ export function SenderSelector({ value, onChange, disabled }: Props) {
             className={`flex items-center gap-2.5 cursor-pointer rounded-lg border px-3 py-2 transition-colors ${
               selected
                 ? 'border-[#4F6CF7] bg-[#4F6CF7]/5'
-                : 'border-stone-200 hover:border-stone-300'
+                : 'border-gray-200 hover:border-gray-300'
             } ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
           >
             <input
@@ -29,7 +29,7 @@ export function SenderSelector({ value, onChange, disabled }: Props) {
               disabled={disabled}
               className="accent-[#4F6CF7]"
             />
-            <span className="text-[13px] text-stone-700">{sender.label}</span>
+            <span className="text-[13px] text-gray-700">{sender.label}</span>
           </label>
         )
       })}

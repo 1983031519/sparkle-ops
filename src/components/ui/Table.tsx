@@ -16,7 +16,7 @@ interface Props<T> {
 
 export function Table<T extends { id: string }>({ columns, data, onRowClick, emptyMessage = 'No records yet.' }: Props<T>) {
   if (data.length === 0) {
-    return <p className="py-16 text-center text-[13px] text-stone-400">{emptyMessage}</p>
+    return <p className="py-16 text-center text-[13px] text-gray-400">{emptyMessage}</p>
   }
 
   return (

@@ -256,13 +256,13 @@ export default function InvoicesPage() {
       </div>
 
       <Card>
-        <div className="border-b border-stone-100 px-4 py-3">
+        <div className="border-b border-gray-100 px-4 py-3">
           <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-            <input className="w-full rounded-[10px] border border-stone-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-stone-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search invoices..." value={search} onChange={e => setSearch(e.target.value)} />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input className="w-full rounded-[10px] border border-gray-200 py-2 pl-10 pr-3 text-[13px] placeholder:text-gray-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-[3px] focus:ring-[#4F6CF7]/[0.12]" placeholder="Search invoices..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
-        {loading ? <p className="p-6 text-sm text-stone-500">Loading...</p> : (
+        {loading ? <p className="p-6 text-sm text-gray-500">Loading...</p> : (
           <Table
             data={filtered}
             onRowClick={openEdit}
@@ -273,7 +273,7 @@ export default function InvoicesPage() {
               { key: 'total', header: 'Total', render: i => fmtCurrency(i.total) },
               { key: 'balance', header: 'Balance Due', render: i => {
                 const bal = i.balance_due ?? i.total
-                return bal > 0 && i.status !== 'Paid' ? <span className="font-semibold text-danger-600">{fmtCurrency(bal)}</span> : <span className="text-stone-400">-</span>
+                return bal > 0 && i.status !== 'Paid' ? <span className="font-semibold text-danger-600">{fmtCurrency(bal)}</span> : <span className="text-gray-400">-</span>
               }},
               { key: 'due', header: 'Due Date', render: i => fmtDateShort(i.due_date) },
               { key: 'viewed', header: '', render: i => viewedDocIds.has(i.id) ? <span style={{ fontSize: 10, fontWeight: 600, color: '#16a34a', background: '#f0fdf4', padding: '2px 7px', borderRadius: 10, border: '1px solid #bbf7d0', whiteSpace: 'nowrap' }}>Viewed</span> : null },
@@ -318,14 +318,14 @@ export default function InvoicesPage() {
 
           {/* Line Items */}
           <div>
-            <label className="mb-2 block text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">Line Items</label>
+            <label className="mb-2 block text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500">Line Items</label>
             <div className="space-y-2">
               {form.line_items.map((line, i) => (
                 <div key={i} className="grid grid-cols-12 gap-2 items-end">
-                  <div className="col-span-5"><input className="w-full h-[36px] rounded-[10px] border border-stone-200 px-2 text-[13px]" placeholder="Description" value={line.description} onChange={e => updateLine(i, 'description', e.target.value)} /></div>
-                  <div className="col-span-2"><input className="w-full h-[36px] rounded-[10px] border border-stone-200 px-2 text-[13px]" type="number" placeholder="Qty" value={line.qty} onChange={e => updateLine(i, 'qty', Number(e.target.value))} /></div>
-                  <div className="col-span-1"><input className="w-full h-[36px] rounded-[10px] border border-stone-200 px-2 text-[13px]" placeholder="Unit" value={line.unit} onChange={e => updateLine(i, 'unit', e.target.value)} /></div>
-                  <div className="col-span-2"><input className="w-full h-[36px] rounded-[10px] border border-stone-200 px-2 text-[13px]" type="number" step="0.01" placeholder="Price" value={line.unit_price} onChange={e => updateLine(i, 'unit_price', Number(e.target.value))} /></div>
+                  <div className="col-span-5"><input className="w-full h-[36px] rounded-[10px] border border-gray-200 px-2 text-[13px]" placeholder="Description" value={line.description} onChange={e => updateLine(i, 'description', e.target.value)} /></div>
+                  <div className="col-span-2"><input className="w-full h-[36px] rounded-[10px] border border-gray-200 px-2 text-[13px]" type="number" placeholder="Qty" value={line.qty} onChange={e => updateLine(i, 'qty', Number(e.target.value))} /></div>
+                  <div className="col-span-1"><input className="w-full h-[36px] rounded-[10px] border border-gray-200 px-2 text-[13px]" placeholder="Unit" value={line.unit} onChange={e => updateLine(i, 'unit', e.target.value)} /></div>
+                  <div className="col-span-2"><input className="w-full h-[36px] rounded-[10px] border border-gray-200 px-2 text-[13px]" type="number" step="0.01" placeholder="Price" value={line.unit_price} onChange={e => updateLine(i, 'unit_price', Number(e.target.value))} /></div>
                   <div className="col-span-1 text-right text-[13px] font-medium">${(line.qty * line.unit_price).toFixed(2)}</div>
                   <div className="col-span-1">{form.line_items.length > 1 && <button type="button" onClick={() => removeLine(i)} className="text-red-500 text-xs hover:underline">X</button>}</div>
                 </div>
@@ -335,19 +335,19 @@ export default function InvoicesPage() {
           </div>
 
           {/* Totals */}
-          <div className="rounded-lg bg-stone-50 p-4 space-y-1 text-right text-sm">
+          <div className="rounded-lg bg-gray-50 p-4 space-y-1 text-right text-sm">
             <div className="flex justify-end gap-8"><span>Subtotal:</span><strong>${subtotal.toFixed(2)}</strong></div>
             <div className="flex justify-end gap-8"><span>Tax (0%):</span><strong>$0.00</strong></div>
-            <div className="flex justify-end gap-8 text-base border-t border-stone-200 pt-1"><span>Total:</span><strong>${total.toFixed(2)}</strong></div>
+            <div className="flex justify-end gap-8 text-base border-t border-gray-200 pt-1"><span>Total:</span><strong>${total.toFixed(2)}</strong></div>
           </div>
 
           {/* Payment Agreement */}
-          <div className="border rounded-lg border-stone-200 p-4 space-y-4">
-            <h3 className="text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">Payment Agreement</h3>
+          <div className="border rounded-lg border-gray-200 p-4 space-y-4">
+            <h3 className="text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500">Payment Agreement</h3>
 
             {/* Payment Method */}
             <div className="space-y-1.5">
-              <label className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">Payment Method</label>
+              <label className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500">Payment Method</label>
               <div className="space-y-1.5">
                 {PAYMENT_METHOD_OPTIONS.map(m => (
                   <label key={m} className="flex items-center gap-2.5 cursor-pointer">
@@ -386,7 +386,7 @@ export default function InvoicesPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Input label="Deposit Amount ($)" id="inv-deposit" type="number" step="0.01" value={form.deposit_received} onChange={e => setForm(f => ({ ...f, deposit_received: Number(e.target.value) }))} />
                   <div className="space-y-1.5">
-                    <label className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">Balance Due</label>
+                    <label className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500">Balance Due</label>
                     <p className="h-[40px] flex items-center text-[18px] font-bold text-[#111827]">{fmtCurrency(total - form.deposit_received)}</p>
                   </div>
                 </div>
@@ -396,7 +396,7 @@ export default function InvoicesPage() {
 
           <Textarea label="Notes" id="inv-notes" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
 
-          <div className="flex justify-between border-t border-stone-200 pt-4">
+          <div className="flex justify-between border-t border-gray-200 pt-4">
             {editing && <Button variant="danger" onClick={handleDeleteClick} type="button"><Trash2 className="h-4 w-4" /> Delete</Button>}
             <div className="ml-auto flex gap-2">
               <Button variant="secondary" onClick={() => setModalOpen(false)} type="button">Cancel</Button>
@@ -433,7 +433,7 @@ export default function InvoicesPage() {
           <DateInput label="Payment Date" id="paid-date" value={markPaidDate} onChange={v => setMarkPaidDate(v)} />
 
           <div>
-            <p className="text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500 mb-2">Payment Method</p>
+            <p className="text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500 mb-2">Payment Method</p>
             <div className="space-y-1.5">
               {['Check', 'Zelle', 'Cash', 'ACH', 'Other'].map(m => (
                 <label key={m} className="flex items-center gap-2.5 cursor-pointer">
@@ -444,11 +444,11 @@ export default function InvoicesPage() {
             </div>
           </div>
 
-          <div className="rounded-lg bg-stone-50 border border-stone-200 p-3 text-[13px]">
-            <div className="flex justify-between"><span className="text-stone-500">Invoice Total</span><span className="font-semibold text-[#111827]">{fmtCurrency(markPaidTarget?.total ?? 0)}</span></div>
+          <div className="rounded-lg bg-gray-50 border border-gray-200 p-3 text-[13px]">
+            <div className="flex justify-between"><span className="text-gray-500">Invoice Total</span><span className="font-semibold text-[#111827]">{fmtCurrency(markPaidTarget?.total ?? 0)}</span></div>
           </div>
 
-          <div className="flex justify-end gap-2 border-t border-stone-200 pt-4">
+          <div className="flex justify-end gap-2 border-t border-gray-200 pt-4">
             <Button variant="secondary" type="button" onClick={() => setMarkPaidTarget(null)} disabled={markingPaid}>Cancel</Button>
             <Button type="button" onClick={confirmMarkPaid} disabled={markingPaid}>
               <CheckCircle className="h-4 w-4" />

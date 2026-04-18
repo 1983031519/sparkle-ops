@@ -413,65 +413,65 @@ export default function ClientsPage() {
         <Textarea label="Notes" id="notes" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
 
         {/* Contacts Section */}
-        <div className="border-t border-stone-200 pt-4">
+        <div className="border-t border-gray-200 pt-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-stone-800 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
               <UserPlus className="h-4 w-4" /> Contacts
             </h3>
             <Button variant="ghost" size="sm" onClick={addContact}><Plus className="h-3 w-3" /> Add Contact</Button>
           </div>
 
           {contacts.length === 0 && (
-            <p className="text-sm text-stone-400 italic">No contacts yet. Click &quot;Add Contact&quot; to add one.</p>
+            <p className="text-sm text-gray-400 italic">No contacts yet. Click &quot;Add Contact&quot; to add one.</p>
           )}
 
           <div className="space-y-4">
             {contacts.map((contact, i) => (
-              <div key={i} className="rounded-lg border border-stone-200 bg-stone-50 p-4 space-y-3">
+              <div key={i} className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-stone-500">Contact #{i + 1}</span>
+                  <span className="text-xs font-medium text-gray-500">Contact #{i + 1}</span>
                   <button onClick={() => removeContact(i)} className="rounded p-1 text-red-400 hover:bg-red-50 hover:text-red-600">
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
-                    <label className="block text-xs font-medium text-stone-600">Name *</label>
-                    <input className="w-full rounded-lg border border-stone-300 px-2.5 py-1.5 text-sm" placeholder="e.g. Kamila" value={contact.name} onChange={e => updateContact(i, 'name', e.target.value)} />
+                    <label className="block text-xs font-medium text-gray-600">Name *</label>
+                    <input className="w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm" placeholder="e.g. Kamila" value={contact.name} onChange={e => updateContact(i, 'name', e.target.value)} />
                   </div>
                   <div className="space-y-1">
-                    <label className="block text-xs font-medium text-stone-600">Role</label>
-                    <select className="w-full rounded-lg border border-stone-300 px-2.5 py-1.5 text-sm" value={contact.role} onChange={e => updateContact(i, 'role', e.target.value)}>
+                    <label className="block text-xs font-medium text-gray-600">Role</label>
+                    <select className="w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm" value={contact.role} onChange={e => updateContact(i, 'role', e.target.value)}>
                       {CONTACT_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                     </select>
                   </div>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div className="space-y-1">
-                    <label className="block text-xs font-medium text-stone-600"><Phone className="inline h-3 w-3 mr-1" />Phone</label>
-                    <input className="w-full rounded-lg border border-stone-300 px-2.5 py-1.5 text-sm" placeholder="(941) 555-0123" value={contact.phone} onChange={e => updateContact(i, 'phone', e.target.value)} />
+                    <label className="block text-xs font-medium text-gray-600"><Phone className="inline h-3 w-3 mr-1" />Phone</label>
+                    <input className="w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm" placeholder="(941) 555-0123" value={contact.phone} onChange={e => updateContact(i, 'phone', e.target.value)} />
                   </div>
                   <div className="space-y-1">
-                    <label className="block text-xs font-medium text-stone-600"><Mail className="inline h-3 w-3 mr-1" />Email</label>
-                    <input className="w-full rounded-lg border border-stone-300 px-2.5 py-1.5 text-sm" placeholder="email@example.com" value={contact.email} onChange={e => updateContact(i, 'email', e.target.value)} />
+                    <label className="block text-xs font-medium text-gray-600"><Mail className="inline h-3 w-3 mr-1" />Email</label>
+                    <input className="w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm" placeholder="email@example.com" value={contact.email} onChange={e => updateContact(i, 'email', e.target.value)} />
                   </div>
                   <div className="space-y-1">
-                    <label className="block text-xs font-medium text-stone-600">Preferred</label>
-                    <select className="w-full rounded-lg border border-stone-300 px-2.5 py-1.5 text-sm" value={contact.preferred_contact} onChange={e => updateContact(i, 'preferred_contact', e.target.value)}>
+                    <label className="block text-xs font-medium text-gray-600">Preferred</label>
+                    <select className="w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm" value={contact.preferred_contact} onChange={e => updateContact(i, 'preferred_contact', e.target.value)}>
                       {PREFERRED_CONTACTS.map(p => <option key={p} value={p}>{p}</option>)}
                     </select>
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="block text-xs font-medium text-stone-600">Contact Notes</label>
-                  <input className="w-full rounded-lg border border-stone-300 px-2.5 py-1.5 text-sm" placeholder="Optional notes..." value={contact.notes} onChange={e => updateContact(i, 'notes', e.target.value)} />
+                  <label className="block text-xs font-medium text-gray-600">Contact Notes</label>
+                  <input className="w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm" placeholder="Optional notes..." value={contact.notes} onChange={e => updateContact(i, 'notes', e.target.value)} />
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="flex justify-between border-t border-stone-200 pt-4">
+        <div className="flex justify-between border-t border-gray-200 pt-4">
           {editing && <Button variant="danger" onClick={handleDelete}>Delete</Button>}
           <div className="ml-auto flex gap-2">
             <Button variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
@@ -495,16 +495,16 @@ export default function ClientsPage() {
           <Card>
             <div className="border-b border-[#E5E7EB] px-4 py-3">
               <div className="relative max-w-sm">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input
-                  className="w-full rounded-lg border border-stone-300 py-2 pl-10 pr-3 text-sm placeholder:text-stone-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-1 focus:ring-[#4F6CF7]/20"
+                  className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-3 text-sm placeholder:text-gray-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-1 focus:ring-[#4F6CF7]/20"
                   placeholder="Search clients..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                 />
               </div>
             </div>
-            {loading ? <p className="p-6 text-sm text-stone-500">Loading...</p> : (
+            {loading ? <p className="p-6 text-sm text-gray-500">Loading...</p> : (
               <Table
                 data={filtered}
                 onRowClick={selectClient}
@@ -518,7 +518,7 @@ export default function ClientsPage() {
                   ...(!selectedClient ? [
                     { key: 'contacts' as keyof Client, header: 'Contacts', render: (c: Client) => {
                       const cc = contactsByClient[c.id]
-                      if (!cc || cc.length === 0) return <span className="text-stone-400">-</span>
+                      if (!cc || cc.length === 0) return <span className="text-gray-400">-</span>
                       return (
                         <div className="space-y-0.5">
                           {cc.slice(0, 3).map(contact => (
@@ -527,7 +527,7 @@ export default function ClientsPage() {
                               {contact.role && <Badge color="gray" className="text-[10px]">{contact.role}</Badge>}
                             </div>
                           ))}
-                          {cc.length > 3 && <span className="text-[10px] text-stone-400">+{cc.length - 3} more</span>}
+                          {cc.length > 3 && <span className="text-[10px] text-gray-400">+{cc.length - 3} more</span>}
                         </div>
                       )
                     }},

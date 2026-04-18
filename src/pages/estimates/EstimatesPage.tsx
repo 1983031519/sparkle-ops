@@ -281,13 +281,13 @@ export default function EstimatesPage() {
       </div>
 
       <Card>
-        <div className="border-b border-stone-100 px-4 py-3">
+        <div className="border-b border-gray-100 px-4 py-3">
           <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-            <input className="w-full rounded-lg border border-stone-300 py-2 pl-10 pr-3 text-sm placeholder:text-stone-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-1 focus:ring-[#4F6CF7]/20" placeholder="Search estimates..." value={search} onChange={e => setSearch(e.target.value)} />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-3 text-sm placeholder:text-gray-400 focus:border-[#4F6CF7] focus:outline-none focus:ring-1 focus:ring-[#4F6CF7]/20" placeholder="Search estimates..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
-        {loading ? <p className="p-6 text-sm text-stone-500">Loading...</p> : (
+        {loading ? <p className="p-6 text-sm text-gray-500">Loading...</p> : (
           <Table
             data={filtered}
             onRowClick={openEdit}
@@ -365,8 +365,8 @@ export default function EstimatesPage() {
           <Textarea label="Description" id="est-description" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Brief description of the work to be performed..." />
 
           {/* Materials */}
-          <div className="border rounded-lg border-stone-200 p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-stone-700">Materials Specified</h3>
+          <div className="border rounded-lg border-gray-200 p-4 space-y-3">
+            <h3 className="text-sm font-semibold text-gray-700">Materials Specified</h3>
             <div className="grid gap-3 sm:grid-cols-3">
               <Input label="Paver/Stone Type" id="mat-type" value={form.materials.paver_type ?? ''} onChange={e => setMat('paver_type', e.target.value)} />
               <Input label="Size" id="mat-size" value={form.materials.paver_size ?? ''} onChange={e => setMat('paver_size', e.target.value)} />
@@ -387,14 +387,14 @@ export default function EstimatesPage() {
 
           {/* Line Items */}
           <div>
-            <label className="mb-2 block text-sm font-semibold text-stone-700">Line Items</label>
+            <label className="mb-2 block text-sm font-semibold text-gray-700">Line Items</label>
             <div className="space-y-2">
               {form.line_items.map((line, i) => (
                 <div key={i} className="grid grid-cols-12 gap-2 items-end">
-                  <div className="col-span-5"><input className="w-full rounded-lg border border-stone-300 px-2 py-1.5 text-sm" placeholder="Description" value={line.description} onChange={e => updateLine(i, 'description', e.target.value)} /></div>
-                  <div className="col-span-2"><input className="w-full rounded-lg border border-stone-300 px-2 py-1.5 text-sm" type="number" placeholder="Qty" value={line.qty} onChange={e => updateLine(i, 'qty', Number(e.target.value))} /></div>
-                  <div className="col-span-1"><input className="w-full rounded-lg border border-stone-300 px-2 py-1.5 text-sm" placeholder="Unit" value={line.unit} onChange={e => updateLine(i, 'unit', e.target.value)} /></div>
-                  <div className="col-span-2"><input className="w-full rounded-lg border border-stone-300 px-2 py-1.5 text-sm" type="number" step="0.01" placeholder="Price" value={line.unit_price} onChange={e => updateLine(i, 'unit_price', Number(e.target.value))} /></div>
+                  <div className="col-span-5"><input className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm" placeholder="Description" value={line.description} onChange={e => updateLine(i, 'description', e.target.value)} /></div>
+                  <div className="col-span-2"><input className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm" type="number" placeholder="Qty" value={line.qty} onChange={e => updateLine(i, 'qty', Number(e.target.value))} /></div>
+                  <div className="col-span-1"><input className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm" placeholder="Unit" value={line.unit} onChange={e => updateLine(i, 'unit', e.target.value)} /></div>
+                  <div className="col-span-2"><input className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm" type="number" step="0.01" placeholder="Price" value={line.unit_price} onChange={e => updateLine(i, 'unit_price', Number(e.target.value))} /></div>
                   <div className="col-span-1 text-right text-sm font-medium">${(line.qty * line.unit_price).toFixed(2)}</div>
                   <div className="col-span-1">{form.line_items.length > 1 && <button type="button" onClick={() => removeLine(i)} className="text-red-500 text-sm hover:underline">X</button>}</div>
                 </div>
@@ -404,17 +404,17 @@ export default function EstimatesPage() {
           </div>
 
           {/* Totals */}
-          <div className="rounded-lg bg-stone-50 p-4 space-y-1 text-right text-sm">
+          <div className="rounded-lg bg-gray-50 p-4 space-y-1 text-right text-sm">
             <div className="flex justify-end gap-8"><span>Subtotal:</span><strong>${subtotal.toFixed(2)}</strong></div>
             <div className="flex justify-end gap-8"><span>Tax (0%):</span><strong>$0.00</strong></div>
-            <div className="flex justify-end gap-8 text-base border-t border-stone-200 pt-1 mt-1"><span>Total:</span><strong>${total.toFixed(2)}</strong></div>
-            <div className="flex justify-end gap-8 text-xs text-stone-500"><span>Deposit (50%):</span><span>${deposit.toFixed(2)}</span></div>
-            <div className="flex justify-end gap-8 text-xs text-stone-500"><span>Balance (50%):</span><span>${(total - deposit).toFixed(2)}</span></div>
+            <div className="flex justify-end gap-8 text-base border-t border-gray-200 pt-1 mt-1"><span>Total:</span><strong>${total.toFixed(2)}</strong></div>
+            <div className="flex justify-end gap-8 text-xs text-gray-500"><span>Deposit (50%):</span><span>${deposit.toFixed(2)}</span></div>
+            <div className="flex justify-end gap-8 text-xs text-gray-500"><span>Balance (50%):</span><span>${(total - deposit).toFixed(2)}</span></div>
           </div>
 
           {/* Payment Terms */}
-          <div className="border rounded-lg border-stone-200 p-4 space-y-3">
-            <h3 className="text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">Payment Terms</h3>
+          <div className="border rounded-lg border-gray-200 p-4 space-y-3">
+            <h3 className="text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500">Payment Terms</h3>
             <Select label="Payment Schedule" id="est-pterms" value={form.payment_terms} onChange={e => setForm(f => ({ ...f, payment_terms: e.target.value }))} options={[
               { value: '50% deposit + 50% on completion', label: '50% Deposit + 50% on Completion' },
               { value: '100% on completion', label: '100% on Completion' },
@@ -422,7 +422,7 @@ export default function EstimatesPage() {
               { value: 'Custom', label: 'Custom' },
             ]} />
             <div className="space-y-1.5">
-              <label className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-stone-500">Accepted Payment Methods</label>
+              <label className="block text-[12px] font-semibold uppercase tracking-[0.5px] text-gray-500">Accepted Payment Methods</label>
               <div className="flex flex-wrap gap-4">
                 {['Check', 'ACH', 'Zelle', 'Cash'].map(m => (
                   <label key={m} className="flex items-center gap-2 cursor-pointer">
@@ -439,7 +439,7 @@ export default function EstimatesPage() {
           <Textarea label="Warranty" id="est-warranty" value={form.warranty} onChange={e => setForm(f => ({ ...f, warranty: e.target.value }))} />
           <Textarea label="Notes" id="est-notes" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
 
-          <div className="flex justify-between border-t border-stone-200 pt-4">
+          <div className="flex justify-between border-t border-gray-200 pt-4">
             {editing && <Button variant="danger" onClick={handleDeleteClick} type="button"><Trash2 className="h-4 w-4" /> Delete</Button>}
             <div className="ml-auto flex gap-2">
               {editing && editing.status === 'Approved' && !jobByEstimate[editing.id] && (

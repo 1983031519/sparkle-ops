@@ -138,15 +138,15 @@ export default function ReportsPage() {
     }))
   }, [clients, dateRange])
 
-  if (loading) return <div className="flex h-full items-center justify-center text-stone-500">Loading reports...</div>
+  if (loading) return <div className="flex h-full items-center justify-center text-gray-500">Loading reports...</div>
 
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-end">
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-stone-600">Period:</label>
+          <label className="text-sm font-medium text-gray-600">Period:</label>
           <select
-            className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm focus:border-[#4F6CF7] focus:outline-none focus:ring-1 focus:ring-[#4F6CF7]/20"
+            className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-[#4F6CF7] focus:outline-none focus:ring-1 focus:ring-[#4F6CF7]/20"
             value={range}
             onChange={e => setRange(e.target.value)}
           >
@@ -189,7 +189,7 @@ export default function ReportsPage() {
         <Card className="lg:col-span-2">
           <CardHeader><h2 className="font-semibold">Monthly Revenue (Paid Invoices)</h2></CardHeader>
           <CardBody>
-            {monthlyRevenue.length === 0 ? <p className="py-8 text-center text-sm text-stone-400">No paid invoices in this period</p> : (
+            {monthlyRevenue.length === 0 ? <p className="py-8 text-center text-sm text-gray-400">No paid invoices in this period</p> : (
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={monthlyRevenue}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
@@ -212,13 +212,13 @@ export default function ReportsPage() {
             </div>
           </CardHeader>
           <CardBody>
-            {outstandingInvoices.length === 0 ? <p className="py-4 text-center text-sm text-stone-400">No outstanding invoices</p> : (
+            {outstandingInvoices.length === 0 ? <p className="py-4 text-center text-sm text-gray-400">No outstanding invoices</p> : (
               <div className="space-y-2 max-h-[250px] overflow-y-auto">
                 {outstandingInvoices.map(inv => (
-                  <div key={inv.id} className="flex items-center justify-between rounded-lg border border-stone-100 px-3 py-2 text-sm">
+                  <div key={inv.id} className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2 text-sm">
                     <div>
-                      <span className="font-mono text-xs text-stone-500">{inv.number}</span>
-                      {inv.due_date && <span className="ml-2 text-xs text-stone-400">Due: {fmtDateShort(inv.due_date)}</span>}
+                      <span className="font-mono text-xs text-gray-500">{inv.number}</span>
+                      {inv.due_date && <span className="ml-2 text-xs text-gray-400">Due: {fmtDateShort(inv.due_date)}</span>}
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge color={statusColor(inv.status)}>{inv.status}</Badge>
@@ -235,7 +235,7 @@ export default function ReportsPage() {
         <Card>
           <CardHeader><h2 className="font-semibold">Estimates: Sent vs Accepted vs Declined</h2></CardHeader>
           <CardBody>
-            {estimateBreakdown.length === 0 ? <p className="py-8 text-center text-sm text-stone-400">No estimates in this period</p> : (
+            {estimateBreakdown.length === 0 ? <p className="py-8 text-center text-sm text-gray-400">No estimates in this period</p> : (
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie data={estimateBreakdown} cx="50%" cy="50%" outerRadius={90} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
@@ -253,7 +253,7 @@ export default function ReportsPage() {
         <Card>
           <CardHeader><h2 className="font-semibold">Jobs by Status</h2></CardHeader>
           <CardBody>
-            {jobsByStatus.length === 0 ? <p className="py-8 text-center text-sm text-stone-400">No jobs in this period</p> : (
+            {jobsByStatus.length === 0 ? <p className="py-8 text-center text-sm text-gray-400">No jobs in this period</p> : (
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={jobsByStatus} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
@@ -276,7 +276,7 @@ export default function ReportsPage() {
         <Card>
           <CardHeader><h2 className="font-semibold">Revenue by Division</h2></CardHeader>
           <CardBody>
-            {revenueByDivision.length === 0 ? <p className="py-8 text-center text-sm text-stone-400">No revenue data for this period</p> : (
+            {revenueByDivision.length === 0 ? <p className="py-8 text-center text-sm text-gray-400">No revenue data for this period</p> : (
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie data={revenueByDivision} cx="50%" cy="50%" outerRadius={90} dataKey="value" label={({ name, value }) => `${name}: ${fmtCurrency(value)}`}>
@@ -295,7 +295,7 @@ export default function ReportsPage() {
         <Card>
           <CardHeader><h2 className="font-semibold">New Clients by Month</h2></CardHeader>
           <CardBody>
-            {clientsByMonth.length === 0 ? <p className="py-8 text-center text-sm text-stone-400">No new clients in this period</p> : (
+            {clientsByMonth.length === 0 ? <p className="py-8 text-center text-sm text-gray-400">No new clients in this period</p> : (
               <>
                 <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={clientsByMonth}>
