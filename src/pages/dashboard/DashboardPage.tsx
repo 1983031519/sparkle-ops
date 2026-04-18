@@ -166,27 +166,27 @@ export default function DashboardPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '12px 14px' : '16px 20px', borderBottom: '1px solid #F3F4F6' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <CalendarIcon className="h-4 w-4" strokeWidth={1.5} color="#4F6CF7" />
-          <p style={{ fontSize: isMobile ? 13 : 14, fontWeight: 600, color: '#111827' }}>Schedule</p>
+          <p className="text-label font-semibold text-gray-900">Schedule</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 10 }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#6B7280' }}>
+            <span className="text-micro font-normal text-gray-500" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
               <span style={{ width: 8, height: 8, borderRadius: 2, background: EVENT_PILL.bg, border: `1px solid ${EVENT_PILL.fg}` }} /> Events
             </span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#6B7280' }}>
+            <span className="text-micro font-normal text-gray-500" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
               <span style={{ width: 8, height: 8, borderRadius: 2, background: JOB_PILL.bg }} /> Jobs
             </span>
           </div>
         </div>
-        <Link to="/schedule" style={{ fontSize: isMobile ? 11 : 12, fontWeight: 500, color: '#4F6CF7', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+        <Link to="/schedule" className="text-micro font-medium" style={{ color: '#4F6CF7', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
           See all <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
         </Link>
       </div>
 
       {/* Section 1: Upcoming list */}
-      <div style={{ padding: isMobile ? '10px 14px 4px' : '12px 20px 4px', fontSize: 11, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <div className="text-eyebrow uppercase text-gray-400" style={{ padding: isMobile ? '10px 14px 4px' : '12px 20px 4px' }}>
         Upcoming
       </div>
       {upcomingList.length === 0
-        ? <p style={{ fontSize: 13, color: '#9CA3AF', padding: isMobile ? '4px 14px 16px' : '4px 20px 20px' }}>Nothing coming up. Create an event or schedule a job.</p>
+        ? <p className="text-label font-normal text-gray-400" style={{ padding: isMobile ? '4px 14px 16px' : '4px 20px 20px' }}>Nothing coming up. Create an event or schedule a job.</p>
         : upcomingList.map(item => {
             const d = parseISO(item.date)
             const isToday = item.date === todayIsoStr
@@ -205,16 +205,17 @@ export default function DashboardPage() {
                   color: isToday ? 'white' : '#374151',
                   borderRadius: 6, flexShrink: 0,
                 }}>
+                  {/* exception: 9px density — Phase 4 spec */}
                   <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', opacity: 0.8 }}>{format(d, 'MMM')}</span>
-                  <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700, lineHeight: 1 }}>{format(d, 'd')}</span>
+                  <span className={`${isMobile ? 'text-label' : 'text-body'} font-bold`} style={{ lineHeight: 1 }}>{format(d, 'd')}</span>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                    <span style={{ fontSize: isMobile ? 12 : 13, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</span>
-                    <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: meta.bg, color: meta.fg, flexShrink: 0 }}>{label}</span>
+                    <span className="text-label font-semibold text-gray-900" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</span>
+                    <span className="text-micro font-semibold" style={{ padding: '2px 6px', borderRadius: 4, background: meta.bg, color: meta.fg, flexShrink: 0 }}>{label}</span>
                   </div>
                   {item.kind === 'event' && item.time_start && (
-                    <p style={{ fontSize: isMobile ? 10 : 11, color: '#6B7280', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <p className="text-micro font-normal text-gray-500" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                       <Clock className="h-4 w-4" strokeWidth={1.5} /> {fmtEventTime(item.time_start)}
                     </p>
                   )}
@@ -226,7 +227,7 @@ export default function DashboardPage() {
 
       {/* Section 2: mini calendar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '12px 14px 6px' : '14px 20px 6px', borderTop: '1px solid #F3F4F6' }}>
-        <span style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{format(currentMonth, 'MMMM yyyy', { locale: enUS })}</span>
+        <span className="text-eyebrow uppercase text-gray-400">{format(currentMonth, 'MMMM yyyy', { locale: enUS })}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <button onClick={() => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() - 1))} style={{ background: 'none', border: '1px solid #E5E7EB', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: '#6B7280', display: 'flex', alignItems: 'center' }}><ChevronLeft className="h-4 w-4" strokeWidth={1.5} /></button>
           <button onClick={() => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() + 1))} style={{ background: 'none', border: '1px solid #E5E7EB', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: '#6B7280', display: 'flex', alignItems: 'center' }}><ChevronRight className="h-4 w-4" strokeWidth={1.5} /></button>
@@ -235,7 +236,7 @@ export default function DashboardPage() {
       <div style={{ padding: isMobile ? '0 10px 12px' : '0 20px 20px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', marginBottom: 2 }}>
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-            <div key={d} style={{ fontSize: 10, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '4px 0' }}>{d}</div>
+            <div key={d} className="text-micro uppercase font-semibold text-gray-400" style={{ letterSpacing: '0.05em', padding: '4px 0' }}>{d}</div>
           ))}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
@@ -248,6 +249,7 @@ export default function DashboardPage() {
             return (
               <div key={iso} style={{ minHeight: isMobile ? 56 : 64, padding: '3px 2px', borderRadius: 6 }}>
                 <div style={{ textAlign: 'center', marginBottom: 2 }}>
+                  {/* Calendar circle — inline fontSize kept to fit 22x22 cell (P7 exception) */}
                   <span style={{
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     width: 22, height: 22, borderRadius: '50%',
@@ -262,6 +264,7 @@ export default function DashboardPage() {
                     <div
                       key={`${item.kind}-${item.id}`}
                       title={`${item.kind === 'event' ? 'Event' : 'Job'}: ${item.title}`}
+                      // exception: 9px density — Phase 4 spec
                       style={{
                         fontSize: 9, background: pill.bg, color: pill.fg,
                         borderRadius: 3, padding: '1px 4px', marginBottom: 2,
@@ -271,6 +274,7 @@ export default function DashboardPage() {
                   )
                 })}
                 {dayItems.length > maxShow && (
+                  /* exception: 9px density — Phase 4 spec */
                   <div style={{ fontSize: 9, color: '#9CA3AF', paddingLeft: 2 }}>+{dayItems.length - maxShow}</div>
                 )}
               </div>
@@ -304,13 +308,13 @@ export default function DashboardPage() {
   const collectCard = (
     <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #F3F4F6' }}>
-        <p style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Collect</p>
-        <Link to="/invoices" style={{ fontSize: 12, fontWeight: 500, color: '#4F6CF7', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+        <p className="text-body font-semibold text-gray-900">Collect</p>
+        <Link to="/invoices" className="text-eyebrow font-medium" style={{ color: '#4F6CF7', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
           View all <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
         </Link>
       </div>
       {collectSorted.length === 0
-        ? <p style={{ fontSize: 13, color: '#9CA3AF', padding: '24px 20px' }}>Nothing to collect. All invoices current.</p>
+        ? <p className="text-label font-normal text-gray-400" style={{ padding: '24px 20px' }}>Nothing to collect. All invoices current.</p>
         : collectSorted.slice(0, 6).map(inv => (
             <Link key={inv.id} to="/invoices" style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -319,13 +323,13 @@ export default function DashboardPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                 <div style={{ width: 7, height: 7, borderRadius: '50%', background: inv.status === 'Overdue' ? '#DC2626' : '#D97706', flexShrink: 0 }} />
                 <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 500, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{clientMap[inv.client_id] ?? 'Unknown'}</p>
-                  <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 1 }}>{inv.number} · due {fmtDateShort(inv.due_date)}</p>
+                  <p className="text-label text-gray-900" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{clientMap[inv.client_id] ?? 'Unknown'}</p>
+                  <p className="text-micro font-normal text-gray-400" style={{ marginTop: 1 }}>{inv.number} · due {fmtDateShort(inv.due_date)}</p>
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Badge color={statusColor(inv.status)}>{inv.status}</Badge>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#111827', minWidth: 72, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(inv.total)}</span>
+                <span className="text-label font-semibold text-gray-900" style={{ minWidth: 72, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(inv.total)}</span>
               </div>
             </Link>
           ))
@@ -385,8 +389,8 @@ export default function DashboardPage() {
         <div style={{ background: 'white', borderBottom: '1px solid #E5E7EB', padding: '20px 16px 20px' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
             <div style={{ minWidth: 0, flex: 1 }}>
-              <h1 style={{ fontSize: 20, fontWeight: 700, color: '#111827' }}>{greeting}, {firstName}.</h1>
-              <p style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>{dateSubtext}</p>
+              <h1 className="text-display text-gray-900">{greeting}, {firstName}.</h1>
+              <p className="text-eyebrow font-normal text-gray-400" style={{ marginTop: 4 }}>{dateSubtext}</p>
             </div>
             <NewEntityDropdown compact />
           </div>
@@ -406,7 +410,7 @@ export default function DashboardPage() {
         {lowStock.length > 0 && (
           <div style={{ margin: '0 16px 16px', background: '#FFFBEB', borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #FDE68A' }}>
             <AlertTriangle className="h-4 w-4 shrink-0" strokeWidth={2} color="#D97706" />
-            <p style={{ fontSize: 12, color: '#92400E' }}><strong>Low stock:</strong> {lowStock.length} item{lowStock.length > 1 ? 's' : ''}</p>
+            <p className="text-eyebrow font-normal" style={{ color: '#92400E' }}><strong>Low stock:</strong> {lowStock.length} item{lowStock.length > 1 ? 's' : ''}</p>
           </div>
         )}
 
@@ -425,8 +429,8 @@ export default function DashboardPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
         <div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: '#111827' }}>{greeting}, {firstName}.</h2>
-          <p style={{ fontSize: 13, color: '#6B7280', marginTop: 4 }}>{dateSubtext}</p>
+          <h2 className="text-display text-gray-900">{greeting}, {firstName}.</h2>
+          <p className="text-label font-normal text-gray-500" style={{ marginTop: 4 }}>{dateSubtext}</p>
         </div>
         <NewEntityDropdown />
       </div>
@@ -445,7 +449,7 @@ export default function DashboardPage() {
       {lowStock.length > 0 && (
         <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 10, padding: '12px 16px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 10 }}>
           <AlertTriangle className="h-4 w-4 shrink-0" strokeWidth={2} color="#D97706" />
-          <p style={{ fontSize: 13, color: '#92400E' }}><strong>Low stock alert:</strong> {lowStock.map(i => `${i.name} (${i.quantity} left)`).join(' · ')}</p>
+          <p className="text-label font-normal" style={{ color: '#92400E' }}><strong>Low stock alert:</strong> {lowStock.map(i => `${i.name} (${i.quantity} left)`).join(' · ')}</p>
         </div>
       )}
 

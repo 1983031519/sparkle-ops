@@ -86,7 +86,8 @@ export function GlobalSearch({ mobile = false }: { mobile?: boolean }) {
                 onKeyDown={handleKey}
                 onFocus={() => setOpen(true)}
                 placeholder="Search..."
-                style={{ width: '100%', height: 36, borderRadius: 8, border: '1px solid #E5E7EB', paddingLeft: 34, paddingRight: 10, fontSize: 14, outline: 'none' }}
+                className="text-body"
+                style={{ width: '100%', height: 36, borderRadius: 8, border: '1px solid #E5E7EB', paddingLeft: 34, paddingRight: 10, outline: 'none' }}
               />
             </div>
             <button onClick={() => { clear(); setOpen(false) }} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer' }}>
@@ -111,10 +112,11 @@ export function GlobalSearch({ mobile = false }: { mobile?: boolean }) {
         onKeyDown={handleKey}
         onFocus={() => setOpen(true)}
         placeholder="Search clients, jobs, invoices..."
+        className="text-label font-normal"
         style={{
           width: '100%', height: 36, borderRadius: 8,
           border: '1px solid #E5E7EB', paddingLeft: 36, paddingRight: 36,
-          fontSize: 13, outline: 'none', background: '#F9FAFB',
+          outline: 'none', background: '#F9FAFB',
           transition: 'border-color 150ms, box-shadow 150ms',
         }}
         onMouseEnter={e => { e.currentTarget.style.borderColor = '#4F6CF7' }}
@@ -139,12 +141,12 @@ function Dropdown({ results, loading, activeIdx, onSelect }: { results: SearchRe
       maxHeight: 400, overflowY: 'auto',
     }}>
       {loading && results.length === 0 && (
-        <div style={{ padding: '20px 16px', textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>
+        <div className="text-label font-normal" style={{ padding: '20px 16px', textAlign: 'center', color: '#9CA3AF' }}>
           Searching...
         </div>
       )}
       {!loading && results.length === 0 && (
-        <div style={{ padding: '20px 16px', textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>
+        <div className="text-label font-normal" style={{ padding: '20px 16px', textAlign: 'center', color: '#9CA3AF' }}>
           No results found
         </div>
       )}
@@ -169,11 +171,11 @@ function Dropdown({ results, loading, activeIdx, onSelect }: { results: SearchRe
               <Icon className="h-4 w-4" strokeWidth={1.5} color={cfg.color} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.primary}</div>
-              {r.secondary && <div style={{ fontSize: 11, color: '#9CA3AF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.secondary}</div>}
-              {r.snippet && <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontStyle: 'italic' }}>{r.snippet}</div>}
+              <div className="text-label font-semibold text-gray-900" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.primary}</div>
+              {r.secondary && <div className="text-micro font-normal text-gray-400" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.secondary}</div>}
+              {r.snippet && <div className="text-micro font-normal text-gray-500" style={{ marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontStyle: 'italic' }}>{r.snippet}</div>}
             </div>
-            <span style={{ fontSize: 10, fontWeight: 600, color: cfg.color, textTransform: 'uppercase', letterSpacing: '0.05em', flexShrink: 0 }}>{cfg.label}</span>
+            <span className="text-micro uppercase font-semibold" style={{ color: cfg.color, letterSpacing: '0.05em', flexShrink: 0 }}>{cfg.label}</span>
           </button>
         )
       })}

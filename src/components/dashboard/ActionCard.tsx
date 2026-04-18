@@ -24,14 +24,14 @@ export function ActionCard({ icon, title, value, sub, href, emptyState = false }
         <ArrowUpRight className="h-4 w-4 text-gray-300 opacity-0 transition-opacity group-hover:opacity-100" strokeWidth={1.5} />
       </div>
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-gray-500">{title}</p>
+        <p className="text-eyebrow uppercase text-gray-500">{title}</p>
         <p
-          className={`mt-1.5 text-[22px] font-bold leading-none ${emptyState ? 'text-gray-400' : 'text-gray-900'}`}
+          className={`mt-1.5 text-display leading-none ${emptyState ? 'text-gray-400' : 'text-gray-900'}`}
           style={{ fontVariantNumeric: 'tabular-nums' }}
         >
           {value}
         </p>
-        <p className="mt-2 text-[12px] text-gray-400">{sub}</p>
+        <p className="mt-2 text-eyebrow font-normal text-gray-400">{sub}</p>
       </div>
     </Link>
   )

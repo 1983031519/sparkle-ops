@@ -39,7 +39,7 @@ export function NewEntityDropdown({ compact = false }: { compact?: boolean }) {
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="inline-flex h-[38px] items-center gap-2 rounded-[8px] bg-[#4F6CF7] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-[#3451D1] focus:outline-none focus:ring-2 focus:ring-[#4F6CF7]/30 focus:ring-offset-1"
+        className="inline-flex h-[38px] items-center gap-2 rounded-[8px] bg-[#4F6CF7] px-4 text-label font-semibold text-white transition-colors hover:bg-[#3451D1] focus:outline-none focus:ring-2 focus:ring-[#4F6CF7]/30 focus:ring-offset-1"
         aria-haspopup="menu"
         aria-expanded={open}
       >
@@ -61,7 +61,7 @@ export function NewEntityDropdown({ compact = false }: { compact?: boolean }) {
                 type="button"
                 role="menuitem"
                 onClick={() => choose(opt.to)}
-                className="flex w-full items-center gap-3 px-3 py-2 text-left text-[13px] font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                className="flex w-full items-center gap-3 px-3 py-2 text-left text-label text-gray-700 transition-colors hover:bg-gray-50"
               >
                 <OptIcon className="h-4 w-4 text-gray-500" strokeWidth={1.5} />
                 {opt.label}

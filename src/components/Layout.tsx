@@ -99,11 +99,11 @@ function UserMenu({ email, onSignOut }: { email: string; onSignOut: () => void }
         onMouseEnter={e => { e.currentTarget.style.background = '#F3F4F6' }}
         onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
       >
-        <div style={{
+        <div className="text-label font-semibold" style={{
           width: 32, height: 32, borderRadius: '50%',
           background: '#4F6CF7', color: 'white',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 13, fontWeight: 600, flexShrink: 0,
+          flexShrink: 0,
         }}>
           {initial}
         </div>
@@ -117,14 +117,15 @@ function UserMenu({ email, onSignOut }: { email: string; onSignOut: () => void }
           padding: '6px',
         }}>
           <div style={{ padding: '8px 12px', borderBottom: '1px solid #F3F4F6', marginBottom: 4 }}>
-            <p style={{ fontSize: 11, color: '#9CA3AF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email}</p>
+            <p className="text-micro font-normal text-gray-400" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email}</p>
           </div>
           <button
             onClick={() => { setOpen(false); onSignOut() }}
+            className="text-label"
             style={{
               display: 'flex', alignItems: 'center', gap: 10, width: '100%',
               padding: '8px 12px', border: 'none', cursor: 'pointer', borderRadius: 6,
-              fontSize: 13, fontWeight: 500, color: '#374151', background: 'transparent',
+              color: '#374151', background: 'transparent',
               transition: 'background 100ms',
             }}
             onMouseEnter={e => { e.currentTarget.style.background = '#F9FAFB' }}
@@ -148,10 +149,10 @@ function NavItem({ to, icon: Icon, label, isChat, chatBadge, canAccess }: {
   return (
     <NavLink
       key={to} to={to} end={to === '/'}
+      className={({ isActive }) => `text-label ${isActive ? 'font-semibold' : ''}`}
       style={({ isActive }) => ({
         display: 'flex', alignItems: 'center', gap: 10,
         padding: '8px 12px', borderRadius: 8,
-        fontSize: 13, fontWeight: isActive ? 600 : 500,
         textDecoration: 'none', transition: 'all 100ms ease',
         color: isActive ? '#4F6CF7' : '#6B7280',
         background: isActive ? '#EEF1FE' : 'transparent',
@@ -177,9 +178,9 @@ function NavItem({ to, icon: Icon, label, isChat, chatBadge, canAccess }: {
         <>
           <span style={{ flex: 1 }}>{label}</span>
           {chatBadge > 0 && (
-            <span style={{
+            <span className="text-micro font-bold" style={{
               background: '#DC2626', color: 'white',
-              fontSize: 10, fontWeight: 700, lineHeight: 1,
+              lineHeight: 1,
               padding: '3px 6px', borderRadius: 99, minWidth: 18, textAlign: 'center',
             }}>
               {chatBadge > 99 ? '99+' : chatBadge}
@@ -246,9 +247,10 @@ export function Layout() {
                 key={to}
                 to={to}
                 end={to === '/'}
+                className="text-micro font-medium"
                 style={({ isActive }) => ({
                   flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                  gap: 2, textDecoration: 'none', fontSize: 10, fontWeight: 500,
+                  gap: 2, textDecoration: 'none',
                   color: isActive ? '#4F6CF7' : '#9CA3AF',
                   transition: 'color 150ms', position: 'relative',
                 })}
@@ -256,6 +258,7 @@ export function Layout() {
                 <div style={{ position: 'relative' }}>
                   <Icon className="h-5 w-5" strokeWidth={1.5} />
                   {isChatTab && chatBadge > 0 && (
+                    /* exception: 9px density — chat badge on bottom nav */
                     <span style={{
                       position: 'absolute', top: -5, right: -10,
                       background: '#DC2626', color: 'white',
@@ -294,7 +297,7 @@ export function Layout() {
                 {navGroups.map((group, gi) => (
                   <div key={gi}>
                     {group.label && (
-                      <p style={{ fontSize: 10, fontWeight: 600, color: '#9CA3AF', letterSpacing: '0.08em', padding: '10px 12px 4px', textTransform: 'uppercase' }}>
+                      <p className="text-micro uppercase font-semibold text-gray-400" style={{ letterSpacing: '0.08em', padding: '10px 12px 4px' }}>
                         {group.label}
                       </p>
                     )}
@@ -305,10 +308,10 @@ export function Layout() {
                       return (
                         <NavLink
                           key={to} to={to} end={to === '/'}
+                          className={`text-body ${isActive ? 'font-semibold' : 'font-medium'}`}
                           style={{
                             display: 'flex', alignItems: 'center', gap: 10,
                             padding: '9px 12px', borderRadius: 8,
-                            fontSize: 14, fontWeight: isActive ? 600 : 500,
                             textDecoration: 'none',
                             color: isActive ? '#4F6CF7' : '#6B7280',
                             background: isActive ? '#EEF1FE' : 'transparent',
@@ -320,7 +323,7 @@ export function Layout() {
                             <>
                               <span style={{ flex: 1 }}>{label}</span>
                               {chatBadge > 0 && (
-                                <span style={{ background: '#DC2626', color: 'white', fontSize: 10, fontWeight: 700, padding: '3px 6px', borderRadius: 99 }}>
+                                <span className="text-micro font-bold" style={{ background: '#DC2626', color: 'white', padding: '3px 6px', borderRadius: 99 }}>
                                   {chatBadge > 99 ? '99+' : chatBadge}
                                 </span>
                               )}
@@ -333,8 +336,8 @@ export function Layout() {
                 ))}
               </nav>
               <div style={{ borderTop: '1px solid #E5E7EB', padding: '12px 16px' }}>
-                {user?.email && <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</p>}
-                <button onClick={signOut} style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 10, padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, color: '#6B7280', backgroundColor: 'transparent' }}>
+                {user?.email && <p className="text-micro font-normal text-gray-400" style={{ marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</p>}
+                <button onClick={signOut} className="text-label" style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 10, padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', color: '#6B7280', backgroundColor: 'transparent' }}>
                   <LogOut className="h-4 w-4" strokeWidth={1.5} /> Sign Out
                 </button>
               </div>
@@ -394,7 +397,7 @@ export function Layout() {
           padding: '0 24px', background: 'white', borderBottom: '1px solid #E5E7EB',
           flexShrink: 0,
         }}>
-          <h1 style={{ fontSize: 18, fontWeight: 600, color: '#111827' }}>{pageTitle}</h1>
+          <h1 className="text-title text-gray-900">{pageTitle}</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <GlobalSearch />
             <button
