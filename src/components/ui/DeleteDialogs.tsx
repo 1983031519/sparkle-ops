@@ -72,7 +72,7 @@ export function DeleteConfirmDialog({ open, onClose, onConfirm, title, message, 
             background: iconBg ?? '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}>
-            <AlertTriangle size={20} strokeWidth={1.75} color={iconColor ?? '#DC2626'} />
+            <AlertTriangle className="h-5 w-5" strokeWidth={2} color={iconColor ?? '#DC2626'} />
           </div>
           <div style={{ flex: 1 }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#111827' }}>{title}</h3>
@@ -140,7 +140,7 @@ export function DeleteWarningDialog({ open, onClose, title, message, linkedRecor
             background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}>
-            <ShieldAlert size={20} strokeWidth={1.75} color="#D97706" />
+            <ShieldAlert className="h-5 w-5" strokeWidth={2} color="#D97706" />
           </div>
           <div style={{ flex: 1 }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#111827' }}>{title || 'Cannot Delete'}</h3>

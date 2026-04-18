@@ -66,7 +66,7 @@ export function Modal({ open, onClose, title, children, wide }: Props) {
             onMouseEnter={e => { e.currentTarget.style.background = '#F3F4F6' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
           >
-            <X size={16} strokeWidth={2} />
+            <X className="h-4 w-4" strokeWidth={2} />
           </button>
         </div>
         {/* Body */}

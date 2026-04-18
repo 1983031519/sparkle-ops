@@ -107,7 +107,7 @@ function UserMenu({ email, onSignOut }: { email: string; onSignOut: () => void }
         }}>
           {initial}
         </div>
-        <ChevronDown size={14} color="#6B7280" />
+        <ChevronDown className="h-4 w-4 text-gray-500" strokeWidth={1.5} />
       </button>
       {open && (
         <div style={{
@@ -130,7 +130,7 @@ function UserMenu({ email, onSignOut }: { email: string; onSignOut: () => void }
             onMouseEnter={e => { e.currentTarget.style.background = '#F9FAFB' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
           >
-            <LogOut size={14} strokeWidth={1.5} color="#6B7280" />
+            <LogOut className="h-4 w-4 text-gray-500" strokeWidth={1.5} />
             Sign Out
           </button>
         </div>
@@ -172,7 +172,7 @@ function NavItem({ to, icon: Icon, label, isChat, chatBadge, canAccess }: {
         }
       }}
     >
-      <Icon size={16} strokeWidth={1.75} />
+      <Icon className="h-4 w-4" strokeWidth={1.5} />
       {isChat ? (
         <>
           <span style={{ flex: 1 }}>{label}</span>
@@ -224,7 +224,7 @@ export function Layout() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <GlobalSearch mobile />
             <button onClick={() => setDrawerOpen(true)} style={{ background: 'none', border: 'none', padding: 8, cursor: 'pointer' }}>
-              <Menu size={22} strokeWidth={1.5} color="#374151" />
+              <Menu className="h-6 w-6 text-gray-700" strokeWidth={1.5} />
             </button>
           </div>
         </header>
@@ -254,7 +254,7 @@ export function Layout() {
                 })}
               >
                 <div style={{ position: 'relative' }}>
-                  <Icon size={20} strokeWidth={1.5} />
+                  <Icon className="h-5 w-5" strokeWidth={1.5} />
                   {isChatTab && chatBadge > 0 && (
                     <span style={{
                       position: 'absolute', top: -5, right: -10,
@@ -287,7 +287,7 @@ export function Layout() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 12px', borderBottom: '1px solid #E5E7EB' }}>
                 <img src="/logo-dark.png" alt="Sparkle" style={{ height: 30, width: 'auto' }} />
                 <button onClick={() => setDrawerOpen(false)} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer' }}>
-                  <X size={20} strokeWidth={1.5} color="#6B7280" />
+                  <X className="h-5 w-5 text-gray-500" strokeWidth={2} />
                 </button>
               </div>
               <nav style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 1, overflowY: 'auto' }}>
@@ -315,7 +315,7 @@ export function Layout() {
                             boxShadow: isActive ? 'inset 3px 0 0 #4F6CF7' : 'none',
                           }}
                         >
-                          <Icon size={17} strokeWidth={1.75} />
+                          <Icon className="h-5 w-5" strokeWidth={1.5} />
                           {isChat ? (
                             <>
                               <span style={{ flex: 1 }}>{label}</span>
@@ -335,7 +335,7 @@ export function Layout() {
               <div style={{ borderTop: '1px solid #E5E7EB', padding: '12px 16px' }}>
                 {user?.email && <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</p>}
                 <button onClick={signOut} style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 10, padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, color: '#6B7280', backgroundColor: 'transparent' }}>
-                  <LogOut size={16} strokeWidth={1.5} /> Sign Out
+                  <LogOut className="h-4 w-4" strokeWidth={1.5} /> Sign Out
                 </button>
               </div>
             </div>
@@ -402,7 +402,7 @@ export function Layout() {
               onMouseEnter={e => { e.currentTarget.style.background = '#F3F4F6' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
             >
-              <Bell size={18} strokeWidth={1.75} />
+              <Bell className="h-5 w-5" strokeWidth={1.5} />
             </button>
             <UserMenu email={user?.email ?? ''} onSignOut={signOut} />
           </div>

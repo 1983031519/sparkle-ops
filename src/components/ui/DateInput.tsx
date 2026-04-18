@@ -136,7 +136,7 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
           onClick={() => setOpen(o => !o)}
           className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-[#9CA3AF] hover:text-[#6B7280]"
         >
-          <Calendar size={16} strokeWidth={1.5} />
+          <Calendar className="h-4 w-4" strokeWidth={1.5} />
         </button>
 
         {open && (
@@ -144,11 +144,11 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
             {/* Header */}
             <div className="mb-2 flex items-center justify-between">
               <button type="button" onClick={prevMonth} className="rounded p-1 hover:bg-[#F3F4F6]">
-                <ChevronLeft size={16} strokeWidth={1.5} />
+                <ChevronLeft className="h-4 w-4" strokeWidth={1.5} />
               </button>
               <span className="text-sm font-semibold text-[#111827]">{MONTHS[viewMonth]} {viewYear}</span>
               <button type="button" onClick={nextMonth} className="rounded p-1 hover:bg-[#F3F4F6]">
-                <ChevronRight size={16} strokeWidth={1.5} />
+                <ChevronRight className="h-4 w-4" strokeWidth={1.5} />
               </button>
             </div>
 

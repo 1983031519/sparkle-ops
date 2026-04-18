@@ -73,12 +73,12 @@ export function GlobalSearch({ mobile = false }: { mobile?: boolean }) {
       <div ref={containerRef} style={{ position: 'relative' }}>
         {!open ? (
           <button onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 50) }} style={{ background: 'none', border: 'none', padding: 8, cursor: 'pointer' }}>
-            <Search size={20} strokeWidth={1.5} color="#374151" />
+            <Search className="h-5 w-5 text-gray-700" strokeWidth={1.5} />
           </button>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ position: 'relative', flex: 1 }}>
-              <Search size={16} strokeWidth={1.5} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} />
+              <Search className="h-4 w-4 text-gray-400" strokeWidth={1.5} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }} />
               <input
                 ref={inputRef}
                 value={query}
@@ -90,7 +90,7 @@ export function GlobalSearch({ mobile = false }: { mobile?: boolean }) {
               />
             </div>
             <button onClick={() => { clear(); setOpen(false) }} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer' }}>
-              <X size={18} color="#9CA3AF" />
+              <X className="h-5 w-5 text-gray-400" strokeWidth={2} />
             </button>
           </div>
         )}
@@ -102,8 +102,8 @@ export function GlobalSearch({ mobile = false }: { mobile?: boolean }) {
   // Desktop: always visible input
   return (
     <div ref={containerRef} style={{ position: 'relative', width: 320 }}>
-      <Search size={16} strokeWidth={1.5} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', zIndex: 1 }} />
-      {loading && <Loader2 size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', animation: 'spin 1s linear infinite' }} />}
+      <Search className="h-4 w-4 text-gray-400" strokeWidth={1.5} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', zIndex: 1 }} />
+      {loading && <Loader2 className="h-4 w-4 text-gray-400" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', animation: 'spin 1s linear infinite' }} />}
       <input
         ref={inputRef}
         value={query}
@@ -122,7 +122,7 @@ export function GlobalSearch({ mobile = false }: { mobile?: boolean }) {
       />
       {query && (
         <button onClick={() => { clear(); inputRef.current?.focus() }} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
-          <X size={14} color="#9CA3AF" />
+          <X className="h-4 w-4 text-gray-400" strokeWidth={2} />
         </button>
       )}
       {showDropdown && <Dropdown results={results} loading={loading} activeIdx={activeIdx} onSelect={handleSelect} />}
@@ -166,7 +166,7 @@ function Dropdown({ results, loading, activeIdx, onSelect }: { results: SearchRe
             onMouseLeave={e => { if (i !== activeIdx) e.currentTarget.style.background = 'transparent' }}
           >
             <div style={{ width: 32, height: 32, borderRadius: 8, background: cfg.color + '10', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Icon size={16} strokeWidth={1.5} color={cfg.color} />
+              <Icon className="h-4 w-4" strokeWidth={1.5} color={cfg.color} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.primary}</div>
