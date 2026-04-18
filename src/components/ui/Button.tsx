@@ -10,9 +10,9 @@ const variants = {
 }
 
 const sizes = {
-  sm: 'px-3 py-1.5 text-[12px]',
-  md: 'h-[38px] px-4 text-[13px]',
-  lg: 'h-[44px] px-6 text-[14px]',
+  sm: 'px-3 py-1.5 text-eyebrow',
+  md: 'h-[38px] px-4 text-label',
+  lg: 'h-[44px] px-6 text-body',
 }
 
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {

@@ -68,7 +68,7 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
         ? <CheckCircle className="h-[16px] w-[16px] shrink-0" />
         : <XCircle className="h-[16px] w-[16px] shrink-0" />
       }
-      <p className="text-[13px] font-semibold">{toast.message}</p>
+      <p className="text-label font-semibold">{toast.message}</p>
       <button onClick={onClose} className="ml-2 shrink-0 rounded-full p-0.5 hover:bg-black/5">
         <X className="h-3.5 w-3.5" />
       </button>

@@ -115,7 +115,7 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
 
   return (
     <div className="space-y-1" ref={ref}>
-      {label && <label htmlFor={id} className="block text-[13px] font-medium text-gray-700">{label}</label>}
+      {label && <label htmlFor={id} className="block text-label text-gray-700">{label}</label>}
       <div className="relative">
         <input
           id={id}
@@ -127,7 +127,7 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
           onBlur={handleInputBlur}
           onFocus={() => setOpen(true)}
           required={required}
-          className="block w-full h-[40px] rounded-[8px] border border-gray-300 bg-white px-3 pr-10 text-[14px] placeholder:text-gray-400 transition-all duration-150 focus:border-[#4F6CF7] focus:outline-none focus:shadow-[0_0_0_3px_rgba(79,108,247,0.12)]"
+          className="block w-full h-[40px] rounded-[8px] border border-gray-300 bg-white px-3 pr-10 text-body placeholder:text-gray-400 transition-all duration-150 focus:border-[#4F6CF7] focus:outline-none focus:shadow-[0_0_0_3px_rgba(79,108,247,0.12)]"
           autoComplete="off"
         />
         <button
@@ -153,7 +153,7 @@ export function DateInput({ label, id, value, onChange, required, placeholder = 
             </div>
 
             {/* Day names */}
-            <div className="grid grid-cols-7 text-center text-[11px] font-medium text-gray-400">
+            <div className="grid grid-cols-7 text-center text-micro text-gray-400">
               {DAYS.map(d => <div key={d} className="py-1">{d}</div>)}
             </div>
 

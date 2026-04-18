@@ -22,7 +22,7 @@ export function Badge({ children, color = 'gray', className }: Props) {
   const c = colors[color] ?? colors.gray
   return (
     <span
-      className={clsx('inline-flex items-center gap-1.5 rounded-full px-2.5 py-[3px] text-[11px] font-semibold', className)}
+      className={clsx('inline-flex items-center gap-1.5 rounded-full px-2.5 py-[3px] text-micro font-semibold', className)}
       style={{ background: c.bg, color: c.text }}
     >
       <span style={{ width: 6, height: 6, borderRadius: '50%', background: c.dot, flexShrink: 0, display: 'inline-block' }} />

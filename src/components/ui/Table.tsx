@@ -16,7 +16,7 @@ interface Props<T> {
 
 export function Table<T extends { id: string }>({ columns, data, onRowClick, emptyMessage = 'No records yet.' }: Props<T>) {
   if (data.length === 0) {
-    return <p className="py-16 text-center text-[13px] text-gray-400">{emptyMessage}</p>
+    return <p className="py-16 text-center text-label text-gray-400">{emptyMessage}</p>
   }
 
   return (
@@ -25,7 +25,7 @@ export function Table<T extends { id: string }>({ columns, data, onRowClick, emp
         <thead>
           <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
             {columns.map(col => (
-              <th key={col.key} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 12, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6B7280' }}>
+              <th key={col.key} className="text-eyebrow uppercase text-gray-500" style={{ padding: '10px 16px', textAlign: 'left' }}>
                 {col.header}
               </th>
             ))}
@@ -41,7 +41,11 @@ export function Table<T extends { id: string }>({ columns, data, onRowClick, emp
               onMouseLeave={e => { if (onRowClick) (e.currentTarget as HTMLTableRowElement).style.background = '' }}
             >
               {columns.map((col, i) => (
-                <td key={col.key} style={{ padding: '12px 16px', fontSize: 13, color: i === 0 ? '#111827' : '#6B7280', fontWeight: i === 0 ? 500 : 400 }} className={col.className}>
+                <td
+                  key={col.key}
+                  style={{ padding: '12px 16px', color: i === 0 ? '#111827' : '#6B7280' }}
+                  className={`text-label ${i === 0 ? '' : 'font-normal'} ${col.className ?? ''}`}
+                >
                   {col.render(row)}
                 </td>
               ))}

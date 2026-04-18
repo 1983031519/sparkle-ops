@@ -75,8 +75,8 @@ export function DeleteConfirmDialog({ open, onClose, onConfirm, title, message, 
             <AlertTriangle className="h-5 w-5" strokeWidth={2} color={iconColor ?? '#DC2626'} />
           </div>
           <div style={{ flex: 1 }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#111827' }}>{title}</h3>
-            <p style={{ margin: '6px 0 0', fontSize: 13, color: '#6B7280', lineHeight: 1.5 }}>
+            <h3 className="text-title text-gray-900" style={{ margin: 0 }}>{title}</h3>
+            <p className="text-label font-normal text-gray-500" style={{ margin: '6px 0 0' }}>
               {message || 'This action cannot be undone.'}
             </p>
           </div>
@@ -89,8 +89,9 @@ export function DeleteConfirmDialog({ open, onClose, onConfirm, title, message, 
         <button
           onClick={onClose}
           disabled={loading}
+          className="text-label"
           style={{
-            padding: '8px 18px', borderRadius: 8, fontSize: 13, fontWeight: 500,
+            padding: '8px 18px', borderRadius: 8,
             border: '1px solid #E5E7EB', background: 'white', color: '#374151',
             cursor: 'pointer', transition: 'background 100ms',
           }}
@@ -102,8 +103,9 @@ export function DeleteConfirmDialog({ open, onClose, onConfirm, title, message, 
         <button
           onClick={onConfirm}
           disabled={loading}
+          className="text-label font-semibold"
           style={{
-            padding: '8px 18px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+            padding: '8px 18px', borderRadius: 8,
             border: 'none', background: confirmColor ?? '#DC2626', color: 'white',
             cursor: loading ? 'default' : 'pointer',
             opacity: loading ? 0.7 : 1, transition: 'opacity 100ms',
@@ -143,8 +145,8 @@ export function DeleteWarningDialog({ open, onClose, title, message, linkedRecor
             <ShieldAlert className="h-5 w-5" strokeWidth={2} color="#D97706" />
           </div>
           <div style={{ flex: 1 }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#111827' }}>{title || 'Cannot Delete'}</h3>
-            <p style={{ margin: '6px 0 0', fontSize: 13, color: '#6B7280', lineHeight: 1.5 }}>
+            <h3 className="text-title text-gray-900" style={{ margin: 0 }}>{title || 'Cannot Delete'}</h3>
+            <p className="text-label font-normal text-gray-500" style={{ margin: '6px 0 0' }}>
               {message}
             </p>
           </div>
@@ -155,12 +157,12 @@ export function DeleteWarningDialog({ open, onClose, title, message, linkedRecor
             marginTop: 14, padding: '10px 14px',
             background: '#F9FAFB', borderRadius: 8, border: '1px solid #E5E7EB',
           }}>
-            <p style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
+            <p className="text-micro uppercase text-gray-400 font-semibold" style={{ marginBottom: 6 }}>
               Linked records
             </p>
             <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 4 }}>
               {linkedRecords.map((r, i) => (
-                <li key={i} style={{ fontSize: 13, color: '#374151' }}>
+                <li key={i} className="text-label text-gray-700">
                   • {r.label}
                 </li>
               ))}
@@ -174,8 +176,9 @@ export function DeleteWarningDialog({ open, onClose, title, message, linkedRecor
       }}>
         <button
           onClick={onClose}
+          className="text-label"
           style={{
-            padding: '8px 18px', borderRadius: 8, fontSize: 13, fontWeight: 500,
+            padding: '8px 18px', borderRadius: 8,
             border: '1px solid #E5E7EB', background: 'white', color: '#374151',
             cursor: 'pointer', transition: 'background 100ms',
           }}

@@ -59,7 +59,7 @@ export function Modal({ open, onClose, title, children, wide }: Props) {
           padding: '16px 24px', borderBottom: '1px solid #E5E7EB',
           borderRadius: '12px 12px 0 0', flexShrink: 0,
         }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: '#111827' }}>{title}</h2>
+          <h2 className="text-title text-gray-900">{title}</h2>
           <button
             onClick={onClose}
             style={{ background: 'none', border: 'none', padding: 6, borderRadius: 6, cursor: 'pointer', transition: 'background 100ms', color: '#9CA3AF' }}
