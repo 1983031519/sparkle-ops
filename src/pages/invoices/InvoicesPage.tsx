@@ -558,7 +558,7 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
 
         {/* Line Items */}
         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 12 }}>
-          <thead><tr style={{ borderBottom: '2px solid #d1d5db', textAlign: 'left' }}><th style={{ padding: '8px 4px' }}>Description</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Qty</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Unit</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Unit Price</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Amount</th></tr></thead>
+          <thead><tr style={{ borderBottom: '2px solid #E5E7EB', textAlign: 'left' }}><th style={{ padding: '8px 4px' }}>Description</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Qty</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Unit</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Unit Price</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Amount</th></tr></thead>
           <tbody>
             {items.map((item, i) => (
               <tr key={i} style={{ borderBottom: '1px solid #ebebeb', background: item.is_change_order ? '#fffbeb' : 'transparent' }}>

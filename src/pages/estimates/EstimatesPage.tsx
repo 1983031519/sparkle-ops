@@ -315,7 +315,7 @@ export default function EstimatesPage() {
                       style={{
                         display: 'inline-flex', alignItems: 'center', gap: 4,
                         fontSize: 11, fontWeight: 600, color: '#374151',
-                        background: 'white', border: '1px solid #D1D5DB',
+                        background: 'white', border: '1px solid #E5E7EB',
                         borderRadius: 6, padding: '3px 10px', cursor: 'pointer',
                         transition: 'background 100ms', whiteSpace: 'nowrap',
                       }}
@@ -629,7 +629,7 @@ function ProposalPreview({ est, client, onSent }: { est: Estimate; client?: Clie
 
         {/* Line Items */}
         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 12 }}>
-          <thead><tr style={{ borderBottom: '2px solid #d1d5db', textAlign: 'left' }}><th style={{ padding: '8px 4px' }}>Description</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Qty</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Unit</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Unit Price</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Amount</th></tr></thead>
+          <thead><tr style={{ borderBottom: '2px solid #E5E7EB', textAlign: 'left' }}><th style={{ padding: '8px 4px' }}>Description</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Qty</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Unit</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Unit Price</th><th style={{ padding: '8px 4px', textAlign: 'right' }}>Amount</th></tr></thead>
           <tbody>
             {items.map((item, i) => (
               <tr key={i} style={{ borderBottom: '1px solid #ebebeb' }}>

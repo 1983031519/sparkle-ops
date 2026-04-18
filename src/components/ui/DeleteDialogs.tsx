@@ -91,7 +91,7 @@ export function DeleteConfirmDialog({ open, onClose, onConfirm, title, message, 
           disabled={loading}
           style={{
             padding: '8px 18px', borderRadius: 8, fontSize: 13, fontWeight: 500,
-            border: '1px solid #D1D5DB', background: 'white', color: '#374151',
+            border: '1px solid #E5E7EB', background: 'white', color: '#374151',
             cursor: 'pointer', transition: 'background 100ms',
           }}
           onMouseEnter={e => { e.currentTarget.style.background = '#F9FAFB' }}
@@ -176,7 +176,7 @@ export function DeleteWarningDialog({ open, onClose, title, message, linkedRecor
           onClick={onClose}
           style={{
             padding: '8px 18px', borderRadius: 8, fontSize: 13, fontWeight: 500,
-            border: '1px solid #D1D5DB', background: 'white', color: '#374151',
+            border: '1px solid #E5E7EB', background: 'white', color: '#374151',
             cursor: 'pointer', transition: 'background 100ms',
           }}
           onMouseEnter={e => { e.currentTarget.style.background = '#F9FAFB' }}

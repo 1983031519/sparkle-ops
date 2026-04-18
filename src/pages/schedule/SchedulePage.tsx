@@ -112,7 +112,7 @@ function TimePicker({ label, value, onChange, disabled }: {
   }
 
   const selectStyle: React.CSSProperties = {
-    height: 40, padding: '0 8px', borderRadius: 8, border: '1px solid #D1D5DB',
+    height: 40, padding: '0 8px', borderRadius: 8, border: '1px solid #E5E7EB',
     background: 'white', fontSize: 14, color: '#111827',
     cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.6 : 1,
   }
@@ -326,7 +326,7 @@ export default function SchedulePage() {
             value={filterAssignee}
             onChange={e => setFilterAssignee(e.target.value)}
             style={{
-              height: 36, padding: '0 10px', borderRadius: 8, border: '1px solid #D1D5DB',
+              height: 36, padding: '0 10px', borderRadius: 8, border: '1px solid #E5E7EB',
               background: 'white', fontSize: 12, color: '#374151', cursor: 'pointer',
             }}
           >
@@ -337,7 +337,7 @@ export default function SchedulePage() {
             value={filterType}
             onChange={e => setFilterType(e.target.value)}
             style={{
-              height: 36, padding: '0 10px', borderRadius: 8, border: '1px solid #D1D5DB',
+              height: 36, padding: '0 10px', borderRadius: 8, border: '1px solid #E5E7EB',
               background: 'white', fontSize: 12, color: '#374151', cursor: 'pointer',
             }}
           >
@@ -363,7 +363,7 @@ export default function SchedulePage() {
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 height: 30, padding: '0 12px', borderRadius: 8,
-                background: 'white', color: '#374151', border: '1px solid #D1D5DB',
+                background: 'white', color: '#374151', border: '1px solid #E5E7EB',
                 fontSize: 12, fontWeight: 600, cursor: 'pointer',
               }}
             >

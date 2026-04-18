@@ -95,7 +95,7 @@ function ClientDetailPanel({ client, contacts, onEdit, onClose, isMobile }: {
         </div>
         <button onClick={onEdit} style={{
           display: 'flex', alignItems: 'center', gap: 4, padding: '5px 12px',
-          borderRadius: 6, border: '1px solid #D1D5DB', background: 'white',
+          borderRadius: 6, border: '1px solid #E5E7EB', background: 'white',
           fontSize: 12, fontWeight: 500, color: '#374151', cursor: 'pointer',
           flexShrink: 0,
         }}>

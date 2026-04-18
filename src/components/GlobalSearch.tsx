@@ -113,12 +113,12 @@ export function GlobalSearch({ mobile = false }: { mobile?: boolean }) {
         placeholder="Search clients, jobs, invoices..."
         style={{
           width: '100%', height: 36, borderRadius: 8,
-          border: '1px solid #D1D5DB', paddingLeft: 36, paddingRight: 36,
+          border: '1px solid #E5E7EB', paddingLeft: 36, paddingRight: 36,
           fontSize: 13, outline: 'none', background: '#F9FAFB',
           transition: 'border-color 150ms, box-shadow 150ms',
         }}
         onMouseEnter={e => { e.currentTarget.style.borderColor = '#4F6CF7' }}
-        onMouseLeave={e => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = '#D1D5DB' }}
+        onMouseLeave={e => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = '#E5E7EB' }}
       />
       {query && (
         <button onClick={() => { clear(); inputRef.current?.focus() }} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>

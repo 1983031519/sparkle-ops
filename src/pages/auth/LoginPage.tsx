@@ -76,12 +76,12 @@ export default function LoginPage() {
               placeholder="you@example.com"
               style={{
                 display: 'block', width: '100%', height: 42, borderRadius: 8,
-                border: '1px solid #D1D5DB', background: 'white', padding: '0 12px',
+                border: '1px solid #E5E7EB', background: 'white', padding: '0 12px',
                 fontSize: 16,
                 outline: 'none', WebkitAppearance: 'none', boxSizing: 'border-box',
               }}
               onFocus={e => { e.currentTarget.style.borderColor = '#4F6CF7'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79,108,247,0.12)' }}
-              onBlur={e => { e.currentTarget.style.borderColor = '#D1D5DB'; e.currentTarget.style.boxShadow = 'none' }}
+              onBlur={e => { e.currentTarget.style.borderColor = '#E5E7EB'; e.currentTarget.style.boxShadow = 'none' }}
             />
           </div>
 
@@ -99,12 +99,12 @@ export default function LoginPage() {
               placeholder="Your password"
               style={{
                 display: 'block', width: '100%', height: 42, borderRadius: 8,
-                border: '1px solid #D1D5DB', background: 'white', padding: '0 12px',
+                border: '1px solid #E5E7EB', background: 'white', padding: '0 12px',
                 fontSize: 16,
                 outline: 'none', WebkitAppearance: 'none', boxSizing: 'border-box',
               }}
               onFocus={e => { e.currentTarget.style.borderColor = '#4F6CF7'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(79,108,247,0.12)' }}
-              onBlur={e => { e.currentTarget.style.borderColor = '#D1D5DB'; e.currentTarget.style.boxShadow = 'none' }}
+              onBlur={e => { e.currentTarget.style.borderColor = '#E5E7EB'; e.currentTarget.style.boxShadow = 'none' }}
             />
           </div>
 
