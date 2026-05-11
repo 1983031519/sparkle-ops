@@ -494,7 +494,7 @@ export default function DashboardPage() {
       {errorBanner}
 
       {/* Section 1: Hero + 3 secondary stacked */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 20, alignItems: 'stretch' }}>
+      <div style={{ display: 'flex', gap: 16, marginBottom: 20, alignItems: 'flex-start' }}>
         {/* Hero card — content-only sizing, no minHeight */}
         <div style={{
           flex: 1,
