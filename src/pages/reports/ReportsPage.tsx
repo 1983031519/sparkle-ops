@@ -227,18 +227,12 @@ export default function ReportsPage() {
             {monthlyRevenue.length === 0 ? <p className="py-8 text-center text-sm text-gray-400">No paid invoices in this period</p> : (
               <ResponsiveContainer width="100%" height={300}>
                 <ComposedChart data={monthlyRevenue}>
-                  <defs>
-                    <linearGradient id="navyBarGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={NAVY} stopOpacity={0.9} />
-                      <stop offset="100%" stopColor="#2563EB" stopOpacity={0.7} />
-                    </linearGradient>
-                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
                   <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
                   <Tooltip formatter={(v, name) => [fmtCurrency(Number(v)), name === 'trend' ? 'Trend' : 'Revenue']} />
-                  <Bar dataKey="revenue" fill="url(#navyBarGradient)" radius={[4, 4, 0, 0]} />
-                  <Line dataKey="trend" type="monotone" stroke="#7C3AED" strokeWidth={2} dot={false} />
+                  <Bar dataKey="revenue" fill={NAVY} radius={[4, 4, 0, 0]} maxBarSize={60} />
+                  <Line dataKey="trend" type="monotone" stroke="#7C3AED" strokeWidth={2} dot={false} strokeDasharray="4 2" />
                 </ComposedChart>
               </ResponsiveContainer>
             )}

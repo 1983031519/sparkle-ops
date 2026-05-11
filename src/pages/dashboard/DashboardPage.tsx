@@ -487,58 +487,53 @@ export default function DashboardPage() {
       {errorBanner}
 
       {/* Section 1: Hero + 3 secondary stacked */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
-        {/* Hero card */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 20, alignItems: 'stretch' }}>
+        {/* Hero card — content-only sizing, no minHeight */}
         <div style={{
           flex: 1,
           background: collectCount > 0
             ? 'linear-gradient(135deg, #991B1B 0%, #7F1D1D 100%)'
             : 'linear-gradient(135deg, #065F46 0%, #064E3B 100%)',
-          borderRadius: 12, padding: '28px 32px', color: 'white',
-          display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 190,
+          borderRadius: 12, padding: '14px 20px', color: 'white',
         }}>
-          <div>
-            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.7, marginBottom: 8 }}>
-              {collectCount > 0 ? 'Action Required' : 'All Clear'}
-            </p>
-            <p style={{ fontSize: 40, fontWeight: 800, lineHeight: 1.05, fontVariantNumeric: 'tabular-nums' }}>
-              {collectCount > 0 ? fmtCurrency(collectTotal) : 'No overdue invoices'}
-            </p>
-            <p style={{ fontSize: 15, opacity: 0.8, marginTop: 8 }}>
-              {collectCount > 0
-                ? `${collectCount} invoice${collectCount !== 1 ? 's' : ''} overdue${heroClientName ? ` · next: ${heroClientName}` : ''}`
-                : `${invoices.filter(i => i.status === 'Unpaid').length} unpaid invoices · all within due dates`}
-            </p>
-          </div>
-          <div style={{ marginTop: 28 }}>
-            <Link to="/invoices" style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(4px)',
-              color: 'white', borderRadius: 8, padding: '9px 18px',
-              fontSize: 13, fontWeight: 600, textDecoration: 'none',
-              border: '1px solid rgba(255,255,255,0.25)',
-            }}>
-              {collectCount > 0 ? 'Collect Now' : 'View Invoices'} <ArrowRight className="h-4 w-4" strokeWidth={2} />
-            </Link>
-          </div>
+          <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.7, marginBottom: 4 }}>
+            {collectCount > 0 ? 'Action Required' : 'All Clear'}
+          </p>
+          <p style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>
+            {collectCount > 0 ? fmtCurrency(collectTotal) : 'No overdue invoices'}
+          </p>
+          <p style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
+            {collectCount > 0
+              ? `${collectCount} invoice${collectCount !== 1 ? 's' : ''} overdue${heroClientName ? ` · next: ${heroClientName}` : ''}`
+              : `${invoices.filter(i => i.status === 'Unpaid').length} unpaid invoices · all within due dates`}
+          </p>
+          <Link to="/invoices" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(4px)',
+            color: 'white', borderRadius: 8, padding: '7px 14px',
+            fontSize: 12, fontWeight: 600, textDecoration: 'none',
+            border: '1px solid rgba(255,255,255,0.25)', marginTop: 10,
+          }}>
+            {collectCount > 0 ? 'Collect Now' : 'View Invoices'} <ArrowRight className="h-4 w-4" strokeWidth={2} />
+          </Link>
         </div>
 
-        {/* 3 secondary stacked */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: 220, flexShrink: 0 }}>
-          <div style={{ flex: 1, background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', borderLeft: `4px solid ${collectCount > 0 ? '#DC2626' : '#059669'}`, padding: '14px 16px' }}>
-            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF' }}>Overdue</p>
-            <p style={{ fontSize: 24, fontWeight: 800, color: '#111827', marginTop: 4 }}>{collectCount}</p>
-            <p style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>{fmtCurrency(collectTotal)}</p>
+        {/* 3 secondary stacked — match hero height via flex stretch */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: 200, flexShrink: 0 }}>
+          <div style={{ flex: 1, background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', borderLeft: `4px solid ${collectCount > 0 ? '#DC2626' : '#059669'}`, padding: '10px 14px' }}>
+            <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF' }}>Overdue</p>
+            <p style={{ fontSize: 20, fontWeight: 800, color: '#111827', marginTop: 2 }}>{collectCount}</p>
+            <p style={{ fontSize: 11, color: '#6B7280' }}>{fmtCurrency(collectTotal)}</p>
           </div>
-          <div style={{ flex: 1, background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', borderLeft: '4px solid #1E3A8A', padding: '14px 16px' }}>
-            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF' }}>Active Jobs</p>
-            <p style={{ fontSize: 24, fontWeight: 800, color: '#111827', marginTop: 4 }}>{activeJobs}</p>
-            <p style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>In progress & scheduled</p>
+          <div style={{ flex: 1, background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', borderLeft: '4px solid #1E3A8A', padding: '10px 14px' }}>
+            <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF' }}>Active Jobs</p>
+            <p style={{ fontSize: 20, fontWeight: 800, color: '#111827', marginTop: 2 }}>{activeJobs}</p>
+            <p style={{ fontSize: 11, color: '#6B7280' }}>In progress & scheduled</p>
           </div>
-          <div style={{ flex: 1, background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', borderLeft: `4px solid ${followUpCount > 0 ? '#D97706' : '#E5E7EB'}`, padding: '14px 16px' }}>
-            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF' }}>Follow Up</p>
-            <p style={{ fontSize: 24, fontWeight: 800, color: '#111827', marginTop: 4 }}>{followUpCount}</p>
-            <p style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>Estimates 7+ days</p>
+          <div style={{ flex: 1, background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', borderLeft: `4px solid ${followUpCount > 0 ? '#D97706' : '#E5E7EB'}`, padding: '10px 14px' }}>
+            <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF' }}>Follow Up</p>
+            <p style={{ fontSize: 20, fontWeight: 800, color: '#111827', marginTop: 2 }}>{followUpCount}</p>
+            <p style={{ fontSize: 11, color: '#6B7280' }}>Estimates 7+ days</p>
           </div>
         </div>
       </div>
