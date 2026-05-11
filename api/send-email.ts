@@ -13,7 +13,8 @@ interface DocumentData {
 type SenderId = 'oscar' | 'sabrina' | 'info'
 
 interface SendEmailBody {
-  to: string
+  to: string | string[]
+  cc?: string[]
   subject?: string
   type: DocumentType
   documentData: DocumentData
@@ -79,13 +80,14 @@ function renderSignatureHtml(signature: string): string {
     .join('<br />')
 }
 
-function buildHtml(type: DocumentType, d: DocumentData, signatureHtml: string, personalMessage?: string): string {
+function buildHtml(type: DocumentType, d: DocumentData, signatureHtml: string, personalMessage?: string, viewUrl?: string): string {
   const label = TYPE_LABEL[type]
   const clientName = escapeHtml(d.clientName || 'Valued Client')
   const number = escapeHtml(d.number || '')
   const date = escapeHtml(d.date || '')
   const total = escapeHtml(fmtMoney(d.total))
   const safeMessage = personalMessage ? escapeHtml(personalMessage.trim()) : ''
+  const safeViewUrl = viewUrl ? escapeHtml(viewUrl) : ''
 
   return `<!doctype html>
 <html lang="en">
@@ -143,6 +145,12 @@ function buildHtml(type: DocumentType, d: DocumentData, signatureHtml: string, p
                 </tr>
               </table>
 
+              ${safeViewUrl ? `
+              <p style="margin:28px 0 0;text-align:center;">
+                <a href="${safeViewUrl}" style="display:inline-block;background:#1a2744;color:#c8a96e;font-size:13px;font-weight:600;text-decoration:none;padding:10px 28px;border-radius:6px;letter-spacing:0.3px;">View ${label} Online</a>
+              </p>
+              ` : ''}
+
               <p style="margin:28px 0 0;font-size:13px;line-height:1.6;color:#555;">
                 For questions, reply to this email or call
                 <a href="tel:+19413875133" style="color:#1a2744;font-weight:600;text-decoration:none;">(941) 387-5133</a>.
@@ -192,9 +200,11 @@ export default async function handler(req: Request): Promise<Response> {
     return jsonResponse(400, { error: 'Invalid JSON body' })
   }
 
-  const { to, subject, type, documentData, senderId, fromEmail, pdfBase64, personalMessage } = body
+  const { to, cc, subject, type, documentData, senderId, fromEmail, viewUrl, pdfBase64, personalMessage } = body
 
-  if (!to || typeof to !== 'string') {
+  const toValid = (typeof to === 'string' && to.length > 0) ||
+    (Array.isArray(to) && to.length > 0 && to.every(e => typeof e === 'string'))
+  if (!toValid) {
     return jsonResponse(400, { error: 'Missing "to" email address' })
   }
   if (!type || !(type in TYPE_LABEL)) {
@@ -235,10 +245,11 @@ export default async function handler(req: Request): Promise<Response> {
       },
       body: JSON.stringify({
         from: `${sender.name} <${sender.email}>`,
-        to: [to],
+        to: Array.isArray(to) ? to : [to],
+        ...(cc && cc.length > 0 ? { cc } : {}),
         reply_to: sender.email,
         subject: finalSubject,
-        html: buildHtml(type, documentData, renderSignatureHtml(sender.signature), personalMessage),
+        html: buildHtml(type, documentData, renderSignatureHtml(sender.signature), personalMessage, viewUrl),
         ...(pdfBase64 ? {
           attachments: [{
             filename: `Sparkle_${TYPE_LABEL[type].replace(' ', '_')}_${documentData.number}.pdf`,

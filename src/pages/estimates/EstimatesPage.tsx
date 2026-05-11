@@ -514,22 +514,40 @@ function ProposalPreview({ est, client, onSent }: { est: Estimate; client?: Clie
     const el = document.querySelector('.print-area') as HTMLElement | null
     if (!el) return
     const html2pdf = (await import('html2pdf.js')).default
-    html2pdf().set({ ...PDF_OPTS, filename: `Proposal — ${est.number}.pdf` }).from(el).save()
+    await (html2pdf() as any).set({ ...PDF_OPTS, filename: `Proposal — ${est.number}.pdf` }).from(el).outputPdf('save')
   }
 
   const [sendOpen, setSendOpen] = useState(false)
   const [pdfBase64, setPdfBase64] = useState<string | null>(null)
   const [generatingPdf, setGeneratingPdf] = useState(false)
+  const [ccEmails, setCcEmails] = useState<{ label: string; email: string }[]>([])
 
   async function handleSendClick() {
     const el = document.querySelector('.print-area') as HTMLElement | null
     setGeneratingPdf(true)
     try {
-      if (el) {
-        const html2pdf = (await import('html2pdf.js')).default
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const dataUri: string = await (html2pdf() as any).set(PDF_OPTS).from(el).outputPdf('datauristring')
-        setPdfBase64(dataUri.split(',')[1])
+      const [pdfResult, contactsResult] = await Promise.allSettled([
+        el
+          ? (async () => {
+              const html2pdf = (await import('html2pdf.js')).default
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const dataUri: string = await (html2pdf() as any).set(PDF_OPTS).from(el).outputPdf('datauristring')
+              return dataUri.split(',')[1]
+            })()
+          : Promise.resolve(null),
+        supabase
+          .from('client_contacts')
+          .select('name, role, email')
+          .eq('client_id', est.client_id)
+          .not('email', 'is', null),
+      ])
+      setPdfBase64(pdfResult.status === 'fulfilled' ? pdfResult.value : null)
+      if (contactsResult.status === 'fulfilled') {
+        const rows = (contactsResult.value.data ?? []) as { name: string; role: string | null; email: string }[]
+        setCcEmails(rows.map(c => ({
+          label: [c.name, c.role].filter(Boolean).join(' — '),
+          email: c.email,
+        })))
       }
     } catch {
       setPdfBase64(null)
@@ -549,10 +567,11 @@ function ProposalPreview({ est, client, onSent }: { est: Estimate; client?: Clie
       </div>
       <SendDocumentModal
         open={sendOpen}
-        onClose={() => setSendOpen(false)}
+        onClose={() => { setSendOpen(false); setPdfBase64(null) }}
         type="estimate"
         documentId={est.id}
         clientEmail={client?.email}
+        ccEmails={ccEmails}
         pdfBase64={pdfBase64 ?? undefined}
         documentData={{
           number: est.number,

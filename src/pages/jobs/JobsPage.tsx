@@ -17,6 +17,7 @@ import { JOB_DIVISIONS, JOB_STATUSES, CHANGE_ORDER_STATUSES, CHANGE_ORDER_REASON
 import { useToast } from '@/components/ui/Toast'
 import { useDebounce } from '@/hooks/useDebounce'
 import type { Job, JobDivision, JobStatus, Client, ChangeOrder, ChangeOrderStatus, ChecklistItem, Estimate, Invoice, Supplier } from '@/lib/database.types'
+import { nextInvoiceNumber } from '../../lib/invoiceNumber'
 
 const emptyForm = {
   title: '', client_id: '', division: 'Pavers' as JobDivision, status: 'Lead' as JobStatus,
@@ -48,6 +49,7 @@ export default function JobsPage() {
   const [deleteConfirmMsg, setDeleteConfirmMsg] = useState('')
   const [deleteWarning, setDeleteWarning] = useState<{ message: string; records: LinkedRecord[] } | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [generatingInvoiceFor, setGeneratingInvoiceFor] = useState<string | null>(null)
   const toast = useToast()
 
   const fetchAll = useCallback(async () => {
@@ -226,38 +228,47 @@ export default function JobsPage() {
 
   // Generate Invoice from Job
   async function generateInvoice(job: Job) {
-    const est = job.estimate_id ? estMap[job.estimate_id] : null
-    const baseLine = est
-      ? (est.line_items as { description: string; qty: number; unit: string; unit_price: number }[])
-      : [{ description: job.title, qty: 1, unit: 'job', unit_price: job.total }]
+    console.log('generateInvoice called for job:', job.id, job.title)
+    setGeneratingInvoiceFor(job.id)
+    try {
+      const est = job.estimate_id ? estMap[job.estimate_id] : null
+      const rawLines = est?.line_items
+      const baseLine = Array.isArray(rawLines) && rawLines.length > 0
+        ? rawLines as { description: string; qty: number; unit: string; unit_price: number }[]
+        : [{ description: job.title, qty: 1, unit: 'job', unit_price: job.total ?? 0 }]
 
-    // Fetch approved change orders
-    const { data: cos } = await supabase.from('change_orders').select('*').eq('job_id', job.id).eq('status', 'Approved')
-    const coLines = ((cos ?? []) as ChangeOrder[]).map((co, i) => ({
-      description: `Change Order #${i + 1} — ${co.description}`,
-      qty: co.qty, unit: co.unit, unit_price: co.unit_price, is_change_order: true,
-    }))
+      const { data: cos } = await supabase.from('change_orders').select('*').eq('job_id', job.id).eq('status', 'Approved')
+      const coLines = ((cos ?? []) as ChangeOrder[]).map((co, i) => ({
+        description: `Change Order #${i + 1} — ${co.description}`,
+        qty: co.qty, unit: co.unit, unit_price: co.unit_price, is_change_order: true,
+      }))
 
-    const allLines = [...baseLine, ...coLines]
-    const subtotal = allLines.reduce((s, l) => s + l.qty * l.unit_price, 0)
-    const now = new Date()
-    const dueDate = new Date(now)
-    dueDate.setDate(dueDate.getDate() + 30)
+      const allLines = [...baseLine, ...coLines]
+      const subtotal = allLines.reduce((s, l) => s + l.qty * l.unit_price, 0)
+      const now = new Date()
+      const dueDate = new Date(now)
+      dueDate.setDate(dueDate.getDate() + 30)
 
-    const invCount = invoices.length + 1
-    const y = now.getFullYear()
-    const m = String(now.getMonth() + 1).padStart(2, '0')
-    const d = String(now.getDate()).padStart(2, '0')
+      const invoiceNumber = await nextInvoiceNumber()
 
-    const { error } = await supabase.from('invoices').insert({
-      number: `${y}-${m}${d}-${String(invCount).padStart(3, '0')}`,
-      client_id: job.client_id, job_id: job.id, estimate_id: job.estimate_id || null,
-      status: 'Unpaid', line_items: allLines, subtotal, total: subtotal,
-      notes: null, due_date: dueDate.toISOString().split('T')[0],
-    } as never)
-    if (error) { toast.error(`Failed to generate invoice: ${error.message}`); return }
-    await fetchAll()
-    toast.success('Invoice generated from job.')
+      const { error } = await supabase.from('invoices').insert({
+        number: invoiceNumber,
+        client_id: job.client_id, job_id: job.id, estimate_id: job.estimate_id || null,
+        status: 'Unpaid', line_items: allLines, subtotal, total: subtotal,
+        notes: null, due_date: dueDate.toISOString().split('T')[0],
+        date: now.toISOString().split('T')[0],
+        site_address: job.site_address ?? null,
+        re_line: job.re_line ?? null,
+      } as never)
+      if (error) { toast.error(`Failed to generate invoice: ${error.message}`); return }
+      await fetchAll()
+      toast.success('Invoice generated from job.')
+    } catch (err) {
+      console.error('generateInvoice error:', err)
+      toast.error(`Failed to generate invoice: ${err instanceof Error ? err.message : String(err)}`)
+    } finally {
+      setGeneratingInvoiceFor(null)
+    }
   }
 
   return (
@@ -300,8 +311,8 @@ export default function JobsPage() {
               { key: 'actions', header: '', render: j => (
                 <div className="flex gap-2" onClick={ev => ev.stopPropagation()}>
                   {!invByJob[j.id] && (j.status === 'In Progress' || j.status === 'Completed') && (
-                    <Button variant="primary" size="sm" onClick={() => generateInvoice(j)}>
-                      <ArrowRight className="h-3 w-3" /> Generate Invoice
+                    <Button variant="primary" size="sm" disabled={generatingInvoiceFor === j.id} onClick={() => generateInvoice(j).catch(e => console.error(e))}>
+                      <ArrowRight className="h-3 w-3" /> {generatingInvoiceFor === j.id ? 'Generating…' : 'Generate Invoice'}
                     </Button>
                   )}
                 </div>
@@ -323,7 +334,9 @@ export default function JobsPage() {
                 { label: 'Invoice', status: invByJob[editing.id] ? 'done' : 'pending' },
               ]} />
               {!invByJob[editing.id] && (editing.status === 'In Progress' || editing.status === 'Completed') && (
-                <Button size="sm" onClick={() => { generateInvoice(editing); setModalOpen(false) }}>Generate Invoice</Button>
+                <Button size="sm" disabled={generatingInvoiceFor === editing.id} onClick={async () => { await generateInvoice(editing); setModalOpen(false) }}>
+                  {generatingInvoiceFor === editing.id ? 'Generating…' : 'Generate Invoice'}
+                </Button>
               )}
             </div>
           )}

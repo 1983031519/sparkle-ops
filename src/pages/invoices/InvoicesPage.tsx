@@ -15,6 +15,7 @@ import { INVOICE_STATUSES, COMPANY, fmtDateShort, fmtDate, fmtCurrency, isoDateP
 import { useToast } from '@/components/ui/Toast'
 import { useDebounce } from '@/hooks/useDebounce'
 import type { Invoice, InvoiceStatus, InvoiceLineItem, Client, Job } from '@/lib/database.types'
+import { nextInvoiceNumber } from '../../lib/invoiceNumber'
 
 const emptyLine: InvoiceLineItem = { description: '', qty: 1, unit: 'ea', unit_price: 0 }
 
@@ -148,25 +149,6 @@ export default function InvoicesPage() {
   function removeLine(i: number) { setForm(f => ({ ...f, line_items: f.line_items.filter((_, idx) => idx !== i) })) }
   function updateLine(i: number, field: keyof InvoiceLineItem, value: string | number) {
     setForm(f => ({ ...f, line_items: f.line_items.map((l, idx) => idx === i ? { ...l, [field]: value } : l) }))
-  }
-
-  async function nextInvoiceNumber(): Promise<string> {
-    const now = new Date()
-    const prefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`
-    const { data } = await supabase
-      .from('invoices')
-      .select('number')
-      .like('number', `${prefix}-%`)
-      .order('number', { ascending: false })
-      .limit(1)
-    let seq = 1
-    if (data && data.length > 0) {
-      const last = (data[0] as { number: string }).number
-      const parts = last.split('-')
-      const lastSeq = parseInt(parts[parts.length - 1], 10)
-      if (!isNaN(lastSeq)) seq = lastSeq + 1
-    }
-    return `${prefix}-${String(seq).padStart(3, '0')}`
   }
 
   async function handleSave() {
@@ -479,22 +461,40 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
     const el = document.querySelector('.print-area') as HTMLElement | null
     if (!el) return
     const html2pdf = (await import('html2pdf.js')).default
-    html2pdf().set({ ...PDF_OPTS, filename: `Invoice — ${inv.number}.pdf` }).from(el).save()
+    await (html2pdf() as any).set({ ...PDF_OPTS, filename: `Invoice — ${inv.number}.pdf` }).from(el).outputPdf('save')
   }
 
   const [sendOpen, setSendOpen] = useState(false)
   const [pdfBase64, setPdfBase64] = useState<string | null>(null)
   const [generatingPdf, setGeneratingPdf] = useState(false)
+  const [ccEmails, setCcEmails] = useState<{ label: string; email: string }[]>([])
 
   async function handleSendClick() {
     const el = document.querySelector('.print-area') as HTMLElement | null
     setGeneratingPdf(true)
     try {
-      if (el) {
-        const html2pdf = (await import('html2pdf.js')).default
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const dataUri: string = await (html2pdf() as any).set(PDF_OPTS).from(el).outputPdf('datauristring')
-        setPdfBase64(dataUri.split(',')[1])
+      const [pdfResult, contactsResult] = await Promise.allSettled([
+        el
+          ? (async () => {
+              const html2pdf = (await import('html2pdf.js')).default
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const dataUri: string = await (html2pdf() as any).set(PDF_OPTS).from(el).outputPdf('datauristring')
+              return dataUri.split(',')[1]
+            })()
+          : Promise.resolve(null),
+        supabase
+          .from('client_contacts')
+          .select('name, role, email')
+          .eq('client_id', inv.client_id)
+          .not('email', 'is', null),
+      ])
+      setPdfBase64(pdfResult.status === 'fulfilled' ? pdfResult.value : null)
+      if (contactsResult.status === 'fulfilled') {
+        const rows = (contactsResult.value.data ?? []) as { name: string; role: string | null; email: string }[]
+        setCcEmails(rows.map(c => ({
+          label: [c.name, c.role].filter(Boolean).join(' — '),
+          email: c.email,
+        })))
       }
     } catch {
       setPdfBase64(null)
@@ -514,10 +514,11 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
       </div>
       <SendDocumentModal
         open={sendOpen}
-        onClose={() => setSendOpen(false)}
+        onClose={() => { setSendOpen(false); setPdfBase64(null) }}
         type="invoice"
         documentId={inv.id}
         clientEmail={client?.email}
+        ccEmails={ccEmails}
         pdfBase64={pdfBase64 ?? undefined}
         documentData={{
           number: inv.number,

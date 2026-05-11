@@ -10,12 +10,18 @@ import { useAuth } from '@/hooks/useAuth'
 
 export type SendDocumentType = 'invoice' | 'estimate' | 'project'
 
+interface CcEmailOption {
+  label: string
+  email: string
+}
+
 interface Props {
   open: boolean
   onClose: () => void
   type: SendDocumentType
   documentId: string    // uuid of the invoice/estimate/project row
   clientEmail: string | null | undefined
+  ccEmails?: CcEmailOption[]
   pdfBase64?: string    // base64-encoded PDF to attach (optional — email sends without if missing)
   documentData: {
     number: string
@@ -26,25 +32,40 @@ interface Props {
   onSent?: () => void   // called after successful email send
 }
 
-export function SendDocumentModal({ open, onClose, type, documentId, clientEmail, pdfBase64, documentData, onSent }: Props) {
+export function SendDocumentModal({ open, onClose, type, documentId, clientEmail, ccEmails = [], pdfBase64, documentData, onSent }: Props) {
   const { user } = useAuth()
   const [senderId, setSenderId] = useState<SenderId>(() => getDefaultSender(user?.email))
   const [personalMessage, setPersonalMessage] = useState('')
   const [sending, setSending] = useState(false)
+  const [selectedEmails, setSelectedEmails] = useState<string[]>([])
   const toast = useToast()
 
-  // Reset default selection every time the modal opens, based on who's logged in.
+  // Reset selections every time the modal opens
   useEffect(() => {
     if (open) {
       setSenderId(getDefaultSender(user?.email))
       setPersonalMessage('')
       setSending(false)
+      setSelectedEmails(clientEmail ? [clientEmail] : [])
     }
-  }, [open, user?.email])
+  }, [open, user?.email, clientEmail])
+
+  function toggleEmail(email: string) {
+    setSelectedEmails(prev =>
+      prev.includes(email) ? prev.filter(e => e !== email) : [...prev, email]
+    )
+  }
+
+  const allOptions: CcEmailOption[] = [
+    ...(clientEmail ? [{ label: 'Primary', email: clientEmail }] : []),
+    ...ccEmails.filter(c => c.email !== clientEmail),
+  ]
+
+  const canSend = selectedEmails.length > 0
 
   async function handleSend() {
-    if (!clientEmail) {
-      toast.error('No client email on file.')
+    if (!canSend) {
+      toast.error('Select at least one recipient.')
       return
     }
     setSending(true)
@@ -71,7 +92,8 @@ export function SendDocumentModal({ open, onClose, type, documentId, clientEmail
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
         body: JSON.stringify({
-          to: clientEmail,
+          to: selectedEmails[0],
+          cc: selectedEmails.slice(1).length > 0 ? selectedEmails.slice(1) : undefined,
           type,
           documentData,
           senderId,
@@ -103,14 +125,19 @@ export function SendDocumentModal({ open, onClose, type, documentId, clientEmail
       console.log('[email_sent]', {
         sent_by_user_id: user?.id ?? null,
         sent_from_email: sender.email,
-        to: clientEmail,
+        to: selectedEmails[0],
+        cc: selectedEmails.slice(1),
         subject: `Your ${typeLabel} from Sparkle Stone & Pavers${documentData.number ? ` — ${documentData.number}` : ''}`,
         document_type: type,
         document_id: documentId,
         timestamp: new Date().toISOString(),
       })
 
-      toast.success(`Email sent to ${clientEmail}`)
+      const recipientCount = selectedEmails.length
+      toast.success(recipientCount > 1
+        ? `Email sent to ${recipientCount} recipients`
+        : `Email sent to ${selectedEmails[0]}`
+      )
       onSent?.()
       onClose()
     } catch (err) {
@@ -126,7 +153,6 @@ export function SendDocumentModal({ open, onClose, type, documentId, clientEmail
   }
 
   const label = type === 'invoice' ? 'Invoice' : type === 'estimate' ? 'Estimate' : 'Project Proposal'
-  const hasEmail = !!clientEmail
 
   return (
     <Modal open={open} onClose={onClose} title={`Send ${label}`}>
@@ -140,10 +166,27 @@ export function SendDocumentModal({ open, onClose, type, documentId, clientEmail
         {/* Send to */}
         <div>
           <p className="text-eyebrow font-semibold uppercase tracking-[0.5px] text-gray-500 mb-1.5">Send to</p>
-          {hasEmail ? (
-            <p className="text-body text-gray-900 break-all">{clientEmail}</p>
-          ) : (
+          {allOptions.length === 0 ? (
             <p className="text-label text-red-600">No email on file for this client. Add one to the client record first.</p>
+          ) : (
+            <div className="space-y-2">
+              {allOptions.map(opt => (
+                <label key={opt.email} className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300 text-[#4F6CF7] focus:ring-[#4F6CF7]/20"
+                    checked={selectedEmails.includes(opt.email)}
+                    onChange={() => toggleEmail(opt.email)}
+                    disabled={sending}
+                  />
+                  <span className="text-label text-gray-800">{opt.email}</span>
+                  <span className="text-eyebrow text-gray-400">{opt.label}</span>
+                </label>
+              ))}
+              {!canSend && (
+                <p className="text-eyebrow text-red-500 pt-1">Select at least one recipient.</p>
+              )}
+            </div>
           )}
         </div>
 
@@ -169,7 +212,7 @@ export function SendDocumentModal({ open, onClose, type, documentId, clientEmail
         {/* Actions */}
         <div className="flex justify-end gap-2 border-t border-gray-200 pt-4">
           <Button variant="secondary" type="button" onClick={onClose} disabled={sending}>Cancel</Button>
-          <Button type="button" onClick={handleSend} disabled={sending || !hasEmail}>
+          <Button type="button" onClick={handleSend} disabled={sending || !canSend}>
             <Mail className="h-4 w-4" />
             {sending ? 'Sending...' : 'Send'}
           </Button>

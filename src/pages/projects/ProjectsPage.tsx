@@ -444,24 +444,44 @@ function ProjectPreview({ project: p, phases, client, onSent }: { project: Proje
     const el = document.querySelector('.print-area') as HTMLElement | null
     if (!el) return
     const html2pdf = (await import('html2pdf.js')).default
-    html2pdf().set({ ...PDF_OPTS, filename: `Project Proposal — ${p.number}.pdf` }).from(el).save()
+    await (html2pdf() as any).set({ ...PDF_OPTS, filename: `Project Proposal — ${p.number}.pdf` }).from(el).outputPdf('save')
   }
 
   const [sendOpen, setSendOpen] = useState(false)
   const [pdfBase64, setPdfBase64] = useState<string | null>(null)
   const [generatingPdf, setGeneratingPdf] = useState(false)
+  const [ccEmails, setCcEmails] = useState<{ label: string; email: string }[]>([])
 
   async function handleSendClick() {
     // Wait for images if there are any — same guard as Download button
-    if (hasPhotos && !imagesReady) { setSendOpen(true); return }
+    if (hasPhotos && !imagesReady) { setPdfBase64(null); setSendOpen(true); return }
     const el = document.querySelector('.print-area') as HTMLElement | null
     setGeneratingPdf(true)
     try {
-      if (el) {
-        const html2pdf = (await import('html2pdf.js')).default
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const dataUri: string = await (html2pdf() as any).set(PDF_OPTS).from(el).outputPdf('datauristring')
-        setPdfBase64(dataUri.split(',')[1])
+      const [pdfResult, contactsResult] = await Promise.allSettled([
+        el
+          ? (async () => {
+              const html2pdf = (await import('html2pdf.js')).default
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const dataUri: string = await (html2pdf() as any).set(PDF_OPTS).from(el).outputPdf('datauristring')
+              return dataUri.split(',')[1]
+            })()
+          : Promise.resolve(null),
+        p.client_id
+          ? supabase
+              .from('client_contacts')
+              .select('name, role, email')
+              .eq('client_id', p.client_id)
+              .not('email', 'is', null)
+          : Promise.resolve({ data: [] }),
+      ])
+      setPdfBase64(pdfResult.status === 'fulfilled' ? pdfResult.value : null)
+      if (contactsResult.status === 'fulfilled') {
+        const rows = (contactsResult.value.data ?? []) as { name: string; role: string | null; email: string }[]
+        setCcEmails(rows.map(c => ({
+          label: [c.name, c.role].filter(Boolean).join(' — '),
+          email: c.email,
+        })))
       }
     } catch {
       setPdfBase64(null)
@@ -483,10 +503,11 @@ function ProjectPreview({ project: p, phases, client, onSent }: { project: Proje
       </div>
       <SendDocumentModal
         open={sendOpen}
-        onClose={() => setSendOpen(false)}
+        onClose={() => { setSendOpen(false); setPdfBase64(null) }}
         type="project"
         documentId={p.id}
         clientEmail={client?.email}
+        ccEmails={ccEmails}
         pdfBase64={pdfBase64 ?? undefined}
         documentData={{
           number: p.number,
