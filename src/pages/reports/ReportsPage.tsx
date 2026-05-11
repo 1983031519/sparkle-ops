@@ -3,7 +3,7 @@ import { ComposedChart, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Cartes
 import { supabase } from '@/lib/supabase'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
 import { Badge, statusColor } from '@/components/ui/Badge'
-import { format, subMonths, startOfMonth, endOfMonth, parseISO, isWithinInterval, startOfYear } from 'date-fns'
+import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval, startOfYear } from 'date-fns'
 import { enUS } from 'date-fns/locale'
 import { fmtCurrency, fmtDateShort } from '@/lib/constants'
 import type { Invoice, Estimate, Job, Client } from '@/lib/database.types'
@@ -96,14 +96,7 @@ export default function ReportsPage() {
 
   const outstandingTotal = outstandingInvoices.reduce((s, i) => s + i.total, 0)
 
-  // 3. Estimates breakdown + conversion rate
-  const estimateBreakdown = useMemo(() => {
-    const filtered = estimates.filter(e => inRange(e.created_at, dateRange))
-    const counts: Record<string, number> = { Sent: 0, Approved: 0, Declined: 0, Draft: 0 }
-    filtered.forEach(e => { counts[e.status] = (counts[e.status] ?? 0) + 1 })
-    return Object.entries(counts).filter(([, v]) => v > 0).map(([name, value]) => ({ name, value }))
-  }, [estimates, dateRange])
-
+  // 3. Conversion rate
   const conversionRate = useMemo(() => {
     const filtered = estimates.filter(e => inRange(e.created_at, dateRange))
     const actionable = filtered.filter(e => e.status === 'Sent' || e.status === 'Approved' || e.status === 'Declined')

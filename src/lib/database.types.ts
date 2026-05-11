@@ -13,7 +13,7 @@ export interface Profile {
 export type ClientType = 'Homeowner' | 'HOA' | 'Builder' | 'Company' | 'Commercial' | 'Property Manager'
 export type JobDivision = 'Pavers' | 'Stone'
 export type JobStatus = 'Lead' | 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled'
-export type EstimateStatus = 'Draft' | 'Sent' | 'Approved'
+export type EstimateStatus = 'Draft' | 'Sent' | 'Approved' | 'Declined'
 export type InvoiceStatus = 'Unpaid' | 'Paid' | 'Overdue'
 export type InventoryCategory = 'Equipment' | 'Vehicles & Trailers' | 'Materials & Stock' | 'Other'
 export type ContactRole = 'Owner' | 'Manager' | 'AP' | 'Superintendent' | 'Other'

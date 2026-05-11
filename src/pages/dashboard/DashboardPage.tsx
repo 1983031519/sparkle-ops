@@ -123,10 +123,6 @@ export default function DashboardPage() {
   const followUpEstimates = estimates.filter(e => e.status === 'Sent' && e.created_at.slice(0, 10) < sevenDaysAgoIso)
   const followUpCount = followUpEstimates.length
 
-  /* ─── Today's schedule ─── */
-  const todayEvents = allEvents.filter(e => e.date === todayIsoStr)
-  const todayJobs = jobs.filter(j => j.start_date && j.start_date.slice(0, 10) === todayIsoStr)
-
   /* ─── Collect sorted (for heroClientName) ─── */
   const collectSorted = [...collectInvoices].sort((a, b) => {
     const aOverdue = a.status === 'Overdue' ? 0 : 1
