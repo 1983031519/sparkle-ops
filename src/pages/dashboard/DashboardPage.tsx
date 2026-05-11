@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { AlertTriangle, ChevronLeft, ChevronRight, ArrowRight, Calendar as CalendarIcon, Clock } from 'lucide-react'
+import { AlertTriangle, ChevronLeft, ChevronRight, ArrowRight, Calendar as CalendarIcon, Clock, Sun, CloudSun, CloudRain } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO, subDays, differenceInDays } from 'date-fns'
@@ -335,11 +335,22 @@ export default function DashboardPage() {
     return (
       <div style={{ background: '#F9FAFB', minHeight: '100vh' }}>
         {/* Header */}
-        <div style={{ background: 'white', borderBottom: '1px solid #E5E7EB', padding: '20px 16px' }}>
+        <div style={{ background: 'white', borderBottom: '1px solid #E5E7EB', padding: '16px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
             <div style={{ minWidth: 0, flex: 1 }}>
               <h1 className="text-display text-gray-900">{greeting}, {firstName}.</h1>
-              <p className="text-eyebrow font-normal text-gray-400" style={{ marginTop: 4 }}>{dateSubtext}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 3, flexWrap: 'wrap' }}>
+                <p className="text-eyebrow font-normal text-gray-400">{dateSubtext}</p>
+                {weather !== null && (() => {
+                  const WIcon = weather.precip < 20 ? Sun : weather.precip <= 50 ? CloudSun : CloudRain
+                  return (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#9CA3AF' }}>
+                      <WIcon className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      {weather.temp}°F · Rain {weather.precip}%
+                    </span>
+                  )
+                })()}
+              </div>
             </div>
             <NewEntityDropdown compact />
           </div>
@@ -359,22 +370,24 @@ export default function DashboardPage() {
             background: collectCount > 0
               ? 'linear-gradient(135deg, #991B1B 0%, #7F1D1D 100%)'
               : 'linear-gradient(135deg, #065F46 0%, #064E3B 100%)',
-            borderRadius: 12, padding: '24px 20px', color: 'white', marginBottom: 12,
+            borderRadius: 12, padding: '12px 16px', color: 'white', marginBottom: 12,
           }}>
-            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.7, marginBottom: 6 }}>
+            <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.7, marginBottom: 4 }}>
               {collectCount > 0 ? 'Action Required' : 'All Clear'}
             </p>
-            <p style={{ fontSize: 30, fontWeight: 800, lineHeight: 1.1 }}>
+            <p style={{ fontSize: 24, fontWeight: 800, lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>
               {collectCount > 0 ? fmtCurrency(collectTotal) : 'No overdue invoices'}
             </p>
-            <p style={{ fontSize: 13, opacity: 0.8, marginTop: 6 }}>
-              {collectCount > 0
-                ? `${collectCount} invoice${collectCount !== 1 ? 's' : ''} overdue${heroClientName ? ` · ${heroClientName}` : ''}`
-                : `${invoices.filter(i => i.status === 'Unpaid').length} unpaid · all current`}
-            </p>
-            <Link to="/invoices" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.18)', color: 'white', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 600, textDecoration: 'none', marginTop: 16, border: '1px solid rgba(255,255,255,0.25)' }}>
-              {collectCount > 0 ? 'Collect Now' : 'View Invoices'} <ArrowRight className="h-4 w-4" strokeWidth={2} />
-            </Link>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4, flexWrap: 'wrap' }}>
+              <p style={{ fontSize: 12, opacity: 0.8 }}>
+                {collectCount > 0
+                  ? `${collectCount} invoice${collectCount !== 1 ? 's' : ''} overdue${heroClientName ? ` · ${heroClientName}` : ''}`
+                  : `${invoices.filter(i => i.status === 'Unpaid').length} unpaid · all current`}
+              </p>
+              <Link to="/invoices" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,0.18)', color: 'white', borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 600, textDecoration: 'none', border: '1px solid rgba(255,255,255,0.25)', flexShrink: 0 }}>
+                {collectCount > 0 ? 'Collect Now' : 'View Invoices'} <ArrowRight className="h-3 w-3" strokeWidth={2} />
+              </Link>
+            </div>
           </div>
 
           {/* 3 secondary cards */}
@@ -450,23 +463,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Weather */}
-          {weather !== null && (
-            <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', padding: '14px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div>
-                <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9CA3AF' }}>Bradenton, FL</p>
-                <p style={{ fontSize: 24, fontWeight: 800, color: '#111827', marginTop: 2 }}>{weather.temp}°F</p>
-              </div>
-              <div style={{ height: 32, width: 1, background: '#E5E7EB' }} />
-              <div>
-                <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9CA3AF' }}>Rain Today</p>
-                <p style={{ fontSize: 18, fontWeight: 700, color: weather.precip > 50 ? '#1E3A8A' : '#9CA3AF', marginTop: 2 }}>{weather.precip}%</p>
-              </div>
-              {weather.precip > 50 && (
-                <p className="text-micro font-normal" style={{ color: '#6B7280', marginLeft: 4 }}>Delays possible</p>
-              )}
-            </div>
-          )}
         </div>
       </div>
     )
@@ -479,7 +475,18 @@ export default function DashboardPage() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
         <div>
           <h2 className="text-display text-gray-900">{greeting}, {firstName}.</h2>
-          <p className="text-label font-normal text-gray-500" style={{ marginTop: 4 }}>{dateSubtext}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 4 }}>
+            <p className="text-label font-normal text-gray-500">{dateSubtext}</p>
+            {weather !== null && (() => {
+              const WIcon = weather.precip < 20 ? Sun : weather.precip <= 50 ? CloudSun : CloudRain
+              return (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13, color: '#9CA3AF' }}>
+                  <WIcon className="h-4 w-4" strokeWidth={1.5} />
+                  {weather.temp}°F · Rain {weather.precip}%
+                </span>
+              )
+            })()}
+          </div>
         </div>
         <NewEntityDropdown />
       </div>
@@ -502,20 +509,22 @@ export default function DashboardPage() {
           <p style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>
             {collectCount > 0 ? fmtCurrency(collectTotal) : 'No overdue invoices'}
           </p>
-          <p style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
-            {collectCount > 0
-              ? `${collectCount} invoice${collectCount !== 1 ? 's' : ''} overdue${heroClientName ? ` · next: ${heroClientName}` : ''}`
-              : `${invoices.filter(i => i.status === 'Unpaid').length} unpaid invoices · all within due dates`}
-          </p>
-          <Link to="/invoices" style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(4px)',
-            color: 'white', borderRadius: 8, padding: '7px 14px',
-            fontSize: 12, fontWeight: 600, textDecoration: 'none',
-            border: '1px solid rgba(255,255,255,0.25)', marginTop: 10,
-          }}>
-            {collectCount > 0 ? 'Collect Now' : 'View Invoices'} <ArrowRight className="h-4 w-4" strokeWidth={2} />
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4, flexWrap: 'wrap' }}>
+            <p style={{ fontSize: 13, opacity: 0.8 }}>
+              {collectCount > 0
+                ? `${collectCount} invoice${collectCount !== 1 ? 's' : ''} overdue${heroClientName ? ` · next: ${heroClientName}` : ''}`
+                : `${invoices.filter(i => i.status === 'Unpaid').length} unpaid invoices · all within due dates`}
+            </p>
+            <Link to="/invoices" style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(4px)',
+              color: 'white', borderRadius: 7, padding: '5px 12px',
+              fontSize: 12, fontWeight: 600, textDecoration: 'none',
+              border: '1px solid rgba(255,255,255,0.25)', flexShrink: 0,
+            }}>
+              {collectCount > 0 ? 'Collect Now' : 'View Invoices'} <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
+            </Link>
+          </div>
         </div>
 
         {/* 3 secondary stacked — match hero height via flex stretch */}
@@ -592,23 +601,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Section 4: Weather (if available) */}
-      {weather !== null && (
-        <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', padding: '16px 24px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 20 }}>
-          <div>
-            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF' }}>Bradenton, FL</p>
-            <p style={{ fontSize: 30, fontWeight: 800, color: '#111827', marginTop: 4 }}>{weather.temp}°F</p>
-          </div>
-          <div style={{ height: 40, width: 1, background: '#E5E7EB' }} />
-          <div>
-            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF' }}>Rain Chance Today</p>
-            <p style={{ fontSize: 22, fontWeight: 700, color: weather.precip > 50 ? '#1E3A8A' : '#9CA3AF', marginTop: 4 }}>{weather.precip}%</p>
-          </div>
-          {weather.precip > 50 && (
-            <p className="text-label font-normal" style={{ color: '#6B7280', marginLeft: 8 }}>Consider delays for outdoor work today.</p>
-          )}
-        </div>
-      )}
     </div>
   )
 }
