@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
-import { AlertTriangle, ChevronLeft, ChevronRight, ArrowRight, Calendar as CalendarIcon, Clock, Sun, CloudSun, CloudRain } from 'lucide-react'
+import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { AlertTriangle, ChevronLeft, ChevronRight, ArrowRight, Calendar as CalendarIcon, Clock, Sun, CloudSun, CloudRain, TrendingUp, TrendingDown } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO, subDays, differenceInDays } from 'date-fns'
@@ -10,7 +11,7 @@ import { NewEntityDropdown } from '@/components/dashboard/NewEntityDropdown'
 import type { Job, Invoice, Event, Estimate } from '@/lib/database.types'
 
 type WeatherData = { temp: number; precip: number }
-type ActivityItem = { id: string; label: string; sub: string; time: string; kind: 'invoice' | 'job' | 'estimate' }
+type ActivityItem = { id: string; label: string; sub: string; time: string; kind: 'invoice' | 'job' | 'estimate'; clientName?: string }
 
 function fmtEventTime(t: string | null) {
   if (!t) return ''
@@ -123,7 +124,7 @@ export default function DashboardPage() {
   const followUpEstimates = estimates.filter(e => e.status === 'Sent' && e.created_at.slice(0, 10) < sevenDaysAgoIso)
   const followUpCount = followUpEstimates.length
 
-  /* ─── Collect sorted (for heroClientName) ─── */
+  /* ─── Collect sorted ─── */
   const collectSorted = [...collectInvoices].sort((a, b) => {
     const aOverdue = a.status === 'Overdue' ? 0 : 1
     const bOverdue = b.status === 'Overdue' ? 0 : 1
@@ -137,7 +138,6 @@ export default function DashboardPage() {
     const bDate = b.date ?? b.created_at
     return aDate.localeCompare(bDate)
   })
-
   const heroClientName = collectSorted[0] ? (clientMap[collectSorted[0].client_id] ?? null) : null
 
   /* ─── Collection rate ─── */
@@ -147,24 +147,96 @@ export default function DashboardPage() {
     return total > 0 ? (paid / total) * 100 : 0
   }, [invoices])
 
+  /* ─── MoM revenue delta ─── */
+  const prevMonthRevenue = useMemo(() => {
+    const now = new Date()
+    const prevStart = format(new Date(now.getFullYear(), now.getMonth() - 1, 1), 'yyyy-MM-dd')
+    const prevEnd = format(new Date(now.getFullYear(), now.getMonth(), 0), 'yyyy-MM-dd')
+    return invoices
+      .filter(i => { const d = (i.date ?? i.created_at).slice(0, 10); return d >= prevStart && d <= prevEnd })
+      .reduce((s, i) => s + (i.total || 0), 0)
+  }, [invoices])
+
+  const revenueChangePct = prevMonthRevenue > 0 ? ((revenue - prevMonthRevenue) / prevMonthRevenue) * 100 : null
+
+  /* ─── Job breakdown ─── */
+  const inProgressCount = jobs.filter(j => j.status === 'In Progress').length
+  const scheduledCount = jobs.filter(j => j.status === 'Scheduled').length
+  const unpaidCount = invoices.filter(i => i.status === 'Unpaid' || i.status === 'Overdue').length
+
   /* ─── Activity feed ─── */
   const activityFeed = useMemo<ActivityItem[]>(() => {
     const items: ActivityItem[] = [
-      ...invoices.slice(0, 12).map(i => ({
-        id: `inv-${i.id}`, label: `Invoice ${i.number ?? ''}`, sub: i.status, time: i.created_at, kind: 'invoice' as const,
+      ...invoices.slice(0, 15).map(i => ({
+        id: `inv-${i.id}`, label: `Invoice ${i.number ?? ''}`, sub: i.status, time: i.created_at,
+        kind: 'invoice' as const, clientName: clientMap[i.client_id],
       })),
-      ...jobs.slice(0, 12).map(j => ({
-        id: `job-${j.id}`, label: j.title, sub: j.status, time: j.created_at, kind: 'job' as const,
+      ...jobs.slice(0, 15).map(j => ({
+        id: `job-${j.id}`, label: j.title, sub: j.status, time: j.created_at,
+        kind: 'job' as const, clientName: clientMap[j.client_id],
       })),
-      ...estimates.slice(0, 12).map(e => ({
-        id: `est-${e.id}`, label: `Estimate ${(e as { number?: string }).number ?? ''}`, sub: e.status, time: e.created_at, kind: 'estimate' as const,
+      ...estimates.slice(0, 15).map(e => ({
+        id: `est-${e.id}`, label: `Estimate ${e.number ?? ''}`, sub: e.status, time: e.created_at,
+        kind: 'estimate' as const,
       })),
     ]
-    return items.sort((a, b) => b.time.localeCompare(a.time)).slice(0, 6)
-  }, [invoices, jobs, estimates])
+    return items.sort((a, b) => b.time.localeCompare(a.time)).slice(0, 8)
+  }, [invoices, jobs, estimates, clientMap])
+
+  /* ─── Last 6 months revenue ─── */
+  const last6MonthsRevenue = useMemo(() => {
+    const now = new Date()
+    return Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1)
+      const start = format(d, 'yyyy-MM-dd')
+      const end = format(new Date(d.getFullYear(), d.getMonth() + 1, 0), 'yyyy-MM-dd')
+      const total = invoices
+        .filter(inv => { const dt = (inv.date ?? inv.created_at).slice(0, 10); return dt >= start && dt <= end })
+        .reduce((s, inv) => s + (inv.total || 0), 0)
+      return { month: format(d, 'MMM'), revenue: total }
+    })
+  }, [invoices])
+
+  /* ─── YTD + avg ─── */
+  const ytdRevenue = useMemo(() => {
+    const yearStart = `${today.getFullYear()}-01-01`
+    return invoices
+      .filter(i => i.status === 'Paid' && (i.date ?? i.created_at).slice(0, 10) >= yearStart)
+      .reduce((s, i) => s + (i.total || 0), 0)
+  }, [invoices, today])
+
+  const avgMonthlyRevenue = useMemo(() => {
+    const monthsElapsed = today.getMonth() + 1
+    return monthsElapsed > 0 ? ytdRevenue / monthsElapsed : 0
+  }, [ytdRevenue, today])
+
+  /* ─── Top 5 clients ─── */
+  const topClients = useMemo(() => {
+    const totals: Record<string, number> = {}
+    for (const inv of invoices) {
+      if (!totals[inv.client_id]) totals[inv.client_id] = 0
+      totals[inv.client_id] += inv.total || 0
+    }
+    return Object.entries(totals)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([clientId, total]) => ({ name: clientMap[clientId] ?? 'Unknown', total }))
+  }, [invoices, clientMap])
+
+  /* ─── Pipeline counts ─── */
+  const estSent = estimates.filter(e => e.status === 'Sent').length
+  const estApproved = estimates.filter(e => e.status === 'Approved').length
+  const estDeclined = estimates.filter(e => e.status === 'Declined').length
+  const estConversionDenom = estSent + estApproved + estDeclined
+  const estConversionRate = estConversionDenom > 0 ? (estApproved / estConversionDenom) * 100 : 0
+
+  const completedThisMonth = useMemo(() => {
+    const start = format(startOfMonth(today), 'yyyy-MM-dd')
+    const end = format(endOfMonth(today), 'yyyy-MM-dd')
+    return jobs.filter(j => j.status === 'Completed' && j.created_at.slice(0, 10) >= start && j.created_at.slice(0, 10) <= end).length
+  }, [jobs, today])
 
   /* ─── Schedule card ─── */
-
   type CalItem =
     | { kind: 'event'; id: string; date: string; time_start: string | null; title: string; sortKey: string }
     | { kind: 'job'; id: string; date: string; title: string; sortKey: string }
@@ -285,7 +357,7 @@ export default function DashboardPage() {
             return (
               <div key={iso} style={{ minHeight: isMobile ? 56 : 64, padding: '3px 2px', borderRadius: 6 }}>
                 <div style={{ textAlign: 'center', marginBottom: 2 }}>
-                  {/* Calendar circle — inline fontSize kept to fit 22x22 cell (P7 exception) */}
+                  {/* Calendar circle — inline fontSize kept to fit 22x22 cell */}
                   <span style={{
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     width: 22, height: 22, borderRadius: '50%',
@@ -300,7 +372,7 @@ export default function DashboardPage() {
                     <div
                       key={`${item.kind}-${item.id}`}
                       title={`${item.kind === 'event' ? 'Event' : 'Job'}: ${item.title}`}
-                      // exception: 9px density — Phase 4 spec
+                      // exception: 9px density — calendar cells
                       style={{
                         fontSize: 9, background: pill.bg, color: pill.fg,
                         borderRadius: 3, padding: '1px 4px', marginBottom: 2,
@@ -310,7 +382,7 @@ export default function DashboardPage() {
                   )
                 })}
                 {dayItems.length > maxShow && (
-                  /* exception: 9px density — Phase 4 spec */
+                  // exception: 9px density — calendar overflow count
                   <div style={{ fontSize: 9, color: '#9CA3AF', paddingLeft: 2 }}>+{dayItems.length - maxShow}</div>
                 )}
               </div>
@@ -323,19 +395,35 @@ export default function DashboardPage() {
 
   /* ─── Shared error banner ─── */
   const errorBanner = loadError ? (
-    <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4" style={{ marginBottom: 20 }}>
+    <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4" style={{ marginBottom: 16 }}>
       <AlertTriangle className="h-5 w-5 shrink-0 text-red-500" />
       <p className="text-label text-red-700 flex-1">{loadError}</p>
       <button onClick={loadDashboard} className="text-label font-medium text-red-700 underline underline-offset-2">Retry</button>
     </div>
   ) : null
 
+  /* ─── Shared activity row renderer ─── */
+  function ActivityRow({ item, compact }: { item: ActivityItem; compact?: boolean }) {
+    const kindColor = item.kind === 'invoice' ? '#1E3A8A' : item.kind === 'job' ? '#059669' : '#D97706'
+    const pad = compact ? '8px 14px' : '10px 16px'
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: pad, borderBottom: '1px solid #F9FAFB' }}>
+        <div style={{ width: 7, height: 7, borderRadius: '50%', background: kindColor, flexShrink: 0, marginTop: 1 }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p className="text-label font-medium text-gray-900" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.3 }}>{item.label}</p>
+          <p className="text-micro font-normal text-gray-400" style={{ lineHeight: 1.3 }}>{item.clientName ? item.clientName : item.sub}</p>
+        </div>
+        <p className="text-micro font-normal text-gray-400" style={{ flexShrink: 0 }}>{fmtDateShort(item.time.slice(0, 10))}</p>
+      </div>
+    )
+  }
+
   /* ─── MOBILE ─── */
   if (isMobile) {
     return (
-      <div style={{ background: '#F9FAFB', minHeight: '100vh' }}>
+      <div style={{ background: '#F6F8FA', minHeight: '100vh' }}>
         {/* Header */}
-        <div style={{ background: 'white', borderBottom: '1px solid #E5E7EB', padding: '16px 16px' }}>
+        <div style={{ background: 'white', borderBottom: '1px solid #E5E7EB', padding: '16px 12px' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
             <div style={{ minWidth: 0, flex: 1 }}>
               <h1 className="text-display text-gray-900">{greeting}, {firstName}.</h1>
@@ -356,58 +444,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div style={{ padding: '16px' }}>
-          {loadError && (
-            <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4" style={{ marginBottom: 16 }}>
-              <AlertTriangle className="h-5 w-5 shrink-0 text-red-500" />
-              <p className="text-label text-red-700 flex-1">{loadError}</p>
-              <button onClick={loadDashboard} className="text-label font-medium text-red-700 underline underline-offset-2">Retry</button>
-            </div>
-          )}
-
-          {/* Hero card */}
-          <div style={{
-            background: collectCount > 0
-              ? 'linear-gradient(135deg, #991B1B 0%, #7F1D1D 100%)'
-              : 'linear-gradient(135deg, #065F46 0%, #064E3B 100%)',
-            borderRadius: 12, padding: '12px 16px', color: 'white', marginBottom: 12,
-          }}>
-            <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.7, marginBottom: 4 }}>
-              {collectCount > 0 ? 'Action Required' : 'All Clear'}
-            </p>
-            <p style={{ fontSize: 24, fontWeight: 800, lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>
-              {collectCount > 0 ? fmtCurrency(collectTotal) : 'No overdue invoices'}
-            </p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4, flexWrap: 'wrap' }}>
-              <p style={{ fontSize: 12, opacity: 0.8 }}>
-                {collectCount > 0
-                  ? `${collectCount} invoice${collectCount !== 1 ? 's' : ''} overdue${heroClientName ? ` · ${heroClientName}` : ''}`
-                  : `${invoices.filter(i => i.status === 'Unpaid').length} unpaid · all current`}
-              </p>
-              <Link to="/invoices" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,0.18)', color: 'white', borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 600, textDecoration: 'none', border: '1px solid rgba(255,255,255,0.25)', flexShrink: 0 }}>
-                {collectCount > 0 ? 'Collect Now' : 'View Invoices'} <ArrowRight className="h-3 w-3" strokeWidth={2} />
-              </Link>
-            </div>
-          </div>
-
-          {/* 3 secondary cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 12 }}>
-            <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', borderLeft: `4px solid ${collectCount > 0 ? '#DC2626' : '#059669'}`, padding: '12px 10px' }}>
-              <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9CA3AF' }}>Overdue</p>
-              <p style={{ fontSize: 20, fontWeight: 800, color: '#111827', marginTop: 4 }}>{collectCount}</p>
-              <p style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>{fmtCurrency(collectTotal)}</p>
-            </div>
-            <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', borderLeft: '4px solid #1E3A8A', padding: '12px 10px' }}>
-              <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9CA3AF' }}>Active</p>
-              <p style={{ fontSize: 20, fontWeight: 800, color: '#111827', marginTop: 4 }}>{activeJobs}</p>
-              <p style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>Jobs</p>
-            </div>
-            <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', borderLeft: `4px solid ${followUpCount > 0 ? '#D97706' : '#E5E7EB'}`, padding: '12px 10px' }}>
-              <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9CA3AF' }}>Follow Up</p>
-              <p style={{ fontSize: 20, fontWeight: 800, color: '#111827', marginTop: 4 }}>{followUpCount}</p>
-              <p style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>Estimates</p>
-            </div>
-          </div>
+        <div style={{ padding: '12px' }}>
+          {errorBanner}
 
           {/* Low stock */}
           {lowStock.length > 0 && (
@@ -417,179 +455,337 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Financial pulse — stacked */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-            <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', padding: '14px 14px' }}>
-              <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9CA3AF', marginBottom: 6 }}>Revenue · Month</p>
-              <p style={{ fontSize: 20, fontWeight: 800, color: '#111827', fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(revenue)}</p>
+          {/* 6 KPI cards — 2-col grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+            {/* Revenue */}
+            <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', padding: '12px 14px' }}>
+              <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9CA3AF', marginBottom: 4 }}>Revenue · Month</p>
+              <p style={{ fontSize: 20, fontWeight: 700, color: '#111827', fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(revenue)}</p>
+              {revenueChangePct !== null && (
+                <p style={{ fontSize: 11, marginTop: 2, color: revenueChangePct >= 0 ? '#059669' : '#DC2626' }}>
+                  {revenueChangePct >= 0 ? '+' : ''}{revenueChangePct.toFixed(1)}% vs last mo
+                </p>
+              )}
             </div>
-            <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', padding: '14px 14px' }}>
-              <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9CA3AF', marginBottom: 6 }}>Outstanding</p>
-              <p style={{ fontSize: 20, fontWeight: 800, color: outstanding > 0 ? '#D97706' : '#059669', fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(outstanding)}</p>
-            </div>
-          </div>
-          <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', padding: '14px 14px', marginBottom: 16 }}>
-            <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9CA3AF', marginBottom: 6 }}>Collection Rate · All Time</p>
-            <p style={{ fontSize: 20, fontWeight: 800, color: '#111827' }}>{collectionRate.toFixed(0)}%</p>
-            <div style={{ marginTop: 8, background: '#F3F4F6', borderRadius: 4, height: 5, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${Math.min(collectionRate, 100)}%`, background: collectionRate >= 80 ? '#059669' : collectionRate >= 50 ? '#D97706' : '#DC2626', borderRadius: 4 }} />
-            </div>
-          </div>
 
-          {/* Schedule + Activity */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, marginBottom: 16 }}>
-            {scheduleCard}
-            {/* Activity feed */}
-            <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', overflow: 'hidden' }}>
-              <div style={{ padding: '12px 14px', borderBottom: '1px solid #F3F4F6' }}>
-                <p className="text-label font-semibold text-gray-900">Recent Activity</p>
+            {/* Outstanding */}
+            <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', padding: '12px 14px' }}>
+              <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9CA3AF', marginBottom: 4 }}>Outstanding</p>
+              <p style={{ fontSize: 20, fontWeight: 700, color: outstanding > 0 ? '#D97706' : '#059669', fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(outstanding)}</p>
+              <p style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>{unpaidCount} invoice{unpaidCount !== 1 ? 's' : ''}</p>
+            </div>
+
+            {/* Collect Today */}
+            <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', borderLeft: `4px solid ${collectTotal > 0 ? '#DC2626' : '#059669'}`, padding: '12px 10px' }}>
+              <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9CA3AF', marginBottom: 4 }}>Collect Today</p>
+              <p style={{ fontSize: 20, fontWeight: 700, color: collectTotal > 0 ? '#DC2626' : '#059669', fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(collectTotal)}</p>
+              <p style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>
+                {collectCount > 0 ? `${collectCount} overdue${heroClientName ? ` · ${heroClientName}` : ''}` : 'All current'}
+              </p>
+            </div>
+
+            {/* Collection Rate */}
+            <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', padding: '12px 14px' }}>
+              <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9CA3AF', marginBottom: 4 }}>Collection Rate</p>
+              <p style={{ fontSize: 20, fontWeight: 700, color: '#111827' }}>{collectionRate.toFixed(0)}%</p>
+              <div style={{ marginTop: 6, background: '#F3F4F6', borderRadius: 4, height: 4, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${Math.min(collectionRate, 100)}%`, background: collectionRate >= 80 ? '#059669' : collectionRate >= 50 ? '#D97706' : '#DC2626', borderRadius: 4 }} />
               </div>
-              {activityFeed.length === 0
-                ? <p className="text-label font-normal text-gray-400" style={{ padding: '20px 14px' }}>No recent activity.</p>
-                : activityFeed.map(item => {
-                    const kindColor = item.kind === 'invoice' ? '#1E3A8A' : item.kind === 'job' ? '#059669' : '#D97706'
-                    return (
-                      <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid #F9FAFB' }}>
-                        <div style={{ width: 7, height: 7, borderRadius: '50%', background: kindColor, flexShrink: 0 }} />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <p className="text-label font-medium text-gray-900" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</p>
-                          <p className="text-micro font-normal text-gray-400" style={{ marginTop: 1 }}>{item.sub}</p>
-                        </div>
-                        <p className="text-micro font-normal text-gray-400" style={{ flexShrink: 0 }}>{fmtDateShort(item.time.slice(0, 10))}</p>
-                      </div>
-                    )
-                  })
-              }
+            </div>
+
+            {/* Active Jobs */}
+            <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', borderLeft: `4px solid ${activeJobs > 0 ? '#2563EB' : '#E5E7EB'}`, padding: '12px 10px' }}>
+              <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9CA3AF', marginBottom: 4 }}>Active Jobs</p>
+              <p style={{ fontSize: 20, fontWeight: 700, color: '#111827' }}>{activeJobs}</p>
+              <p style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>{inProgressCount} running · {scheduledCount} sched.</p>
+            </div>
+
+            {/* Follow Up */}
+            <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', borderLeft: `4px solid ${followUpCount > 0 ? '#D97706' : '#E5E7EB'}`, padding: '12px 10px' }}>
+              <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9CA3AF', marginBottom: 4 }}>Follow Up</p>
+              <p style={{ fontSize: 20, fontWeight: 700, color: '#111827' }}>{followUpCount}</p>
+              <p style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>Estimates 7+ days</p>
             </div>
           </div>
 
+          {/* Activity */}
+          <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', overflow: 'hidden', marginBottom: 12 }}>
+            <div style={{ padding: '12px 14px', borderBottom: '1px solid #F3F4F6' }}>
+              <p className="text-label font-semibold text-gray-900">Recent Activity</p>
+            </div>
+            {activityFeed.length === 0
+              ? <p className="text-label font-normal text-gray-400" style={{ padding: '16px 14px' }}>No recent activity.</p>
+              : activityFeed.map(item => <ActivityRow key={item.id} item={item} compact />)
+            }
+          </div>
+
+          {/* Schedule */}
+          <div style={{ marginBottom: 12 }}>{scheduleCard}</div>
+
+          {/* Top Clients */}
+          {topClients.length > 0 && (
+            <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', overflow: 'hidden', marginBottom: 12 }}>
+              <div style={{ padding: '12px 14px', borderBottom: '1px solid #F3F4F6' }}>
+                <p className="text-label font-semibold text-gray-900">Top Clients</p>
+              </div>
+              {topClients.map((c, idx) => (
+                <div key={c.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: idx < topClients.length - 1 ? '1px solid #F9FAFB' : 'none' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', minWidth: 16 }}>{idx + 1}</span>
+                  <p className="text-label font-medium text-gray-900" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</p>
+                  <p className="text-label font-semibold" style={{ color: '#111827', fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(c.total)}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     )
   }
 
   /* ─── DESKTOP ─── */
+  const NAVY = '#1E3A5F'
+
   return (
-    <div style={{ padding: '28px 32px', maxWidth: 1280, margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
-        <div>
-          <h2 className="text-display text-gray-900">{greeting}, {firstName}.</h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 4 }}>
-            <p className="text-label font-normal text-gray-500">{dateSubtext}</p>
-            {weather !== null && (() => {
-              const WIcon = weather.precip < 20 ? Sun : weather.precip <= 50 ? CloudSun : CloudRain
-              return (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13, color: '#9CA3AF' }}>
-                  <WIcon className="h-4 w-4" strokeWidth={1.5} />
-                  {weather.temp}°F · Rain {weather.precip}%
-                </span>
-              )
-            })()}
-          </div>
-        </div>
-        <NewEntityDropdown />
-      </div>
+    <div style={{ background: '#F6F8FA', minHeight: '100vh', padding: '28px 32px' }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto' }}>
 
-      {errorBanner}
-
-      {/* Section 1: Priority Actions — 4 equal cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
-        {/* Card 1: Collect Today */}
-        <Link to="/invoices" style={{ textDecoration: 'none' }}>
-          <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E5E7EB', borderLeft: `4px solid ${collectTotal > 0 ? '#DC2626' : '#059669'}`, padding: '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF', marginBottom: 6 }}>Collect Today</p>
-            <p style={{ fontSize: 26, fontWeight: 800, color: collectTotal > 0 ? '#DC2626' : '#059669', fontVariantNumeric: 'tabular-nums', lineHeight: 1.1 }}>{fmtCurrency(collectTotal)}</p>
-            <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>
-              {collectCount > 0
-                ? `${collectCount} invoice${collectCount !== 1 ? 's' : ''} overdue${heroClientName ? ` · ${heroClientName}` : ''}`
-                : 'All invoices current'}
-            </p>
-          </div>
-        </Link>
-
-        {/* Card 2: Overdue */}
-        <Link to="/invoices" style={{ textDecoration: 'none' }}>
-          <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E5E7EB', borderLeft: `4px solid ${collectCount > 0 ? '#DC2626' : '#E5E7EB'}`, padding: '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF', marginBottom: 6 }}>Overdue</p>
-            <p style={{ fontSize: 26, fontWeight: 800, color: '#111827', lineHeight: 1.1 }}>{collectCount}</p>
-            <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>{fmtCurrency(collectTotal)}</p>
-          </div>
-        </Link>
-
-        {/* Card 3: Active Jobs */}
-        <Link to="/jobs" style={{ textDecoration: 'none' }}>
-          <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E5E7EB', borderLeft: `4px solid ${activeJobs > 0 ? '#2563EB' : '#E5E7EB'}`, padding: '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF', marginBottom: 6 }}>Active Jobs</p>
-            <p style={{ fontSize: 26, fontWeight: 800, color: '#111827', lineHeight: 1.1 }}>{activeJobs}</p>
-            <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>In progress & scheduled</p>
-          </div>
-        </Link>
-
-        {/* Card 4: Follow Up */}
-        <Link to="/estimates" style={{ textDecoration: 'none' }}>
-          <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E5E7EB', borderLeft: `4px solid ${followUpCount > 0 ? '#D97706' : '#E5E7EB'}`, padding: '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF', marginBottom: 6 }}>Follow Up</p>
-            <p style={{ fontSize: 26, fontWeight: 800, color: '#111827', lineHeight: 1.1 }}>{followUpCount}</p>
-            <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>Estimates 7+ days</p>
-          </div>
-        </Link>
-      </div>
-
-      {/* Low stock alert */}
-      {lowStock.length > 0 && (
-        <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 10, padding: '12px 16px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <AlertTriangle className="h-4 w-4 shrink-0" strokeWidth={2} color="#D97706" />
-          <p className="text-label font-normal" style={{ color: '#92400E' }}><strong>Low stock alert:</strong> {lowStock.map(i => `${i.name} (${i.quantity} left)`).join(' · ')}</p>
-        </div>
-      )}
-
-      {/* Section 2: Financial Pulse */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
-        <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', padding: '20px 24px' }}>
-          <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF', marginBottom: 8 }}>Revenue · This Month</p>
-          <p style={{ fontSize: 30, fontWeight: 800, color: '#111827', fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(revenue)}</p>
-        </div>
-        <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', padding: '20px 24px' }}>
-          <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF', marginBottom: 8 }}>Collection Rate · All Time</p>
-          <p style={{ fontSize: 30, fontWeight: 800, color: '#111827' }}>{collectionRate.toFixed(0)}%</p>
-          <div style={{ marginTop: 10, background: '#F3F4F6', borderRadius: 4, height: 6, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${Math.min(collectionRate, 100)}%`, background: collectionRate >= 80 ? '#059669' : collectionRate >= 50 ? '#D97706' : '#DC2626', borderRadius: 4, transition: 'width 0.6s ease' }} />
-          </div>
-        </div>
-        <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', padding: '20px 24px' }}>
-          <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF', marginBottom: 8 }}>Outstanding</p>
-          <p style={{ fontSize: 30, fontWeight: 800, color: outstanding > 0 ? '#D97706' : '#059669', fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(outstanding)}</p>
-        </div>
-      </div>
-
-      {/* Section 3: Operations — Schedule + Activity Feed */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
-        {scheduleCard}
-        {/* Activity feed */}
-        <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', overflow: 'hidden' }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid #F3F4F6' }}>
-            <p className="text-label font-semibold text-gray-900">Recent Activity</p>
-          </div>
-          {activityFeed.length === 0
-            ? <p className="text-label font-normal text-gray-400" style={{ padding: '24px 20px' }}>No recent activity.</p>
-            : activityFeed.map(item => {
-                const kindColor = item.kind === 'invoice' ? '#1E3A8A' : item.kind === 'job' ? '#059669' : '#D97706'
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 20 }}>
+          <div>
+            <h2 className="text-display text-gray-900">{greeting}, {firstName}.</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 4 }}>
+              <p className="text-label font-normal text-gray-500">{dateSubtext}</p>
+              {weather !== null && (() => {
+                const WIcon = weather.precip < 20 ? Sun : weather.precip <= 50 ? CloudSun : CloudRain
                 return (
-                  <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderBottom: '1px solid #F9FAFB' }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: kindColor, flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p className="text-label font-medium text-gray-900" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</p>
-                      <p className="text-micro font-normal text-gray-400" style={{ marginTop: 1 }}>{item.sub}</p>
-                    </div>
-                    <p className="text-micro font-normal text-gray-400" style={{ flexShrink: 0 }}>{fmtDateShort(item.time.slice(0, 10))}</p>
-                  </div>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13, color: '#9CA3AF' }}>
+                    <WIcon className="h-4 w-4" strokeWidth={1.5} />
+                    {weather.temp}°F · Rain {weather.precip}%
+                  </span>
                 )
-              })
-          }
+              })()}
+            </div>
+          </div>
+          <NewEntityDropdown />
         </div>
-      </div>
 
+        {errorBanner}
+
+        {/* Low stock alert */}
+        {lowStock.length > 0 && (
+          <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 10, padding: '10px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <AlertTriangle className="h-4 w-4 shrink-0" strokeWidth={2} color="#D97706" />
+            <p className="text-label font-normal" style={{ color: '#92400E' }}><strong>Low stock:</strong> {lowStock.map(i => `${i.name} (${i.quantity} left)`).join(' · ')}</p>
+          </div>
+        )}
+
+        {/* ── ROW 1: 6 KPI cards ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12, marginBottom: 14 }}>
+
+          {/* Revenue */}
+          <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', padding: '14px 16px' }}>
+            <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9CA3AF', marginBottom: 5 }}>Revenue · Month</p>
+            <p style={{ fontSize: 22, fontWeight: 700, color: '#111827', lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(revenue)}</p>
+            {revenueChangePct !== null ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 5 }}>
+                {revenueChangePct >= 0
+                  ? <TrendingUp style={{ width: 13, height: 13, color: '#059669', flexShrink: 0 }} strokeWidth={2} />
+                  : <TrendingDown style={{ width: 13, height: 13, color: '#DC2626', flexShrink: 0 }} strokeWidth={2} />
+                }
+                <span style={{ fontSize: 11, color: revenueChangePct >= 0 ? '#059669' : '#DC2626', fontWeight: 600 }}>
+                  {revenueChangePct >= 0 ? '+' : ''}{revenueChangePct.toFixed(1)}% vs last month
+                </span>
+              </div>
+            ) : (
+              <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 5 }}>No prior month data</p>
+            )}
+          </div>
+
+          {/* Outstanding */}
+          <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', padding: '14px 16px' }}>
+            <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9CA3AF', marginBottom: 5 }}>Outstanding</p>
+            <p style={{ fontSize: 22, fontWeight: 700, color: outstanding > 0 ? '#D97706' : '#059669', lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(outstanding)}</p>
+            <p style={{ fontSize: 11, color: '#6B7280', marginTop: 5 }}>{unpaidCount} invoice{unpaidCount !== 1 ? 's' : ''}</p>
+          </div>
+
+          {/* Collect Today */}
+          <Link to="/invoices" style={{ textDecoration: 'none' }}>
+            <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', borderLeft: `4px solid ${collectTotal > 0 ? '#DC2626' : '#059669'}`, boxShadow: '0 1px 3px rgba(0,0,0,0.06)', padding: '14px 16px', height: '100%' }}>
+              <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9CA3AF', marginBottom: 5 }}>Collect Today</p>
+              <p style={{ fontSize: 22, fontWeight: 700, color: collectTotal > 0 ? '#DC2626' : '#059669', lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(collectTotal)}</p>
+              <p style={{ fontSize: 11, color: '#6B7280', marginTop: 5 }}>
+                {collectCount > 0 ? `${collectCount} overdue${heroClientName ? ` · ${heroClientName}` : ''}` : 'All invoices current'}
+              </p>
+            </div>
+          </Link>
+
+          {/* Collection Rate */}
+          <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', padding: '14px 16px' }}>
+            <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9CA3AF', marginBottom: 5 }}>Collection Rate</p>
+            <p style={{ fontSize: 22, fontWeight: 700, color: '#111827', lineHeight: 1.1 }}>{collectionRate.toFixed(0)}%</p>
+            <div style={{ marginTop: 8, background: '#F3F4F6', borderRadius: 4, height: 5, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${Math.min(collectionRate, 100)}%`, background: collectionRate >= 80 ? '#059669' : collectionRate >= 50 ? '#D97706' : '#DC2626', borderRadius: 4, transition: 'width 0.5s ease' }} />
+            </div>
+          </div>
+
+          {/* Active Jobs */}
+          <Link to="/jobs" style={{ textDecoration: 'none' }}>
+            <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', borderLeft: `4px solid ${activeJobs > 0 ? '#2563EB' : '#E5E7EB'}`, boxShadow: '0 1px 3px rgba(0,0,0,0.06)', padding: '14px 16px', height: '100%' }}>
+              <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9CA3AF', marginBottom: 5 }}>Active Jobs</p>
+              <p style={{ fontSize: 22, fontWeight: 700, color: '#111827', lineHeight: 1.1 }}>{activeJobs}</p>
+              <p style={{ fontSize: 11, color: '#6B7280', marginTop: 5 }}>{inProgressCount} in progress · {scheduledCount} scheduled</p>
+            </div>
+          </Link>
+
+          {/* Follow Up */}
+          <Link to="/estimates" style={{ textDecoration: 'none' }}>
+            <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', borderLeft: `4px solid ${followUpCount > 0 ? '#D97706' : '#E5E7EB'}`, boxShadow: '0 1px 3px rgba(0,0,0,0.06)', padding: '14px 16px', height: '100%' }}>
+              <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9CA3AF', marginBottom: 5 }}>Follow Up</p>
+              <p style={{ fontSize: 22, fontWeight: 700, color: '#111827', lineHeight: 1.1 }}>{followUpCount}</p>
+              <p style={{ fontSize: 11, color: '#6B7280', marginTop: 5 }}>Estimates 7+ days old</p>
+            </div>
+          </Link>
+        </div>
+
+        {/* ── ROW 2: Activity | Revenue Chart | Pipeline ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 14 }}>
+
+          {/* Activity Feed */}
+          <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid #F3F4F6' }}>
+              <p className="text-label font-semibold text-gray-900">Recent Activity</p>
+              <Link to="/invoices" className="text-micro font-medium" style={{ color: '#4F6CF7', textDecoration: 'none' }}>View all</Link>
+            </div>
+            {activityFeed.length === 0
+              ? <p className="text-label font-normal text-gray-400" style={{ padding: '20px 16px' }}>No recent activity.</p>
+              : activityFeed.map(item => <ActivityRow key={item.id} item={item} />)
+            }
+          </div>
+
+          {/* Monthly Revenue Chart */}
+          <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', padding: '14px 16px', display: 'flex', flexDirection: 'column' }}>
+            <p className="text-label font-semibold text-gray-900" style={{ marginBottom: 14 }}>Monthly Revenue</p>
+            <div style={{ flex: 1, minHeight: 160 }}>
+              <ResponsiveContainer width="100%" height={160}>
+                <BarChart data={last6MonthsRevenue} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+                    formatter={(v: unknown) => [fmtCurrency(v as number), 'Revenue']}
+                    contentStyle={{ borderRadius: 8, border: '1px solid #E5E7EB', fontSize: 12 }}
+                  />
+                  <Bar dataKey="revenue" fill={NAVY} radius={[4, 4, 0, 0]} maxBarSize={40} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 14, paddingTop: 12, borderTop: '1px solid #F3F4F6' }}>
+              <div>
+                <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9CA3AF', marginBottom: 3 }}>YTD Revenue</p>
+                <p style={{ fontSize: 16, fontWeight: 700, color: '#111827', fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(ytdRevenue)}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9CA3AF', marginBottom: 3 }}>Avg / Month</p>
+                <p style={{ fontSize: 16, fontWeight: 700, color: '#111827', fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(avgMonthlyRevenue)}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Pipeline Snapshot */}
+          <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <p className="text-label font-semibold text-gray-900">Pipeline</p>
+
+            {/* Estimates */}
+            <div style={{ borderLeft: '3px solid #D97706', paddingLeft: 12 }}>
+              <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9CA3AF', marginBottom: 8 }}>Estimates</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+                <div>
+                  <p style={{ fontSize: 16, fontWeight: 700, color: '#111827' }}>{estSent}</p>
+                  <p style={{ fontSize: 10, color: '#6B7280', marginTop: 1 }}>Sent</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: 16, fontWeight: 700, color: '#059669' }}>{estApproved}</p>
+                  <p style={{ fontSize: 10, color: '#6B7280', marginTop: 1 }}>Approved</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: 16, fontWeight: 700, color: '#111827' }}>{estConversionRate.toFixed(0)}%</p>
+                  <p style={{ fontSize: 10, color: '#6B7280', marginTop: 1 }}>Conv.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Jobs */}
+            <div style={{ borderLeft: '3px solid #2563EB', paddingLeft: 12 }}>
+              <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9CA3AF', marginBottom: 8 }}>Jobs</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+                <div>
+                  <p style={{ fontSize: 16, fontWeight: 700, color: '#2563EB' }}>{inProgressCount}</p>
+                  <p style={{ fontSize: 10, color: '#6B7280', marginTop: 1 }}>Running</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: 16, fontWeight: 700, color: '#111827' }}>{scheduledCount}</p>
+                  <p style={{ fontSize: 10, color: '#6B7280', marginTop: 1 }}>Scheduled</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: 16, fontWeight: 700, color: '#059669' }}>{completedThisMonth}</p>
+                  <p style={{ fontSize: 10, color: '#6B7280', marginTop: 1 }}>Done / Mo</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Invoices */}
+            <div style={{ borderLeft: '3px solid #DC2626', paddingLeft: 12 }}>
+              <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9CA3AF', marginBottom: 8 }}>Invoices</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+                <div>
+                  <p style={{ fontSize: 16, fontWeight: 700, color: '#111827' }}>{unpaidCount}</p>
+                  <p style={{ fontSize: 10, color: '#6B7280', marginTop: 1 }}>Unpaid</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: 16, fontWeight: 700, color: '#DC2626' }}>{collectCount}</p>
+                  <p style={{ fontSize: 10, color: '#6B7280', marginTop: 1 }}>Overdue</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: '#D97706', fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(outstanding)}</p>
+                  <p style={{ fontSize: 10, color: '#6B7280', marginTop: 1 }}>Owed</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── ROW 3: Schedule | Top Clients ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 14, marginBottom: 20 }}>
+          {scheduleCard}
+
+          {/* Top 5 Clients */}
+          <div style={{ background: 'white', borderRadius: 10, border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: '1px solid #F3F4F6' }}>
+              <p className="text-label font-semibold text-gray-900">Top Clients</p>
+              <Link to="/clients" className="text-micro font-medium" style={{ color: '#4F6CF7', textDecoration: 'none' }}>View all</Link>
+            </div>
+            {topClients.length === 0
+              ? <p className="text-label font-normal text-gray-400" style={{ padding: '24px 18px' }}>No client data yet.</p>
+              : topClients.map((c, idx) => {
+                  const maxVal = topClients[0].total || 1
+                  const barPct = (c.total / maxVal) * 100
+                  return (
+                    <div key={c.name} style={{ padding: '12px 18px', borderBottom: idx < topClients.length - 1 ? '1px solid #F9FAFB' : 'none' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', minWidth: 16 }}>{idx + 1}</span>
+                        <p className="text-label font-medium text-gray-900" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</p>
+                        <p className="text-label font-semibold" style={{ color: '#111827', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{fmtCurrency(c.total)}</p>
+                      </div>
+                      <div style={{ background: '#F3F4F6', borderRadius: 4, height: 4, overflow: 'hidden', marginLeft: 26 }}>
+                        <div style={{ height: '100%', width: `${barPct}%`, background: NAVY, borderRadius: 4 }} />
+                      </div>
+                    </div>
+                  )
+                })
+            }
+          </div>
+        </div>
+
+      </div>
     </div>
   )
 }
