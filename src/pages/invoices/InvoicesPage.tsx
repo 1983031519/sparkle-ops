@@ -532,6 +532,7 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: 16, borderBottom: '1px solid #e0e0e0', marginBottom: 20 }}>
           <div>
             <img src="/logo-dark.png" alt="Sparkle" style={{ width: 160, height: 'auto', display: 'block', marginBottom: 8 }} />
+            <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', margin: '0 0 2px' }}>{COMPANY.legal_name}</p>
             <p style={{ fontSize: 11, color: '#666' }}>{COMPANY.address}</p>
             <p style={{ fontSize: 11, color: '#666' }}>{COMPANY.phone} | {COMPANY.email}</p>
           </div>

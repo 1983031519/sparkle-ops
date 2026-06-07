@@ -522,6 +522,7 @@ function ProjectPreview({ project: p, phases, client, onSent }: { project: Proje
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: 16, borderBottom: '1px solid #e0e0e0', marginBottom: 20 }}>
           <div>
             <img src="/logo-dark.png" alt="Sparkle" style={{ width: 160, height: 'auto', display: 'block', marginBottom: 8 }} />
+            <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', margin: '0 0 2px' }}>{COMPANY.legal_name}</p>
             <p style={{ fontSize: 11, color: '#666' }}>{COMPANY.address}</p>
             <p style={{ fontSize: 11, color: '#666' }}>{COMPANY.phone} | {COMPANY.email}</p>
           </div>
@@ -588,12 +589,13 @@ function ProjectPreview({ project: p, phases, client, onSent }: { project: Proje
           </div>
           <div style={{ background: '#f5f4f2', border: '1px solid #e8e6e2', borderRadius: 8, padding: 16 }}>
             <p style={{ fontWeight: 600, color: '#333', marginBottom: 8 }}>Payment Schedule</p>
-            <p style={{ color: '#333', fontSize: 13 }}>Deposit ({p.deposit_percent}%): <strong>{fmtCurrency(dep)}</strong> — due upon signing</p>
-            <p style={{ color: '#333', fontSize: 13 }}>Mid-project ({p.mid_percent}%): <strong>{fmtCurrency(mid)}</strong> — due upon phase completion</p>
-            <p style={{ color: '#333', fontSize: 13 }}>Final ({p.final_percent}%): <strong>{fmtCurrency(fin)}</strong> — due upon project completion</p>
-            <p style={{ marginTop: 10, fontSize: 12, color: '#555' }}>Payment Methods: {(p.accepted_payment_methods ?? []).join(' · ')}</p>
-            <p style={{ fontSize: 11, color: '#888' }}>Check payable to: {COMPANY.check_payable}</p>
-            <p style={{ fontSize: 11, color: '#888' }}>Zelle: {COMPANY.zelle}</p>
+            {p.deposit_percent > 0 && <p style={{ color: '#333', fontSize: 13 }}>Deposit ({p.deposit_percent}%): <strong>{fmtCurrency(dep)}</strong> — due upon signing</p>}
+            {p.mid_percent > 0 && <p style={{ color: '#333', fontSize: 13 }}>Mid-project ({p.mid_percent}%): <strong>{fmtCurrency(mid)}</strong> — due upon phase completion</p>}
+            {p.final_percent > 0 && <p style={{ color: '#333', fontSize: 13 }}>Final ({p.final_percent}%): <strong>{fmtCurrency(fin)}</strong> — due upon project completion</p>}
+            {(p.accepted_payment_methods ?? []).length > 0 && <p style={{ marginTop: 10, fontSize: 12, color: '#555' }}>Payment Methods: {(p.accepted_payment_methods ?? []).join(' · ')}</p>}
+            {(p.accepted_payment_methods ?? []).includes('Check') && <p style={{ fontSize: 11, color: '#888' }}>Check payable to: {COMPANY.check_payable}</p>}
+            {(p.accepted_payment_methods ?? []).includes('Zelle') && <p style={{ fontSize: 11, color: '#888' }}>Zelle: {COMPANY.zelle}</p>}
+            {(p.accepted_payment_methods ?? []).includes('ACH') && <p style={{ fontSize: 11, color: '#888' }}>ACH / Bank Transfer — contact office for details</p>}
           </div>
         </div>
 

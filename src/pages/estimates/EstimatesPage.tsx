@@ -586,6 +586,7 @@ function ProposalPreview({ est, client, onSent }: { est: Estimate; client?: Clie
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: 16, borderBottom: '1px solid #e0e0e0', marginBottom: 20 }}>
           <div>
             <img src="/logo-dark.png" alt="Sparkle" style={{ width: 160, height: 'auto', display: 'block', marginBottom: 8 }} />
+            <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', margin: '0 0 2px' }}>{COMPANY.legal_name}</p>
             <p style={{ fontSize: 11, color: '#666' }}>{COMPANY.address}</p>
             <p style={{ fontSize: 11, color: '#666' }}>{COMPANY.phone} | {COMPANY.email}</p>
           </div>
@@ -668,11 +669,12 @@ function ProposalPreview({ est, client, onSent }: { est: Estimate; client?: Clie
         {/* Payment Terms */}
         <div style={{ background: '#f5f4f2', border: '1px solid #e8e6e2', borderRadius: 8, padding: 16, marginBottom: 16 }}>
           <h4 style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 8 }}>Payment Terms</h4>
-          <p style={{ fontWeight: 600, color: '#333' }}>{est.payment_terms || '50% deposit + 50% on completion'}</p>
-          <p style={{ color: '#333', marginTop: 4 }}>Deposit: <strong>${deposit.toFixed(2)}</strong> — Balance: <strong>${balance.toFixed(2)}</strong></p>
-          <p style={{ marginTop: 10, fontSize: 12, color: '#555' }}>Accepted Payment Methods: {(est.accepted_payment_methods ?? ['Check', 'ACH', 'Zelle']).join(' · ')}</p>
-          <p style={{ fontSize: 11, color: '#888' }}>Check payable to: {COMPANY.check_payable}</p>
-          <p style={{ fontSize: 11, color: '#888' }}>Zelle: {COMPANY.zelle}</p>
+          {est.payment_terms && <p style={{ fontWeight: 600, color: '#333' }}>{est.payment_terms}</p>}
+          {/deposit|%/i.test(est.payment_terms ?? '') && <p style={{ color: '#333', marginTop: 4 }}>Deposit: <strong>${deposit.toFixed(2)}</strong> — Balance: <strong>${balance.toFixed(2)}</strong></p>}
+          {(est.accepted_payment_methods ?? []).length > 0 && <p style={{ marginTop: 10, fontSize: 12, color: '#555' }}>Accepted Payment Methods: {(est.accepted_payment_methods ?? []).join(' · ')}</p>}
+          {(est.accepted_payment_methods ?? []).includes('Check') && <p style={{ fontSize: 11, color: '#888' }}>Check payable to: {COMPANY.check_payable}</p>}
+          {(est.accepted_payment_methods ?? []).includes('Zelle') && <p style={{ fontSize: 11, color: '#888' }}>Zelle: {COMPANY.zelle}</p>}
+          {(est.accepted_payment_methods ?? []).includes('ACH') && <p style={{ fontSize: 11, color: '#888' }}>ACH / Bank Transfer — contact office for details</p>}
         </div>
 
         {est.warranty && <div style={{ marginBottom: 16 }}><h4 style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Warranty</h4><p style={{ color: '#555', lineHeight: 1.7 }}>{est.warranty}</p></div>}
