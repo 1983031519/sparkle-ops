@@ -670,7 +670,7 @@ function ProposalPreview({ est, client, onSent }: { est: Estimate; client?: Clie
         <div style={{ background: '#f5f4f2', border: '1px solid #e8e6e2', borderRadius: 8, padding: 16, marginBottom: 16 }}>
           <h4 style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 8 }}>Payment Terms</h4>
           {est.payment_terms && <p style={{ fontWeight: 600, color: '#333' }}>{est.payment_terms}</p>}
-          {/deposit|%/i.test(est.payment_terms ?? '') && <p style={{ color: '#333', marginTop: 4 }}>Deposit: <strong>${deposit.toFixed(2)}</strong> — Balance: <strong>${balance.toFixed(2)}</strong></p>}
+          {/deposit/i.test(est.payment_terms ?? '') && <p style={{ color: '#333', marginTop: 4 }}>Deposit: <strong>${deposit.toFixed(2)}</strong> — Balance: <strong>${balance.toFixed(2)}</strong></p>}
           {(est.accepted_payment_methods ?? []).length > 0 && <p style={{ marginTop: 10, fontSize: 12, color: '#555' }}>Accepted Payment Methods: {(est.accepted_payment_methods ?? []).join(' · ')}</p>}
           {(est.accepted_payment_methods ?? []).includes('Check') && <p style={{ fontSize: 11, color: '#888' }}>Check payable to: {COMPANY.check_payable}</p>}
           {(est.accepted_payment_methods ?? []).includes('Zelle') && <p style={{ fontSize: 11, color: '#888' }}>Zelle: {COMPANY.zelle}</p>}
