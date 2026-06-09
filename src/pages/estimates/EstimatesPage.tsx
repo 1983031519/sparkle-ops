@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { Plus, Search, Printer, ArrowRight, Mail, Trash2 } from 'lucide-react'
+import { useSearchParams, useNavigate } from 'react-router-dom'
+import { Plus, Search, Printer, ArrowRight, Mail, Trash2, FileText, FileCheck } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input, Select, Textarea } from '@/components/ui/Input'
@@ -60,6 +60,8 @@ export default function EstimatesPage() {
   const [deleteWarning, setDeleteWarning] = useState<{ message: string; records: LinkedRecord[] } | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [approveTarget, setApproveTarget] = useState<Estimate | null>(null)
+  const [creatingInvoice, setCreatingInvoice] = useState(false)
+  const navigate = useNavigate()
   const toast = useToast()
 
   const fetchAll = useCallback(async () => {
@@ -68,7 +70,7 @@ export default function EstimatesPage() {
       supabase.from('estimates').select('*').order('created_at', { ascending: false }),
       supabase.from('clients').select('id, name, email, phone, address, city, state, contact_name').order('name'),
       supabase.from('jobs').select('id, title, estimate_id, client_id'),
-      supabase.from('invoices').select('id, job_id, estimate_id, status, number'),
+      supabase.from('invoices').select('id, job_id, estimate_id, status, number, invoice_type'),
       supabase.from('document_links').select('document_id').eq('document_type', 'estimate').not('viewed_at', 'is', null),
     ])
     setEstimates((eRes.data ?? []) as Estimate[])
@@ -86,6 +88,9 @@ export default function EstimatesPage() {
   const clientMap     = useMemo(() => Object.fromEntries(clients.map(c => [c.id, c])), [clients])
   const jobByEstimate = useMemo(() => Object.fromEntries(jobs.filter(j => j.estimate_id).map(j => [j.estimate_id!, j])), [jobs])
   const invByJob      = useMemo(() => Object.fromEntries(invoices.filter(i => i.job_id).map(i => [i.job_id!, i])), [invoices])
+  const invByEstimate = useMemo(() => invoices.filter(i => i.estimate_id).reduce<Record<string, Invoice[]>>((acc, i) => {
+    acc[i.estimate_id!] = [...(acc[i.estimate_id!] ?? []), i]; return acc
+  }, {}), [invoices])
 
   const filtered = useMemo(() => estimates.filter(e => {
     const cl = clientMap[e.client_id]
@@ -272,6 +277,7 @@ export default function EstimatesPage() {
   }
 
   async function createInvoiceFromEstimate(est: Estimate, type: 'deposit' | 'balance' | 'full') {
+    setCreatingInvoice(true)
     const invoiceNumber = await nextInvoiceNumber()
     const isDeposit  = type === 'deposit'
     const isBalance  = type === 'balance'
@@ -314,11 +320,13 @@ export default function EstimatesPage() {
     }
 
     const { data, error } = await supabase.from('invoices').insert(payload as never).select().single()
+    setCreatingInvoice(false)
     if (error) {
       toast.error(`Failed to create invoice: ${error.message}`)
       return null
     }
     toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} invoice ${invoiceNumber} created.`)
+    navigate('/invoices')
     return data as Invoice
   }
 
@@ -383,6 +391,45 @@ export default function EstimatesPage() {
                       <ArrowRight className="h-3 w-3" /> Convert to Job
                     </Button>
                   )}
+                  {(() => {
+                    if (e.status !== 'Approved') return null
+                    const estInvs = invByEstimate[e.id] ?? []
+                    const hasDeposit = /deposit/i.test(e.payment_terms ?? '')
+                    const hasDepositInv = estInvs.some(i => (i as any).invoice_type === 'deposit')
+                    const hasBalanceInv = estInvs.some(i => (i as any).invoice_type === 'balance')
+                    const hasFullInv   = estInvs.some(i => (i as any).invoice_type === 'full' || !(i as any).invoice_type)
+                    if (hasDeposit) {
+                      if (!hasDepositInv) return (
+                        <button disabled={creatingInvoice} onClick={() => createInvoiceFromEstimate(e, 'deposit')}
+                          style={{ display:'inline-flex', alignItems:'center', gap:4, fontSize:11, fontWeight:600,
+                            color:'white', background: creatingInvoice ? '#6ee7b7' : '#059669',
+                            border:'none', borderRadius:6, padding:'3px 10px', cursor: creatingInvoice ? 'not-allowed' : 'pointer', whiteSpace:'nowrap' }}>
+                          <FileText style={{width:12,height:12,strokeWidth:1.5}} />
+                          {creatingInvoice ? '...' : 'Deposit Invoice'}
+                        </button>
+                      )
+                      if (hasDepositInv && !hasBalanceInv) return (
+                        <button disabled={creatingInvoice} onClick={() => createInvoiceFromEstimate(e, 'balance')}
+                          style={{ display:'inline-flex', alignItems:'center', gap:4, fontSize:11, fontWeight:600,
+                            color:'white', background: creatingInvoice ? '#fcd34d' : '#D97706',
+                            border:'none', borderRadius:6, padding:'3px 10px', cursor: creatingInvoice ? 'not-allowed' : 'pointer', whiteSpace:'nowrap' }}>
+                          <FileCheck style={{width:12,height:12,strokeWidth:1.5}} />
+                          {creatingInvoice ? '...' : 'Balance Invoice'}
+                        </button>
+                      )
+                    } else {
+                      if (!hasFullInv) return (
+                        <button disabled={creatingInvoice} onClick={() => createInvoiceFromEstimate(e, 'full')}
+                          style={{ display:'inline-flex', alignItems:'center', gap:4, fontSize:11, fontWeight:600,
+                            color:'#374151', background:'white', border:'1px solid #E5E7EB',
+                            borderRadius:6, padding:'3px 10px', cursor: creatingInvoice ? 'not-allowed' : 'pointer', whiteSpace:'nowrap' }}>
+                          <FileText style={{width:12,height:12,strokeWidth:1.5}} />
+                          {creatingInvoice ? '...' : 'Invoice'}
+                        </button>
+                      )
+                    }
+                    return null
+                  })()}
                   <Button variant="ghost" size="sm" onClick={() => openPreview(e)}><Printer className="h-4 w-4" /></Button>
                 </div>
               )},
@@ -500,6 +547,37 @@ export default function EstimatesPage() {
                   <ArrowRight className="h-4 w-4" /> Convert to Job
                 </Button>
               )}
+              {editing && editing.status === 'Approved' && (() => {
+                const estInvs = invByEstimate[editing.id] ?? []
+                const hasDeposit = /deposit/i.test(editing.payment_terms ?? '')
+                const hasDepositInv = estInvs.some(i => (i as any).invoice_type === 'deposit')
+                const hasBalanceInv = estInvs.some(i => (i as any).invoice_type === 'balance')
+                const hasFullInv   = estInvs.some(i => (i as any).invoice_type === 'full' || !(i as any).invoice_type)
+                if (hasDeposit && !hasDepositInv) return (
+                  <Button onClick={() => { createInvoiceFromEstimate(editing, 'deposit'); setModalOpen(false) }}
+                    type="button" disabled={creatingInvoice}
+                    style={{ background:'#059669', color:'white', borderColor:'#059669' }}>
+                    <FileText className="h-4 w-4" strokeWidth={1.5} />
+                    {creatingInvoice ? 'Creating...' : 'Deposit Invoice'}
+                  </Button>
+                )
+                if (hasDeposit && hasDepositInv && !hasBalanceInv) return (
+                  <Button onClick={() => { createInvoiceFromEstimate(editing, 'balance'); setModalOpen(false) }}
+                    type="button" disabled={creatingInvoice}
+                    style={{ background:'#D97706', color:'white', borderColor:'#D97706' }}>
+                    <FileCheck className="h-4 w-4" strokeWidth={1.5} />
+                    {creatingInvoice ? 'Creating...' : 'Balance Invoice'}
+                  </Button>
+                )
+                if (!hasDeposit && !hasFullInv) return (
+                  <Button onClick={() => { createInvoiceFromEstimate(editing, 'full'); setModalOpen(false) }}
+                    type="button" disabled={creatingInvoice}>
+                    <FileText className="h-4 w-4" strokeWidth={1.5} />
+                    {creatingInvoice ? 'Creating...' : 'Invoice'}
+                  </Button>
+                )
+                return null
+              })()}
               <Button variant="secondary" onClick={() => setModalOpen(false)} type="button">Cancel</Button>
               <Button onClick={handleSave} type="button" disabled={saving}>{saving ? 'Saving...' : editing ? 'Update' : 'Create'}</Button>
             </div>
