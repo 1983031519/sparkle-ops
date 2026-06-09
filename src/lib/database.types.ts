@@ -122,6 +122,9 @@ export interface Invoice {
   site_address: string | null
   paid_at: string | null
   created_at: string
+  invoice_type: 'full' | 'deposit' | 'balance'  // DB default: 'full'
+  sequence_number: number                         // DB default: 1
+  linked_invoice_id: string | null               // FK → invoices(id)
 }
 
 export interface ChecklistItem {

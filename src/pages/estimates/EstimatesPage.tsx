@@ -18,6 +18,7 @@ import {
   generateEstimateNumber,
 } from '@/lib/constants'
 import type { Estimate, EstimateStatus, EstimateLineItem, Client, Job, Invoice, MaterialsSpecified } from '@/lib/database.types'
+import { nextInvoiceNumber } from '@/lib/invoiceNumber'
 import { fmtDate, fmtCurrency, futureISO, isoDatePart } from '@/lib/constants'
 import { useToast } from '@/components/ui/Toast'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -150,8 +151,9 @@ export default function EstimatesPage() {
     try {
       const subtotal = form.line_items.reduce((s, i) => s + i.qty * i.unit_price, 0)
       const total = subtotal // Tax is always 0% for Sparkle
-      const deposit_amount = total * 0.5
-      const balance_amount = total - deposit_amount
+      const hasDeposit = /deposit/i.test(form.payment_terms ?? '')
+      const deposit_amount = hasDeposit ? total * 0.5 : total
+      const balance_amount = hasDeposit ? total * 0.5 : 0
 
       const estNum = editing?.number ?? generateEstimateNumber(estimates.length + 1)
       const payload = {
@@ -267,6 +269,57 @@ export default function EstimatesPage() {
     await supabase.from('estimates').update({ status: 'Approved' } as never).eq('id', est.id)
     setEstimates(prev => prev.map(e => e.id === est.id ? { ...e, status: 'Approved' as EstimateStatus } : e))
     toast.success('Job created from estimate.')
+  }
+
+  async function createInvoiceFromEstimate(est: Estimate, type: 'deposit' | 'balance' | 'full') {
+    const invoiceNumber = await nextInvoiceNumber()
+    const isDeposit  = type === 'deposit'
+    const isBalance  = type === 'balance'
+    const invoiceTotal = isDeposit
+      ? (est.deposit_amount ?? est.total * 0.5)
+      : isBalance
+        ? (est.balance_amount ?? est.total * 0.5)
+        : est.total
+
+    const suffix = isDeposit
+      ? ' — Deposit (1 of 2)'
+      : isBalance
+        ? ' — Balance Due (2 of 2)'
+        : ''
+
+    const lineItems = (est.line_items as EstimateLineItem[]).map(item => ({
+      ...item,
+      description: item.description + suffix,
+    }))
+
+    const payload = {
+      number: invoiceNumber,
+      client_id: est.client_id,
+      estimate_id: est.id,
+      job_id: jobs.find(j => j.estimate_id === est.id)?.id ?? null,
+      status: 'Unpaid' as const,
+      date: new Date().toISOString().split('T')[0],
+      line_items: lineItems,
+      subtotal: invoiceTotal,
+      total: invoiceTotal,
+      deposit_received: 0,
+      balance_due: invoiceTotal,
+      payment_terms: est.payment_terms ?? null,
+      site_address: est.site_address ?? null,
+      notes: null,
+      due_date: null,
+      invoice_type: type,
+      sequence_number: isDeposit ? 1 : isBalance ? 2 : 1,
+      linked_invoice_id: null,
+    }
+
+    const { data, error } = await supabase.from('invoices').insert(payload as never).select().single()
+    if (error) {
+      toast.error(`Failed to create invoice: ${error.message}`)
+      return null
+    }
+    toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} invoice ${invoiceNumber} created.`)
+    return data as Invoice
   }
 
   function openPreview(est: Estimate) { setPreviewEst(est); setPreviewOpen(true) }
