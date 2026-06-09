@@ -287,16 +287,18 @@ export default function EstimatesPage() {
         ? (est.balance_amount ?? est.total * 0.5)
         : est.total
 
-    const suffix = isDeposit
-      ? ' — Deposit (1 of 2)'
-      : isBalance
-        ? ' — Balance Due (2 of 2)'
-        : ''
-
-    const lineItems = (est.line_items as EstimateLineItem[]).map(item => ({
-      ...item,
-      description: item.description + suffix,
-    }))
+    // For deposit/balance: single summary line item — avoids showing full prices against a partial invoice
+    const serviceLabel = est.re_line || (est.scope_of_work ?? '').split('\n')[0] || 'Services'
+    const lineItems: EstimateLineItem[] = (isDeposit || isBalance)
+      ? [{
+          description: isDeposit
+            ? `Deposit — ${serviceLabel} (1 of 2)`
+            : `Balance Due — ${serviceLabel} (2 of 2)`,
+          qty: 1,
+          unit: 'job',
+          unit_price: invoiceTotal,
+        }]
+      : (est.line_items as EstimateLineItem[])
 
     const payload = {
       number: invoiceNumber,
