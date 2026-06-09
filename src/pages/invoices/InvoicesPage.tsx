@@ -14,7 +14,7 @@ import { SendDocumentModal } from '@/components/SendDocumentModal'
 import { INVOICE_STATUSES, COMPANY, fmtDateShort, fmtDate, fmtCurrency, isoDatePart } from '@/lib/constants'
 import { useToast } from '@/components/ui/Toast'
 import { useDebounce } from '@/hooks/useDebounce'
-import type { Invoice, InvoiceStatus, InvoiceLineItem, Client, Job } from '@/lib/database.types'
+import type { Invoice, InvoiceStatus, InvoiceLineItem, Client, Job, Estimate } from '@/lib/database.types'
 import { nextInvoiceNumber } from '../../lib/invoiceNumber'
 
 const emptyLine: InvoiceLineItem = { description: '', qty: 1, unit: 'ea', unit_price: 0 }
@@ -54,6 +54,7 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [clients, setClients] = useState<Client[]>([])
   const [jobs, setJobs] = useState<Job[]>([])
+  const [estimates, setEstimates] = useState<Estimate[]>([])
   const [viewedDocIds, setViewedDocIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -74,15 +75,17 @@ export default function InvoicesPage() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
-    const [iRes, cRes, jRes, vRes] = await Promise.all([
+    const [iRes, cRes, jRes, eRes, vRes] = await Promise.all([
       supabase.from('invoices').select('*').order('created_at', { ascending: false }),
       supabase.from('clients').select('id, name, email, phone, address, city, state').order('name'),
       supabase.from('jobs').select('id, title, client_id, estimate_id, re_line, site_address'),
+      supabase.from('estimates').select('id, deposit_amount, balance_amount, total'),
       supabase.from('document_links').select('document_id').eq('document_type', 'invoice').not('viewed_at', 'is', null),
     ])
     setInvoices((iRes.data ?? []) as Invoice[])
     setClients((cRes.data ?? []) as Client[])
     setJobs((jRes.data ?? []) as Job[])
+    setEstimates((eRes.data ?? []) as Estimate[])
     setViewedDocIds(new Set((vRes.data ?? []).map((r: { document_id: string }) => r.document_id)))
     setLoading(false)
   }, [])
@@ -91,8 +94,9 @@ export default function InvoicesPage() {
 
   const debouncedSearch = useDebounce(search, 250)
 
-  const clientMap = useMemo(() => Object.fromEntries(clients.map(c => [c.id, c])), [clients])
-  const jobMap    = useMemo(() => Object.fromEntries(jobs.map(j => [j.id, j])), [jobs])
+  const clientMap   = useMemo(() => Object.fromEntries(clients.map(c => [c.id, c])), [clients])
+  const jobMap      = useMemo(() => Object.fromEntries(jobs.map(j => [j.id, j])), [jobs])
+  const estimateMap = useMemo(() => Object.fromEntries(estimates.map(e => [e.id, e])), [estimates])
 
   const filtered = useMemo(() => {
     const list = invoices.filter(e =>
@@ -390,7 +394,7 @@ export default function InvoicesPage() {
 
       {/* PRINT PREVIEW */}
       <Modal open={previewOpen} onClose={() => setPreviewOpen(false)} title="Invoice Preview" wide>
-        {previewInv && <InvoicePreview inv={previewInv} client={clientMap[previewInv.client_id]} job={previewInv.job_id ? jobMap[previewInv.job_id] : undefined} />}
+        {previewInv && <InvoicePreview inv={previewInv} client={clientMap[previewInv.client_id]} job={previewInv.job_id ? jobMap[previewInv.job_id] : undefined} estimate={previewInv.estimate_id ? estimateMap[previewInv.estimate_id] : undefined} />}
       </Modal>
 
       <DeleteConfirmDialog
@@ -444,7 +448,7 @@ export default function InvoicesPage() {
 }
 
 /* ─── Professional Invoice Preview ─── */
-function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; job?: Job }) {
+function InvoicePreview({ inv, client, job, estimate }: { inv: Invoice; client?: Client; job?: Job; estimate?: Estimate }) {
   const items = inv.line_items as InvoiceLineItem[]
   const method = inv.payment_method_used
   const depositAmt = inv.deposit_received ?? 0
@@ -537,7 +541,14 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
             <p style={{ fontSize: 11, color: '#666' }}>{COMPANY.phone} | {COMPANY.email}</p>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <h3 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: 0 }}>INVOICE</h3>
+            <h3 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: 0 }}>
+              {inv.invoice_type === 'deposit' ? 'DEPOSIT INVOICE' : inv.invoice_type === 'balance' ? 'BALANCE INVOICE' : 'INVOICE'}
+            </h3>
+            {(inv.invoice_type === 'deposit' || inv.invoice_type === 'balance') && (
+              <p style={{ fontSize: 11, fontWeight: 600, color: inv.invoice_type === 'deposit' ? '#059669' : '#D97706', margin: '2px 0 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {inv.invoice_type === 'deposit' ? 'Payment 1 of 2' : 'Payment 2 of 2'}
+              </p>
+            )}
             <p style={{ fontFamily: 'monospace', fontSize: 13, color: '#555', margin: '4px 0' }}>{inv.number}</p>
             <p style={{ fontSize: 12, color: '#666' }}>Date: {fmtDate(inv.date ?? isoDatePart(inv.created_at))}</p>
             {inv.due_date && <p style={{ fontSize: 12, color: '#666' }}>Due: {fmtDate(inv.due_date)}</p>}
@@ -583,6 +594,22 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
           {depositAmt > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #111827', paddingTop: 4, marginTop: 4, fontSize: 17, fontWeight: 700, color: '#111827' }}><span>Balance Due</span><span>${balanceDue.toFixed(2)}</span></div>}
         </div>
 
+        {/* Project Summary — only for deposit/balance invoices with a linked estimate */}
+        {(inv.invoice_type === 'deposit' || inv.invoice_type === 'balance') && estimate && (
+          <div style={{ background: '#f5f4f2', border: '1px solid #e8e6e2', borderRadius: 8, padding: 16, marginBottom: 16 }}>
+            <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#9a8f82', margin: '0 0 8px' }}>Project Summary</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#555', padding: '2px 0' }}>
+              <span>Deposit (1 of 2)</span><span>{fmtCurrency(estimate.deposit_amount)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#555', padding: '2px 0' }}>
+              <span>Balance (2 of 2)</span><span>{fmtCurrency(estimate.balance_amount)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, color: '#111827', borderTop: '1px solid #e0e0e0', paddingTop: 6, marginTop: 4 }}>
+              <span>Total Project Value</span><span>{fmtCurrency(estimate.total)}</span>
+            </div>
+          </div>
+        )}
+
         {/* Payment */}
         <div style={{ background: '#f5f4f2', border: '1px solid #e8e6e2', borderRadius: 8, padding: 16, marginBottom: 16 }}>
           <h4 style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 8 }}>Payment Information</h4>
@@ -594,6 +621,18 @@ function InvoicePreview({ inv, client, job }: { inv: Invoice; client?: Client; j
         </div>
 
         {inv.notes && <div style={{ marginBottom: 16 }}><h4 style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Notes</h4><p style={{ color: '#555' }}>{inv.notes}</p></div>}
+
+        {/* Deposit / Balance note */}
+        {inv.invoice_type === 'deposit' && (
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: '#065f46' }}>
+            This is a deposit invoice. A separate balance invoice will be issued upon project completion.
+          </div>
+        )}
+        {inv.invoice_type === 'balance' && (
+          <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 6, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: '#92400e' }}>
+            This is the final balance invoice. Thank you for your business.
+          </div>
+        )}
 
         {/* Signatures */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, marginTop: 40, paddingTop: 20, borderTop: '1px solid #e0e0e0' }}>
